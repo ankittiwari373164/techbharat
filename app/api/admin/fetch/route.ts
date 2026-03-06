@@ -32,6 +32,8 @@ async function incrementCounter() {
   }
 }
 
+export const dynamic = 'force-dynamic'
+
 let isFetching = false
 
 export async function POST(request: NextRequest) {

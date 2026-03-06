@@ -3,6 +3,7 @@ import { fetchSingleArticle, buildArticles } from '@/lib/news-fetcher'
 import { getAllArticlesAsync, addArticleAsync } from '@/lib/store'
 import { getNextDueSlot, isDuplicate, nowIST, getTodaySchedule } from '@/lib/scheduler'
 
+export const dynamic = 'force-dynamic'
 export const maxDuration = 300
 
 const IS_VERCEL = !!process.env.KV_REST_API_URL
