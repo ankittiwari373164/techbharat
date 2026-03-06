@@ -1,0 +1,10 @@
+# Sample Phone Folders
+
+Add your phone images here.
+
+Example structure:
+- samsung-galaxy-s25-ultra/1.jpg, 2.jpg, 3.jpg
+- apple-iphone-17-pro/1.jpg, 2.jpg
+- xiaomi-15-ultra/1.jpg, 2.jpg, 3.jpg, 4.jpg
+
+See README.md for full instructions.
