@@ -8,7 +8,7 @@ const IS_VERCEL = !!process.env.KV_REST_API_URL
 async function getPublishedTodayCount(): Promise<number> {
   const today = nowIST().toLocaleDateString('en-IN')
   if (IS_VERCEL) {
-    try { const { kv } = await import('@vercel/kv'); return (await kv.get<number>(`tb:counter:${today}`)) || 0 }
+    try { const { Redis } = await import('@upstash/redis'); const kv = new Redis({ url: process.env.KV_REST_API_URL!, token: process.env.KV_REST_API_TOKEN! }); return (await kv.get<number>(`tb:counter:${today}`)) || 0 }
     catch { return 0 }
   } else {
     try {

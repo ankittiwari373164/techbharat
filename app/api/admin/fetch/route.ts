@@ -11,7 +11,7 @@ const IS_VERCEL    = !!process.env.KV_REST_API_URL
 async function incrementCounter() {
   if (IS_VERCEL) {
     try {
-      const { kv } = await import('@vercel/kv')
+      const { Redis } = await import('@upstash/redis'); const kv = new Redis({ url: process.env.KV_REST_API_URL!, token: process.env.KV_REST_API_TOKEN! })
       const today  = new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })
       const key    = `tb:counter:${today}`
       await kv.incr(key)

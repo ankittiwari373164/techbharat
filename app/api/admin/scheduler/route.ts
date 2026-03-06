@@ -11,7 +11,7 @@ async function getPublishedTodayCount(): Promise<number> {
   const today = nowIST().toLocaleDateString('en-IN')
   if (IS_VERCEL) {
     try {
-      const { kv } = await import('@vercel/kv')
+      const { Redis } = await import('@upstash/redis'); const kv = new Redis({ url: process.env.KV_REST_API_URL!, token: process.env.KV_REST_API_TOKEN! })
       return (await kv.get<number>(`tb:counter:${today}`)) || 0
     } catch { return 0 }
   } else {
@@ -30,7 +30,7 @@ async function incrementCounter(): Promise<void> {
   const today = nowIST().toLocaleDateString('en-IN')
   if (IS_VERCEL) {
     try {
-      const { kv } = await import('@vercel/kv')
+      const { Redis } = await import('@upstash/redis'); const kv = new Redis({ url: process.env.KV_REST_API_URL!, token: process.env.KV_REST_API_TOKEN! })
       const key = `tb:counter:${today}`
       await kv.incr(key)
       await kv.expire(key, 86400 * 2)
