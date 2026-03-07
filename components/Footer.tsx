@@ -39,15 +39,15 @@ export default function Footer() {
               India's most trusted source for mobile technology news, smartphone reviews, and expert analysis.
             </p>
             <div className="flex gap-3 mt-4">
-              <a href="https://t.me/techbharat" target="_blank" rel="noopener noreferrer"
+              <a href="https://t.me/the_tech_bharat" target="_blank" rel="noopener noreferrer"
                 className="w-8 h-8 bg-gray-800 hover:bg-[#d4220a] flex items-center justify-center transition-colors text-xs font-sans font-bold">
                 TG
               </a>
-              <a href="https://whatsapp.com/channel/techbharat" target="_blank" rel="noopener noreferrer"
+              <a href="https://whatsapp.com/channel/0029VbCXZfAJJhzh46IrfI2W" target="_blank" rel="noopener noreferrer"
                 className="w-8 h-8 bg-gray-800 hover:bg-[#d4220a] flex items-center justify-center transition-colors text-xs font-sans font-bold">
                 WA
               </a>
-              <a href="https://linkedin.com/company/techbharat" target="_blank" rel="noopener noreferrer"
+              <a href="https://www.linkedin.com/company/the-tech-bharat/about/?viewAsMember=true" target="_blank" rel="noopener noreferrer"
                 className="w-8 h-8 bg-gray-800 hover:bg-[#d4220a] flex items-center justify-center transition-colors text-xs font-sans font-bold">
                 LI
               </a>

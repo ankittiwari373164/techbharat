@@ -147,7 +147,7 @@ export default function ArticlePage() {
                   className="font-sans text-xs bg-[#25D366] text-white px-2.5 py-1 hover:opacity-80"
                 >Share</a>
                 <a
-                  href={`https://t.me/share/url?url=${encodeURIComponent((process.env.NEXT_PUBLIC_SITE_URL || 'https://techbharat.com') + '/article/' + article.slug)}&text=${encodeURIComponent(article.title)}`}
+                  href={`https://t.me/share/url?url=${encodeURIComponent((process.env.NEXT_PUBLIC_SITE_URL || 'https://thetechbharat.com') + '/article/' + article.slug)}&text=${encodeURIComponent(article.title)}`}
                   target="_blank" rel="noopener noreferrer"
                   className="font-sans text-xs bg-[#2AABEE] text-white px-2.5 py-1 hover:opacity-80"
                 >Telegram</a>
@@ -404,11 +404,11 @@ export default function ArticlePage() {
               <p className="font-playfair text-lg font-bold mb-2">Never Miss a Launch</p>
               <p className="font-sans text-xs opacity-80 mb-3">Get instant phone news on your phone.</p>
               <div className="space-y-2">
-                <a href="https://t.me/techbharat" target="_blank" rel="noopener noreferrer"
+                <a href="https://t.me/the_tech_bharat" target="_blank" rel="noopener noreferrer"
                   className="block bg-[#2AABEE] text-white font-sans text-xs font-semibold text-center py-2 hover:opacity-90">
                   Join Telegram →
                 </a>
-                <a href="https://whatsapp.com/channel/techbharat" target="_blank" rel="noopener noreferrer"
+                <a href="https://whatsapp.com/channel/0029VbCXZfAJJhzh46IrfI2W" target="_blank" rel="noopener noreferrer"
                   className="block bg-[#25D366] text-white font-sans text-xs font-semibold text-center py-2 hover:opacity-90">
                   Join WhatsApp →
                 </a>
