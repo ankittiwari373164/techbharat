@@ -86,7 +86,7 @@ export default function ArticlePage() {
             datePublished: article.publishDate,
             dateModified: article.updatedDate || article.publishDate,
             author: { '@type': 'Organization', name: article.author },
-            publisher: { '@type': 'Organization', name: 'TechBharat', logo: { '@type': 'ImageObject', url: 'https://techbharat.com/logo.png' } },
+            publisher: { '@type': 'Organization', name: 'The Tech Bharat', logo: { '@type': 'ImageObject', url: 'https://thetechbharat.com/logo.png' } },
             description: article.seoDescription,
           }),
         }}
@@ -122,11 +122,11 @@ export default function ArticlePage() {
             <div className="flex flex-wrap items-center gap-3 border-b border-border pb-4 mb-5">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-[#1a3a5c] flex items-center justify-center text-white text-xs font-bold font-sans">
-                  TB
+                  {(article.author || 'TB').split(' ').map((n: string) => n[0]).join('').slice(0,2).toUpperCase()}
                 </div>
                 <div>
-                  <p className="font-sans text-xs font-semibold text-ink">{article.author}</p>
-                  <p className="font-sans text-[10px] text-muted">TechBharat Editorial</p>
+                  <p className="font-sans text-xs font-semibold text-ink">{article.author || 'The Tech Bharat'}</p>
+                  <p className="font-sans text-[10px] text-muted">The Tech Bharat</p>
                 </div>
               </div>
               <span className="font-sans text-[10px] text-muted">·</span>
@@ -358,7 +358,7 @@ export default function ArticlePage() {
                   TB
                 </div>
                 <div>
-                  <p className="font-sans text-sm font-bold text-ink">TechBharat Editorial Team</p>
+                  <p className="font-sans text-sm font-bold text-ink">{article.author || 'The Tech Bharat'}</p>
                   <p className="font-sans text-xs text-muted">Mobile Tech Journalists</p>
                 </div>
               </div>

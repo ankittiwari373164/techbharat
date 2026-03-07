@@ -46,7 +46,7 @@ export default function ArticleCard({ article, variant = 'card' }: Props) {
             <div className="flex items-center gap-3 mt-3">
               <span className="font-sans text-xs text-white/60">{pubDate}</span>
               <span className="font-sans text-xs text-white/60">·</span>
-              <span className="font-sans text-xs text-white/60">{article.readTime} min read</span>
+              <span className="font-sans text-xs text-white/60">By {article.author || 'The Tech Bharat'} · {article.readTime} min read</span>
             </div>
           </div>
         </Link>
@@ -174,7 +174,7 @@ export default function ArticleCard({ article, variant = 'card' }: Props) {
         </ul>
 
         <div className="mt-3 flex items-center justify-between">
-          <span className="font-sans text-[10px] text-muted">{article.readTime} min read</span>
+          <span className="font-sans text-[10px] text-muted">By {article.author || 'The Tech Bharat'} · {article.readTime} min read</span>
           <Link
             href={`/article/${article.slug}`}
             className="font-sans text-xs font-semibold text-[#d4220a] hover:underline"

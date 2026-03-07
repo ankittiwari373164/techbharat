@@ -131,7 +131,7 @@ function pickTopStories(raw: RawArticle[], limit = 8): RawArticle[] {
 //  research: persona, sentence variety, banned phrases, India
 //  grounding, imperfection mandate, structural chaos.
 // ════════════════════════════════════════════════════════════════
-const HUMAN_SYSTEM_PROMPT = `You are Arjun Mehta. You have been covering the Indian smartphone market for 11 years, first at a print magazine in Mumbai, now at TechBharat in Delhi. You are direct, occasionally sarcastic, genuinely excited by good hardware, and frustrated by marketing fluff.
+const HUMAN_SYSTEM_PROMPT = `You are Arjun Mehta. The current year is 2026. You have been covering the Indian smartphone market for 11 years, first at a print magazine in Mumbai, now at TechBharat in Delhi. You are direct, occasionally sarcastic, genuinely excited by good hardware, and frustrated by marketing fluff.
 
 ═══ YOUR WRITING DNA ═══
 
@@ -206,14 +206,31 @@ If you write any of these phrases, your article fails completely:
 - Repeating the brand name at the start of every paragraph
 - Generic calls to action at the end`
 
-// ── BUILD USER PROMPT ──────────────────────────────────────────────
+const AUTHOR_PERSONAS = [
+  { name: 'Arjun Mehta', bio: 'Senior mobile editor based in Delhi, 11 years covering Indian smartphones, direct and occasionally sarcastic' },
+  { name: 'Priya Sharma', bio: 'Bengaluru-based budget phone correspondent, focuses on real Indian usage conditions, heat/dust/patchy 5G' },
+  { name: 'Rohit Verma', bio: 'Mumbai news reporter, former national daily journalist, brings news rigour to tech coverage, concise and factual' },
+  { name: 'Neha Singh', bio: 'Hyderabad reviews editor, tests devices for 4-6 weeks before writing, obsessed with software support and battery real-world' },
+  { name: 'Karan Gupta', bio: 'Pune value analyst, runs head-to-head comparisons, tells readers exactly whether to buy or skip' },
+]
+
+function getSystemPrompt(authorIndex: number): string {
+  const a = AUTHOR_PERSONAS[authorIndex % 5]
+  return HUMAN_SYSTEM_PROMPT.replace(
+    'You are Arjun Mehta. The current year is 2026. You have been covering the Indian smartphone market for 11 years, first at a print magazine in Mumbai, now at TechBharat in Delhi. You are direct, occasionally sarcastic, genuinely excited by good hardware, and frustrated by marketing fluff.',
+    `You are ${a.name}. The current year is ${new Date().getFullYear()}. ${a.bio}. You write for The Tech Bharat. You are direct, occasionally sarcastic, genuinely excited by good hardware, and frustrated by marketing fluff.`
+  )
+}
 function buildUserPrompt(raw: RawArticle, brand: string, type: string): string {
   const isReview  = type === 'review'
   const isCompare = type === 'compare'
   const isNews    = !isReview && !isCompare
 
+  const today = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
+
   return `Write a 1500-word article for TechBharat about this topic.
 
+TODAY'S DATE: ${today} — All dates, timelines, and references must be consistent with this date. Never mention years before ${new Date().getFullYear()}.
 TOPIC: ${raw.title}
 FACTS TO WORK FROM: ${(raw.description + ' ' + raw.content).replace(/\[.*?\]/g, '').trim().slice(0, 800)}
 BRAND: ${brand}
@@ -280,7 +297,7 @@ Escape all internal quotes with backslash.
 }
 
 // ── CALL ANTHROPIC ──────────────────────────────────────────────
-async function rewriteWithAnthropic(raw: RawArticle): Promise<RawNewsItem> {
+async function rewriteWithAnthropic(raw: RawArticle, authorIndex = 0): Promise<RawNewsItem> {
   const brand = detectBrand(raw.title)
   const type  = detectType(raw.title)
 
@@ -294,7 +311,7 @@ async function rewriteWithAnthropic(raw: RawArticle): Promise<RawNewsItem> {
     body: JSON.stringify({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 5500,
-      system: HUMAN_SYSTEM_PROMPT,
+      system: getSystemPrompt(authorIndex),
       messages: [{ role: 'user', content: buildUserPrompt(raw, brand, type) }],
     }),
   })
@@ -313,7 +330,7 @@ async function rewriteWithAnthropic(raw: RawArticle): Promise<RawNewsItem> {
 }
 
 // ── CALL GROQ ──────────────────────────────────────────────────
-async function rewriteWithGroq(raw: RawArticle): Promise<RawNewsItem> {
+async function rewriteWithGroq(raw: RawArticle, authorIndex = 0): Promise<RawNewsItem> {
   if (!GROQ_API_KEY) throw new Error('GROQ_API_KEY not set')
   const brand = detectBrand(raw.title)
   const type  = detectType(raw.title)
@@ -329,7 +346,7 @@ async function rewriteWithGroq(raw: RawArticle): Promise<RawNewsItem> {
       max_tokens: 5500,
       temperature: 0.88,
       messages: [
-        { role: 'system', content: HUMAN_SYSTEM_PROMPT },
+        { role: 'system', content: getSystemPrompt(authorIndex) },
         { role: 'user',   content: buildUserPrompt(raw, brand, type) },
       ],
     }),
@@ -345,10 +362,10 @@ async function rewriteWithGroq(raw: RawArticle): Promise<RawNewsItem> {
 }
 
 // ── REWRITE WITH FALLBACK ──────────────────────────────────────
-async function rewriteArticle(raw: RawArticle): Promise<RawNewsItem> {
+async function rewriteArticle(raw: RawArticle, authorIndex = 0): Promise<RawNewsItem> {
   if (ANTHROPIC_API_KEY) {
     try {
-      return await rewriteWithAnthropic(raw)
+      return await rewriteWithAnthropic(raw, authorIndex)
     } catch (err: unknown) {
       const e = err as Error
       const isRate = e.message?.includes('429') || e.message?.includes('rate_limit')
@@ -356,7 +373,7 @@ async function rewriteArticle(raw: RawArticle): Promise<RawNewsItem> {
       if (isRate) await delay(8000)
     }
   }
-  return await rewriteWithGroq(raw)
+  return await rewriteWithGroq(raw, authorIndex)
 }
 
 // ── MAIN EXPORT ────────────────────────────────────────────────
@@ -391,7 +408,7 @@ export async function fetchAndRewriteNews(): Promise<RawNewsItem[]> {
     console.log(`[TB] Rewriting ${i+1}/${picked.length}: ${picked[i].title.slice(0,55)}`)
     try {
       if (i > 0) await delay(4000)
-      rewritten.push(await rewriteArticle(picked[i]))
+      rewritten.push(await rewriteArticle(picked[i], i))
     } catch (err) {
       console.error(`[TB] Skipped ${i+1}: ${(err as Error).message}`)
     }
@@ -407,7 +424,7 @@ export async function buildArticles(rawItems: RawNewsItem[]): Promise<Article[]>
 
   for (let i = 0; i < rawItems.length; i++) {
     const item   = rawItems[i]
-    const slug   = generateSlug(item.title) + '-' + now.getTime()
+    const slug   = generateSlug(item.title)
     const images = await getArticleImages(item.brand + ' smartphone', 5)
     const wc     = (item.fullContent || '').replace(/<[^>]*>/g, '').split(/\s+/).length
     const rt     = Math.max(5, Math.ceil(wc / 220))
@@ -420,7 +437,7 @@ export async function buildArticles(rawItems: RawNewsItem[]): Promise<Article[]>
       category:      item.type === 'review' ? 'Reviews' : item.type === 'compare' ? 'Compare' : 'Mobile News',
       brand:         item.brand,
       publishDate:   now.toISOString(),
-      author:        'TechBharat Editorial Team',
+      author:        (['Arjun Mehta', 'Priya Sharma', 'Rohit Verma', 'Neha Singh', 'Karan Gupta'])[i % 5],
       readTime:      rt,
       featuredImage: images[0],
       images,
@@ -498,7 +515,7 @@ export async function fetchSingleArticle(
 
     // Sort by recency
     fallback.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
-    return rewriteArticle({ ...fallback[0] })
+    return rewriteArticle({ ...fallback[0] }, Math.floor(Math.random() * 5))
   }
 
   // Sort by recency — pick freshest
@@ -506,7 +523,7 @@ export async function fetchSingleArticle(
 
   // Force the type we want
   const target = fresh[0]
-  const rewritten = await rewriteArticle(target)
+  const rewritten = await rewriteArticle(target, Math.floor(Math.random() * 5))
 
   // Override type to match schedule intent
   rewritten.type = type
