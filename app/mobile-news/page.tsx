@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic'
 
 export async function generateMetadata({ searchParams }: { searchParams: { brand?: string } }): Promise<Metadata> {
   return {
-    title: searchParams.brand ? `${searchParams.brand} News – TechBharat` : 'Mobile News – Latest Smartphone News India',
+    title: searchParams.brand ? `${searchParams.brand} News – The Tech Bharat` : 'Mobile News – Latest Smartphone News India',
     description: searchParams.brand
       ? `Latest news, reviews and updates about ${searchParams.brand} smartphones in India.`
       : 'Latest mobile phone news, launches, leaks, and updates from Samsung, Apple, Xiaomi, OnePlus and more.',

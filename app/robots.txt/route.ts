@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-const SITE_URL = process.env.SITE_URL || 'https://techbharat.com'
+const SITE_URL = process.env.SITE_URL || 'https://thetechbharat.com'
 
 export async function GET() {
   const robots = `User-agent: *

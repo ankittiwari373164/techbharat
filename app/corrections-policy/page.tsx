@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Corrections Policy – TechBharat',
+  title: 'Corrections Policy – The Tech Bharat',
 }
 
 export default function CorrectionsPage() {
@@ -14,7 +14,7 @@ export default function CorrectionsPage() {
       <div className="space-y-6 font-body text-base text-[#2a2a2a] leading-relaxed">
         <section>
           <h2 className="font-playfair text-xl font-bold text-ink mb-3">Our Commitment to Accuracy</h2>
-          <p>TechBharat is committed to publishing accurate, factual content. Despite our best efforts, errors can occasionally occur. When they do, we correct them promptly and transparently.</p>
+          <p>The Tech Bharat is committed to publishing accurate, factual content. Despite our best efforts, errors can occasionally occur. When they do, we correct them promptly and transparently.</p>
         </section>
         <section>
           <h2 className="font-playfair text-xl font-bold text-ink mb-3">How We Handle Corrections</h2>

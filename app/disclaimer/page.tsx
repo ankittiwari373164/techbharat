@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Disclaimer – TechBharat',
-  description: 'TechBharat Disclaimer. Important information about the content we publish.',
+  title: 'Disclaimer – The Tech Bharat',
+  description: 'The Tech Bharat Disclaimer. Important information about the content we publish.',
 }
 
 export default function DisclaimerPage() {
@@ -15,11 +15,11 @@ export default function DisclaimerPage() {
       <div className="space-y-6 font-body text-base text-[#2a2a2a] leading-relaxed">
         <section>
           <h2 className="font-playfair text-xl font-bold text-ink mb-3">General Disclaimer</h2>
-          <p>The information provided by TechBharat on techbharat.com is for general informational purposes only. All information is provided in good faith; however, we make no representation or warranty of any kind regarding the accuracy, adequacy, validity, reliability, or completeness of any information on our website.</p>
+          <p>The information provided by The Tech Bharat on thetechbharat.com is for general informational purposes only. All information is provided in good faith; however, we make no representation or warranty of any kind regarding the accuracy, adequacy, validity, reliability, or completeness of any information on our website.</p>
         </section>
         <section>
           <h2 className="font-playfair text-xl font-bold text-ink mb-3">Pricing Information</h2>
-          <p>Prices mentioned in articles are indicative and may vary. Always verify the latest prices directly with retailers before making a purchase. TechBharat is not responsible for any purchasing decisions made based on pricing information published on this website.</p>
+          <p>Prices mentioned in articles are indicative and may vary. Always verify the latest prices directly with retailers before making a purchase. The Tech Bharat is not responsible for any purchasing decisions made based on pricing information published on this website.</p>
         </section>
         <section>
           <h2 className="font-playfair text-xl font-bold text-ink mb-3">Affiliate Links</h2>
@@ -27,11 +27,11 @@ export default function DisclaimerPage() {
         </section>
         <section>
           <h2 className="font-playfair text-xl font-bold text-ink mb-3">External Links</h2>
-          <p>TechBharat may contain links to external websites. We have no control over the content of those sites and accept no responsibility for them or for any loss or damage that may arise from your use of them.</p>
+          <p>The Tech Bharat may contain links to external websites. We have no control over the content of those sites and accept no responsibility for them or for any loss or damage that may arise from your use of them.</p>
         </section>
         <section>
           <h2 className="font-playfair text-xl font-bold text-ink mb-3">Brand Trademarks</h2>
-          <p>All brand names, trademarks, and product names mentioned on TechBharat are the property of their respective owners. TechBharat is an independent publication and is not affiliated with, endorsed by, or sponsored by any of the companies or brands mentioned.</p>
+          <p>All brand names, trademarks, and product names mentioned on The Tech Bharat are the property of their respective owners. The Tech Bharat is an independent publication and is not affiliated with, endorsed by, or sponsored by any of the companies or brands mentioned.</p>
         </section>
         <section>
           <h2 className="font-playfair text-xl font-bold text-ink mb-3">Contact</h2>

@@ -16,7 +16,7 @@ export default function ContactPage() {
     <div className="max-w-4xl mx-auto px-4 py-12">
       <div className="border-b-2 border-[#d4220a] mb-8 pb-4">
         <h1 className="font-playfair text-4xl font-black text-ink mb-2">Contact Us</h1>
-        <p className="font-sans text-muted">Get in touch with the TechBharat editorial team</p>
+        <p className="font-sans text-muted">Get in touch with the The Tech Bharat editorial team</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
@@ -45,7 +45,7 @@ export default function ContactPage() {
           </div>
 
           <div className="mt-6 p-4 bg-[#1a3a5c]/5 border border-border">
-            <h3 className="font-sans text-sm font-bold text-ink mb-2">TechBharat</h3>
+            <h3 className="font-sans text-sm font-bold text-ink mb-2">The Tech Bharat</h3>
             <p className="font-sans text-xs text-muted leading-relaxed">
               India's Mobile Technology Authority<br />
               New Delhi, India<br />

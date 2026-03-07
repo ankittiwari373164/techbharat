@@ -1,15 +1,15 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'About Us – TechBharat',
-  description: 'Learn about TechBharat – India\'s trusted mobile technology news portal. Our mission, team, and editorial standards.',
+  title: 'About Us – The Tech Bharat',
+  description: 'Learn about The Tech Bharat – India\'s trusted mobile technology news portal. Our mission, team, and editorial standards.',
 }
 
 export default function AboutPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">
       <div className="border-b-2 border-[#d4220a] mb-8 pb-4">
-        <h1 className="font-playfair text-4xl font-black text-ink mb-2">About TechBharat</h1>
+        <h1 className="font-playfair text-4xl font-black text-ink mb-2">About The Tech Bharat</h1>
         <p className="font-sans text-muted">India's Mobile Technology Authority</p>
       </div>
 
@@ -17,10 +17,10 @@ export default function AboutPage() {
         <section>
           <h2 className="font-playfair text-2xl font-bold text-ink mb-4">Who We Are</h2>
           <p className="font-body text-base text-[#2a2a2a] leading-relaxed mb-4">
-            TechBharat is India's dedicated mobile technology news portal, founded with a single mission: to deliver accurate, timely, and genuinely useful smartphone news and analysis to Indian readers. In a market flooded with recycled press releases and copy-pasted specifications, we believe Indian consumers deserve better.
+            The Tech Bharat is India's dedicated mobile technology news portal, founded with a single mission: to deliver accurate, timely, and genuinely useful smartphone news and analysis to Indian readers. In a market flooded with recycled press releases and copy-pasted specifications, we believe Indian consumers deserve better.
           </p>
           <p className="font-body text-base text-[#2a2a2a] leading-relaxed mb-4">
-            Every article on TechBharat is written with the Indian buyer in mind. We provide India-specific pricing in rupees, availability on Flipkart and Amazon India, 5G band compatibility for Indian networks, and honest assessments of whether a device genuinely offers value for money at its price point.
+            Every article on The Tech Bharat is written with the Indian buyer in mind. We provide India-specific pricing in rupees, availability on Flipkart and Amazon India, 5G band compatibility for Indian networks, and honest assessments of whether a device genuinely offers value for money at its price point.
           </p>
         </section>
 
@@ -42,7 +42,7 @@ export default function AboutPage() {
                 TB
               </div>
               <div>
-                <h3 className="font-sans text-lg font-bold text-ink">TechBharat Editorial Team</h3>
+                <h3 className="font-sans text-lg font-bold text-ink">The Tech Bharat Editorial Team</h3>
                 <p className="font-sans text-sm text-[#d4220a] mb-2">Mobile Technology Journalists</p>
                 <p className="font-body text-sm text-[#2a2a2a] leading-relaxed">
                   Our editorial team consists of experienced technology journalists and mobile enthusiasts with a combined experience of over a decade covering the Indian tech industry. We maintain strict editorial independence and do not accept payment for positive coverage.
@@ -93,7 +93,7 @@ export default function AboutPage() {
         <section className="bg-[#0d0d0d] text-white p-6">
           <h2 className="font-playfair text-2xl font-bold mb-3">Connect With Us</h2>
           <p className="font-sans text-sm text-gray-300 mb-4">
-            Follow TechBharat for real-time mobile news and analysis.
+            Follow The Tech Bharat for real-time mobile news and analysis.
           </p>
           <div className="flex flex-wrap gap-3">
             <a href="https://t.me/techbharat" target="_blank" rel="noopener noreferrer"

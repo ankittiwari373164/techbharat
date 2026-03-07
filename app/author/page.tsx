@@ -3,8 +3,8 @@ import { getAllArticlesAsync } from '@/lib/store'
 import ArticleCard from '@/components/ArticleCard'
 
 export const metadata: Metadata = {
-  title: 'Author – TechBharat Editorial Team',
-  description: 'Meet the TechBharat editorial team – experienced mobile technology journalists covering the Indian smartphone market.',
+  title: 'Author – The Tech Bharat Editorial Team',
+  description: 'Meet the The The Tech Bharat editorial team – experienced mobile technology journalists covering the Indian smartphone market.',
 }
 
 export default async function AuthorPage() {
@@ -15,7 +15,7 @@ export default async function AuthorPage() {
     <div className="max-w-4xl mx-auto px-4 py-12">
       <div className="border-b-2 border-[#d4220a] mb-8 pb-4">
         <h1 className="font-playfair text-4xl font-black text-ink mb-2">Our Authors</h1>
-        <p className="font-sans text-sm text-muted">The people behind TechBharat's journalism</p>
+        <p className="font-sans text-sm text-muted">The people behind The Tech Bharat's journalism</p>
       </div>
 
       <div className="bg-white border border-border p-8 mb-8">
@@ -24,9 +24,9 @@ export default async function AuthorPage() {
             <div className="w-24 h-24 rounded-full bg-[#1a3a5c] text-white font-playfair text-4xl font-bold flex items-center justify-center">TB</div>
           </div>
           <div className="flex-1">
-            <h2 className="font-playfair text-2xl font-bold text-ink mb-1">TechBharat Editorial Team</h2>
+            <h2 className="font-playfair text-2xl font-bold text-ink mb-1">The Tech Bharat Editorial Team</h2>
             <p className="font-sans text-sm text-[#d4220a] font-semibold mb-3">Senior Mobile Technology Journalists</p>
-            <p className="font-body text-base text-[#2a2a2a] leading-relaxed mb-4">The TechBharat Editorial Team comprises experienced technology journalists and mobile enthusiasts dedicated to covering the Indian smartphone market.</p>
+            <p className="font-body text-base text-[#2a2a2a] leading-relaxed mb-4">The Tech Bharat Editorial Team comprises experienced technology journalists and mobile enthusiasts dedicated to covering the Indian smartphone market.</p>
             <div className="flex flex-wrap gap-4 text-sm">
               <div className="font-sans"><span className="text-muted text-xs uppercase tracking-wider block mb-0.5">Speciality</span><span className="font-semibold text-ink">Smartphones & Mobile Technology</span></div>
               <div className="font-sans"><span className="text-muted text-xs uppercase tracking-wider block mb-0.5">Market</span><span className="font-semibold text-ink">India</span></div>

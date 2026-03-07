@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Terms & Conditions – TechBharat',
-  description: 'Terms and Conditions for using TechBharat website.',
+  title: 'Terms & Conditions – The Tech Bharat',
+  description: 'Terms and Conditions for using The Tech Bharat website.',
 }
 
 export default function TermsPage() {
@@ -15,15 +15,15 @@ export default function TermsPage() {
       <div className="space-y-6 font-body text-base text-[#2a2a2a] leading-relaxed">
         <section>
           <h2 className="font-playfair text-xl font-bold text-ink mb-3">1. Acceptance of Terms</h2>
-          <p>By accessing and using TechBharat (techbharat.com), you agree to be bound by these Terms and Conditions. If you do not agree to these terms, please do not use our website.</p>
+          <p>By accessing and using The Tech Bharat (thetechbharat.com), you agree to be bound by these Terms and Conditions. If you do not agree to these terms, please do not use our website.</p>
         </section>
         <section>
           <h2 className="font-playfair text-xl font-bold text-ink mb-3">2. Use of Content</h2>
-          <p>All content published on TechBharat, including articles, reviews, images, and analysis, is the intellectual property of TechBharat unless otherwise stated. You may share our content with proper attribution and a link back to the original article. Reproduction, redistribution, or commercial use without written permission is prohibited.</p>
+          <p>All content published on The Tech Bharat, including articles, reviews, images, and analysis, is the intellectual property of The Tech Bharat unless otherwise stated. You may share our content with proper attribution and a link back to the original article. Reproduction, redistribution, or commercial use without written permission is prohibited.</p>
         </section>
         <section>
           <h2 className="font-playfair text-xl font-bold text-ink mb-3">3. User Comments and Reviews</h2>
-          <p>By submitting comments or reviews on TechBharat, you grant us a non-exclusive licence to publish your submission. You are responsible for the accuracy of your submissions. We reserve the right to moderate, edit, or remove any user-submitted content that violates our community guidelines or applicable laws.</p>
+          <p>By submitting comments or reviews on The Tech Bharat, you grant us a non-exclusive licence to publish your submission. You are responsible for the accuracy of your submissions. We reserve the right to moderate, edit, or remove any user-submitted content that violates our community guidelines or applicable laws.</p>
         </section>
         <section>
           <h2 className="font-playfair text-xl font-bold text-ink mb-3">4. Prohibited Conduct</h2>
@@ -38,7 +38,7 @@ export default function TermsPage() {
         </section>
         <section>
           <h2 className="font-playfair text-xl font-bold text-ink mb-3">5. Limitation of Liability</h2>
-          <p>TechBharat shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising out of your use of or inability to use our website or content.</p>
+          <p>The Tech Bharat shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising out of your use of or inability to use our website or content.</p>
         </section>
         <section>
           <h2 className="font-playfair text-xl font-bold text-ink mb-3">6. Governing Law</h2>

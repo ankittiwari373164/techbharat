@@ -116,7 +116,7 @@ export default function Footer() {
       <div className="border-t border-gray-800">
         <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-2">
           <p className="font-sans text-xs text-gray-500">
-            © {year} TechBharat. All rights reserved. India's Mobile Technology Authority.
+            © {year} The Tech Bharat. All rights reserved. India's Mobile Technology Authority.
           </p>
           <p className="font-sans text-xs text-gray-600">
             Content is original and independently produced. Not affiliated with any phone brand.

@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy – TechBharat',
-  description: 'TechBharat Privacy Policy. Learn how we collect, use, and protect your personal information.',
+  title: 'Privacy Policy – The Tech Bharat',
+  description: 'The Tech Bharat Privacy Policy. Learn how we collect, use, and protect your personal information.',
 }
 
 export default function PrivacyPolicyPage() {
@@ -18,7 +18,7 @@ export default function PrivacyPolicyPage() {
       <div className="space-y-8 font-body text-base text-[#2a2a2a] leading-relaxed">
         <section>
           <h2 className="font-playfair text-xl font-bold text-ink mb-3">1. Introduction</h2>
-          <p>Welcome to TechBharat ("we," "our," or "us"). We are committed to protecting your personal information and your right to privacy. This Privacy Policy explains how we collect, use, and share information about you when you use our website at techbharat.com (the "Service").</p>
+          <p>Welcome to The Tech Bharat ("we," "our," or "us"). We are committed to protecting your personal information and your right to privacy. This Privacy Policy explains how we collect, use, and share information about you when you use our website at thetechbharat.com (the "Service").</p>
         </section>
 
         <section>

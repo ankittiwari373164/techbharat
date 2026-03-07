@@ -4,8 +4,8 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: "TechBharat – India's Mobile Technology News",
-  description: 'Latest mobile news, phone reviews, comparisons, and smartphone analysis for Indian readers. Stay updated with TechBharat.',
+  title: "The Tech Bharat – India's Mobile Technology News",
+  description: 'Latest mobile news, phone reviews, comparisons, and smartphone analysis for Indian readers. Stay updated with The Tech Bharat.',
 }
 
 export const revalidate = 60
@@ -44,7 +44,7 @@ export default async function HomePage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 01-2.25 2.25M16.5 7.5V18a2.25 2.25 0 002.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 002.25 2.25h13.5M6 7.5h3v3H6v-3z" />
               </svg>
             </div>
-            <h1 className="font-playfair text-4xl font-black text-ink mb-4">Welcome to TechBharat</h1>
+            <h1 className="font-playfair text-4xl font-black text-ink mb-4">Welcome to The Tech Bharat</h1>
             <p className="font-sans text-lg text-muted mb-8">Your automated mobile news portal is ready. Go to admin and publish your first article.</p>
             <a href="/admin" className="inline-block bg-[#1a3a5c] hover:bg-[#0f2d4a] text-white font-sans font-bold px-8 py-4 text-base transition-colors">
               ⚙ Open Admin Panel
