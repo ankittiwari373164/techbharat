@@ -232,6 +232,11 @@ function buildUserPrompt(raw: RawArticle, brand: string, type: string): string {
 
 TODAY'S DATE: ${today} — All dates, timelines, and references must be consistent with this date. Never mention years before ${new Date().getFullYear()}.
 TOPIC: ${raw.title}
+TITLE REWRITE RULE: If the topic title is a plain spec/launch announcement (e.g. "Samsung Galaxy X specs", "Phone Y launch"), rewrite it as a question or opinion title that real readers would click. Examples:
+  - "Samsung Galaxy S26 specs" → "Samsung Galaxy S26: Is India's ₹80K Investment Actually Worth It?"  
+  - "iPhone 17e launch" → "iPhone 17e Reality Check: Better Value Than iPhone 16?"
+  - "Best phones under 20000" → "2026 में ₹20,000 के Phone — Which Ones Actually Last 2 Years?"
+  Keep the rewritten title factual but curiosity-driven. Output it as the article's <h1>.
 FACTS TO WORK FROM: ${(raw.description + ' ' + raw.content).replace(/\[.*?\]/g, '').trim().slice(0, 800)}
 BRAND: ${brand}
 ARTICLE TYPE: ${type}

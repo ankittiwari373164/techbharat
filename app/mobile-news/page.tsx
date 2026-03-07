@@ -1,80 +1,110 @@
 import { getAllArticlesAsync } from '@/lib/store'
 import ArticleCard from '@/components/ArticleCard'
 import type { Metadata } from 'next'
+import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
+const BRANDS = ['Samsung', 'Apple', 'Xiaomi', 'OnePlus', 'Realme', 'OPPO', 'Vivo', 'Nothing', 'Motorola']
+
 export async function generateMetadata({ searchParams }: { searchParams: { brand?: string } }): Promise<Metadata> {
+  const brand = searchParams.brand
   return {
-    title: searchParams.brand ? `${searchParams.brand} News – The Tech Bharat` : 'Mobile News – Latest Smartphone News India',
-    description: searchParams.brand
-      ? `Latest news, reviews and updates about ${searchParams.brand} smartphones in India.`
-      : 'Latest mobile phone news, launches, leaks, and updates from Samsung, Apple, Xiaomi, OnePlus and more.',
+    title: brand ? `${brand} News India – Latest ${brand} Smartphones | The Tech Bharat` : 'Mobile News – Latest Smartphone News India | The Tech Bharat',
+    description: brand
+      ? `Latest ${brand} smartphone news, launches, prices, and updates for India. Expert analysis from The Tech Bharat.`
+      : 'Latest mobile phone news, launches, leaks, and updates from Samsung, Apple, Xiaomi, OnePlus and more. India-first coverage.',
+    alternates: { canonical: brand ? `https://thetechbharat.com/mobile-news?brand=${brand}` : 'https://thetechbharat.com/mobile-news' },
+    openGraph: {
+      title: brand ? `${brand} News India | The Tech Bharat` : 'Mobile News India | The Tech Bharat',
+      description: brand ? `All ${brand} smartphone news for India` : 'Latest mobile news for Indian smartphone buyers',
+      images: [{ url: '/og-image.jpg', width: 1200, height: 630 }],
+    },
   }
 }
 
 export default async function MobileNewsPage({ searchParams }: { searchParams: { brand?: string } }) {
   const allArticles = await getAllArticlesAsync()
 
-  // If brand filter: show ALL types for that brand
-  // If no brand filter: show only mobile-news type
   let articles = searchParams.brand
     ? allArticles.filter(a => a.brand.toLowerCase() === searchParams.brand!.toLowerCase())
     : allArticles.filter(a => a.type === 'mobile-news')
 
+  const brand = searchParams.brand
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="border-b-2 border-[#1a3a5c] mb-8 pb-4">
-        <div className="flex items-center gap-3 mb-2">
+      {/* Category header - rich content for AdSense reviewers */}
+      <div className="border-b-2 border-[#1a3a5c] mb-8 pb-6">
+        <div className="flex items-center gap-3 mb-3">
           <div className="w-8 h-8 bg-[#1a3a5c] flex items-center justify-center">
             <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
             </svg>
           </div>
-          <h1 className="font-playfair text-3xl font-bold text-ink">
-            {searchParams.brand ? `${searchParams.brand} News` : 'Mobile News'}
+          <h1 className="font-playfair text-3xl font-black text-ink">
+            {brand ? `${brand} News` : 'Mobile News'}
           </h1>
         </div>
-        <p className="font-sans text-sm text-muted">
-          {searchParams.brand
-            ? `Latest news, reviews and updates about ${searchParams.brand} smartphones`
-            : 'Real-time mobile phone news, launches, leaks, and analysis for Indian readers'}
+        <p className="font-body text-sm text-[#3a3a3a] max-w-2xl">
+          {brand
+            ? `In-depth coverage of every ${brand} smartphone launch, price change, software update, and market move in India. Updated as news breaks.`
+            : 'The latest smartphone news, launches, leaks, and analysis — curated for Indian buyers. We cover pricing in ₹, 5G availability, and what actually matters for the Indian market.'}
         </p>
-      </div>
-
-      {/* Brand Filter */}
-      <div className="flex flex-wrap gap-2 mb-8">
-        {['All', 'Samsung', 'Apple', 'Xiaomi', 'OnePlus', 'Realme', 'Vivo', 'OPPO', 'iQOO', 'Poco', 'Nothing'].map(brand => (
-          <a
-            key={brand}
-            href={brand === 'All' ? '/mobile-news' : `/mobile-news?brand=${brand}`}
-            className={`font-sans text-xs font-semibold px-3 py-1.5 border transition-colors ${
-              (brand === 'All' && !searchParams.brand) || brand === searchParams.brand
-                ? 'bg-[#1a3a5c] text-white border-[#1a3a5c]'
-                : 'bg-white text-ink border-border hover:border-[#1a3a5c]'
-            }`}
-          >
-            {brand}
-          </a>
-        ))}
+        
+        {/* Brand filter pills */}
+        <div className="flex flex-wrap gap-2 mt-4">
+          <Link href="/mobile-news" className={`font-sans text-xs px-3 py-1.5 border transition-colors ${!brand ? 'bg-[#1a3a5c] text-white border-[#1a3a5c]' : 'border-border text-muted hover:border-[#1a3a5c] hover:text-[#1a3a5c]'}`}>
+            All
+          </Link>
+          {BRANDS.map(b => (
+            <Link key={b} href={`/mobile-news?brand=${b}`}
+              className={`font-sans text-xs px-3 py-1.5 border transition-colors ${brand === b ? 'bg-[#1a3a5c] text-white border-[#1a3a5c]' : 'border-border text-muted hover:border-[#1a3a5c] hover:text-[#1a3a5c]'}`}>
+              {b}
+            </Link>
+          ))}
+        </div>
       </div>
 
       {articles.length === 0 ? (
         <div className="text-center py-20">
-          <p className="font-playfair text-2xl font-bold text-ink mb-3">No Articles Yet</p>
-          <p className="font-sans text-muted mb-6">
-            {searchParams.brand ? `No articles found for ${searchParams.brand} yet.` : 'Click below to fetch the latest mobile news.'}
-          </p>
-          <a href="/admin" className="inline-block bg-[#1a3a5c] text-white font-sans font-bold px-6 py-3 text-sm">
-            Go to Admin →
-          </a>
+          <p className="font-playfair text-2xl text-ink mb-3">No articles yet</p>
+          <p className="font-body text-sm text-muted">Check back soon — we publish fresh smartphone news daily.</p>
+          <Link href="/" className="font-sans text-xs font-semibold text-[#d4220a] mt-4 inline-block">← Back to Homepage</Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {articles.map(article => (
-            <ArticleCard key={article.id} article={article} variant="card" />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {articles.map(article => (
+              <ArticleCard key={article.id} article={article} variant="card" />
+            ))}
+          </div>
+          
+          {/* Issue 8: Informational content section at bottom of category */}
+          {!brand && (
+            <div className="mt-16 border-t border-border pt-10">
+              <h2 className="font-playfair text-2xl font-bold text-ink mb-6">Understanding the Indian Smartphone Market</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-white border border-border p-5">
+                  <h3 className="font-sans text-sm font-bold text-ink mb-2">What to look for in 2026</h3>
+                  <p className="font-body text-sm text-[#3a3a3a] leading-relaxed">5G support, battery life over 4500mAh, and software update commitments matter most for Indian buyers. Dust and heat resistance is crucial given Indian conditions.</p>
+                </div>
+                <div className="bg-white border border-border p-5">
+                  <h3 className="font-sans text-sm font-bold text-ink mb-2">Price segments that matter</h3>
+                  <p className="font-body text-sm text-[#3a3a3a] leading-relaxed">₹10,000–₹20,000 is where most Indians buy. ₹20,000–₹35,000 is the sweet spot for features. Above ₹50,000 is the premium segment where Samsung and Apple compete.</p>
+                </div>
+                <div className="bg-white border border-border p-5">
+                  <h3 className="font-sans text-sm font-bold text-ink mb-2">Where to buy in India</h3>
+                  <p className="font-body text-sm text-[#3a3a3a] leading-relaxed">Flipkart and Amazon India regularly offer better prices than retail. Watch for Big Billion Days and Great Indian Festival for flagship deals. EMI options are widely available.</p>
+                </div>
+              </div>
+              <div className="flex gap-4 mt-6">
+                <Link href="/reviews" className="font-sans text-xs font-semibold text-[#d4220a] hover:underline">Read our Reviews →</Link>
+                <Link href="/compare" className="font-sans text-xs font-semibold text-[#1a3a5c] hover:underline">Compare Phones →</Link>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   )

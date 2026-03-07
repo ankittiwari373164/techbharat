@@ -85,7 +85,13 @@ export default function ArticlePage() {
             image: [article.featuredImage],
             datePublished: article.publishDate,
             dateModified: article.updatedDate || article.publishDate,
-            author: { '@type': 'Organization', name: article.author },
+            author: { 
+              '@type': 'Person', 
+              name: article.author || 'The Tech Bharat',
+              url: 'https://thetechbharat.com/author',
+              jobTitle: 'Technology Journalist',
+              worksFor: { '@type': 'Organization', name: 'The Tech Bharat' }
+            },
             publisher: { '@type': 'Organization', name: 'The Tech Bharat', logo: { '@type': 'ImageObject', url: 'https://thetechbharat.com/logo.png' } },
             description: article.seoDescription,
           }),
