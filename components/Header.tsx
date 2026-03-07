@@ -76,13 +76,16 @@ export default function Header() {
       <div className="border-b-4 border-[#d4220a]">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex flex-col leading-none">
-            <span className="font-playfair text-3xl md:text-4xl font-black text-ink tracking-tight">
-              Tech<span className="text-[#d4220a]">Bharat</span>
-            </span>
-            <span className="font-sans text-[10px] uppercase tracking-[3px] text-[#6b6460] mt-0.5">
-              India's Mobile Authority
-            </span>
+          <Link href="/" className="flex items-center gap-3 leading-none">
+            <img src="/logo.png" alt="The Tech Bharat" className="h-12 w-12 rounded-full object-cover flex-shrink-0" />
+            <div className="flex flex-col">
+              <span className="font-playfair text-2xl md:text-3xl font-black text-ink tracking-tight">
+                The Tech<span className="text-[#d4220a]"> Bharat</span>
+              </span>
+              <span className="font-sans text-[10px] uppercase tracking-[3px] text-[#6b6460] mt-0.5">
+                India's Mobile Authority
+              </span>
+            </div>
           </Link>
 
           {/* Live Badge + Fetch Button */}

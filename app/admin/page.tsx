@@ -159,7 +159,7 @@ export default function AdminPage() {
       <div className="bg-[#0d0d0d] text-white">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-[#d4220a] font-black text-xl" style={{fontFamily:'serif'}}>Tech<span className="text-white">Bharat</span></span>
+            <img src="/logo.png" alt="The Tech Bharat" style={{height:"32px",width:"32px",borderRadius:"50%",objectFit:"cover"}} /><span className="text-[#d4220a] font-black text-lg ml-2" style={{fontFamily:"serif"}}>The Tech<span className="text-white"> Bharat</span></span>
             <span className="text-gray-600 text-xs">/ Admin</span>
           </div>
           <div className="flex items-center gap-4">
