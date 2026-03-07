@@ -6,6 +6,7 @@ const NAV_ITEMS = [
   { label: 'Home', href: '/' },
   { label: 'Mobile News', href: '/mobile-news' },
   { label: 'Reviews', href: '/reviews' },
+  { label: 'Compare', href: '/compare' },
   { label: 'Web Stories', href: '/web-stories' },
   { label: 'Samsung', href: '/mobile-news?brand=Samsung' },
   { label: 'Apple', href: '/mobile-news?brand=Apple' },

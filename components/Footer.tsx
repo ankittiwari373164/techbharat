@@ -61,6 +61,7 @@ export default function Footer() {
               {[
                 { label: 'Mobile News', href: '/mobile-news' },
                 { label: 'Reviews', href: '/reviews' },
+                { label: 'Compare', href: '/compare' },
                 { label: 'Web Stories', href: '/web-stories' },
               ].map(item => (
                 <li key={item.href}>
