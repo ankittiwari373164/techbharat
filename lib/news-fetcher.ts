@@ -206,19 +206,10 @@ If you write any of these phrases, your article fails completely:
 - Repeating the brand name at the start of every paragraph
 - Generic calls to action at the end`
 
-const AUTHOR_PERSONAS = [
-  { name: 'Arjun Mehta', bio: 'Senior mobile editor based in Delhi, 11 years covering Indian smartphones, direct and occasionally sarcastic' },
-  { name: 'Priya Sharma', bio: 'Bengaluru-based budget phone correspondent, focuses on real Indian usage conditions, heat/dust/patchy 5G' },
-  { name: 'Rohit Verma', bio: 'Mumbai news reporter, former national daily journalist, brings news rigour to tech coverage, concise and factual' },
-  { name: 'Neha Singh', bio: 'Hyderabad reviews editor, tests devices for 4-6 weeks before writing, obsessed with software support and battery real-world' },
-  { name: 'Karan Gupta', bio: 'Pune value analyst, runs head-to-head comparisons, tells readers exactly whether to buy or skip' },
-]
-
-function getSystemPrompt(authorIndex: number): string {
-  const a = AUTHOR_PERSONAS[authorIndex % 5]
+function getSystemPrompt(_authorIndex: number): string {
   return HUMAN_SYSTEM_PROMPT.replace(
     'You are Arjun Mehta. The current year is 2026. You have been covering the Indian smartphone market for 11 years, first at a print magazine in Mumbai, now at TechBharat in Delhi. You are direct, occasionally sarcastic, genuinely excited by good hardware, and frustrated by marketing fluff.',
-    `You are ${a.name}. The current year is ${new Date().getFullYear()}. ${a.bio}. You write for The Tech Bharat. You are direct, occasionally sarcastic, genuinely excited by good hardware, and frustrated by marketing fluff.`
+    `You are Vijay Yadav. The current year is ${new Date().getFullYear()}. You are the founder and Senior Mobile Editor of The Tech Bharat, based in New Delhi. You have been covering the Indian smartphone market for 11 years, starting at a print magazine in Mumbai. You have reviewed over 300 devices. You are direct, occasionally sarcastic, genuinely excited by good hardware, and frustrated by marketing fluff.`
   )
 }
 function buildUserPrompt(raw: RawArticle, brand: string, type: string): string {
@@ -444,7 +435,7 @@ export async function buildArticles(rawItems: RawNewsItem[]): Promise<Article[]>
       category:      item.type === 'review' ? 'Reviews' : item.type === 'compare' ? 'Compare' : 'Mobile News',
       brand:         item.brand,
       publishDate:   now.toISOString(),
-      author:        (['Arjun Mehta', 'Priya Sharma', 'Rohit Verma', 'Neha Singh', 'Karan Gupta'])[i % 5],
+      author:        'Vijay Yadav',
       readTime:      rt,
       featuredImage: images[0],
       images,
@@ -534,7 +525,7 @@ Phone B: ${phoneB.title}. ${phoneB.description} ${phoneB.content?.slice(0,300) |
           publishedAt: new Date().toISOString(),
           url: '',
         }
-        const rewritten = await rewriteArticle(synthetic, Math.floor(Math.random() * 5))
+        const rewritten = await rewriteArticle(synthetic, 0)
         rewritten.type = 'compare'
         return rewritten
       }
@@ -548,7 +539,7 @@ Phone B: ${phoneB.title}. ${phoneB.description} ${phoneB.content?.slice(0,300) |
     if (fallback.length === 0) return null
 
     fallback.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
-    return rewriteArticle({ ...fallback[0] }, Math.floor(Math.random() * 5))
+    return rewriteArticle({ ...fallback[0] }, 0)
   }
 
   // Sort by recency — pick freshest
@@ -556,7 +547,7 @@ Phone B: ${phoneB.title}. ${phoneB.description} ${phoneB.content?.slice(0,300) |
 
   // Force the type we want
   const target = fresh[0]
-  const rewritten = await rewriteArticle(target, Math.floor(Math.random() * 5))
+  const rewritten = await rewriteArticle(target, 0)
 
   // Override type to match schedule intent
   rewritten.type = type

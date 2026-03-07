@@ -371,16 +371,16 @@ export default function ArticlePage() {
             <div className="bg-white border border-border p-5">
               <h3 className="font-sans text-xs font-bold uppercase tracking-widest text-muted mb-3">About the Author</h3>
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-12 h-12 rounded-full bg-[#1a3a5c] text-white font-bold font-playfair text-lg flex items-center justify-center">
-                  TB
+                <div className="w-12 h-12 rounded-full bg-[#d4220a] text-white font-bold font-playfair text-lg flex items-center justify-center">
+                  VY
                 </div>
                 <div>
-                  <p className="font-sans text-sm font-bold text-ink">{article.author || 'The Tech Bharat'}</p>
-                  <p className="font-sans text-xs text-muted">Mobile Tech Journalists</p>
+                  <p className="font-sans text-sm font-bold text-ink">Vijay Yadav</p>
+                  <p className="font-sans text-xs text-muted">Senior Mobile Editor · 11 yrs</p>
                 </div>
               </div>
               <p className="font-sans text-xs text-muted leading-relaxed">
-                Our team of experienced tech journalists covers the Indian mobile market with independent analysis and honest opinions.
+                Vijay has reviewed 300+ devices and covered the Indian smartphone market for 11 years. Founder of The Tech Bharat, based in New Delhi.
               </p>
               <Link href="/author" className="font-sans text-xs font-semibold text-[#d4220a] mt-2 inline-block hover:underline">
                 View Author Profile →
