@@ -33,7 +33,7 @@ export default function Footer() {
           {/* Brand */}
           <div>
             <Link href="/" className="font-playfair text-3xl font-black text-white tracking-tight">
-              Tech<span className="text-[#d4220a]">Bharat</span>
+              The Tech<span className="text-[#d4220a]">Bharat</span>
             </Link>
             <p className="font-sans text-xs text-gray-400 mt-3 leading-relaxed">
               India's most trusted source for mobile technology news, smartphone reviews, and expert analysis.
@@ -61,7 +61,6 @@ export default function Footer() {
               {[
                 { label: 'Mobile News', href: '/mobile-news' },
                 { label: 'Reviews', href: '/reviews' },
-                { label: 'Compare', href: '/compare' },
                 { label: 'Web Stories', href: '/web-stories' },
               ].map(item => (
                 <li key={item.href}>
@@ -101,7 +100,6 @@ export default function Footer() {
                 { label: 'Privacy Policy', href: '/privacy-policy' },
                 { label: 'Disclaimer', href: '/disclaimer' },
                 { label: 'Terms & Conditions', href: '/terms' },
-                { label: 'Sitemap', href: '/sitemap.xml' },
               ].map(item => (
                 <li key={item.href}>
                   <Link href={item.href} className="font-sans text-sm text-gray-300 hover:text-[#d4220a] transition-colors">
