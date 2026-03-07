@@ -1,6 +1,6 @@
 'use client'
 import Link from 'next/link'
-import Image from 'next/image'
+
 import { useState } from 'react'
 import type { Article } from '@/lib/store'
 
@@ -27,14 +27,10 @@ export default function ArticleCard({ article, variant = 'card' }: Props) {
       <div className="relative group cursor-pointer">
         <Link href={`/article/${article.slug}`} className="block">
           <div className="relative overflow-hidden" style={{ paddingBottom: '56.25%' }}>
-            <Image
-              src={article.featuredImage}
+            <img src={article.featuredImage || "https://picsum.photos/seed/tb/1200/675"} style={{position:"absolute",inset:0,width:"100%",height:"100%"}} onError={(e)=>{(e.target as HTMLImageElement).src="https://picsum.photos/seed/tb/1200/675"}}
               alt={article.title}
-              fill
               className="object-cover group-hover:scale-105 transition-transform duration-500"
-              sizes="(max-width: 768px) 100vw, 65vw"
-              priority
-            />
+             loading="lazy" />
           </div>
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
@@ -62,13 +58,10 @@ export default function ArticleCard({ article, variant = 'card' }: Props) {
     return (
       <Link href={`/article/${article.slug}`} className="flex gap-3 group">
         <div className="flex-shrink-0 w-24 h-16 relative overflow-hidden">
-          <Image
-            src={article.featuredImage}
+          <img src={article.featuredImage || "https://picsum.photos/seed/tb/1200/675"} style={{position:"absolute",inset:0,width:"100%",height:"100%"}} onError={(e)=>{(e.target as HTMLImageElement).src="https://picsum.photos/seed/tb/1200/675"}}
             alt={article.title}
-            fill
             className="object-cover group-hover:scale-105 transition-transform duration-300"
-            sizes="96px"
-          />
+           loading="lazy" />
         </div>
         <div className="flex-1 min-w-0">
           <span className={`${typeInfo.color} text-white font-sans text-[9px] font-bold px-1.5 py-0.5 uppercase tracking-wider`}>
@@ -90,13 +83,10 @@ export default function ArticleCard({ article, variant = 'card' }: Props) {
         <div className="flex gap-4">
           <div className="flex-shrink-0 w-36 h-24 relative overflow-hidden">
             <Link href={`/article/${article.slug}`}>
-              <Image
-                src={article.featuredImage}
+              <img src={article.featuredImage || "https://picsum.photos/seed/tb/1200/675"} style={{position:"absolute",inset:0,width:"100%",height:"100%"}} onError={(e)=>{(e.target as HTMLImageElement).src="https://picsum.photos/seed/tb/1200/675"}}
                 alt={article.title}
-                fill
                 className="object-cover hover:scale-105 transition-transform duration-300"
-                sizes="144px"
-              />
+               loading="lazy" />
             </Link>
           </div>
           <div className="flex-1 min-w-0">
@@ -153,13 +143,10 @@ export default function ArticleCard({ article, variant = 'card' }: Props) {
   return (
     <div className="bg-white border border-border hover:border-[#d4220a] transition-colors group animate-fade-in-up">
       <Link href={`/article/${article.slug}`} className="block relative overflow-hidden" style={{ paddingBottom: '60%' }}>
-        <Image
-          src={article.featuredImage}
+        <img src={article.featuredImage || "https://picsum.photos/seed/tb/1200/675"} style={{position:"absolute",inset:0,width:"100%",height:"100%"}} onError={(e)=>{(e.target as HTMLImageElement).src="https://picsum.photos/seed/tb/1200/675"}}
           alt={article.title}
-          fill
           className="object-cover group-hover:scale-105 transition-transform duration-500"
-          sizes="(max-width: 768px) 100vw, 33vw"
-        />
+         loading="lazy" />
         <span className={`absolute top-3 left-3 ${typeInfo.color} text-white font-sans text-[9px] font-bold px-2 py-1 uppercase tracking-wider z-10`}>
           {typeInfo.label}
         </span>

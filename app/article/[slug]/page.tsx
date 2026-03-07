@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
 import type { Article } from '@/lib/store'
 import ArticleCard from '@/components/ArticleCard'
 
@@ -151,13 +150,11 @@ export default function ArticlePage() {
 
             {/* Featured Image */}
             <div className="relative mb-5 overflow-hidden" style={{ paddingBottom: '56.25%' }}>
-              <Image
-                src={article.featuredImage}
+              <img
+                src={article.featuredImage || 'https://picsum.photos/seed/tb/1200/675'}
                 alt={article.title}
-                fill
-                className="object-cover"
-                priority
-                sizes="(max-width: 768px) 100vw, 65vw"
+                style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}}
+                onError={(e)=>{(e.target as HTMLImageElement).src='https://picsum.photos/seed/tb/1200/675'}}
               />
             </div>
 
@@ -214,7 +211,7 @@ export default function ArticlePage() {
                 {/* Inline image */}
                 {article.images[1] && (
                   <div className="relative my-6 overflow-hidden" style={{ paddingBottom: '50%' }}>
-                    <Image src={article.images[1]} alt={`${article.title} detail`} fill className="object-cover" sizes="65vw" />
+                    <img src={article.images[1]} alt={`${article.title} detail`} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}} onError={(e)=>{(e.target as HTMLImageElement).src="https://picsum.photos/seed/tb2/800/600"}} />
                   </div>
                 )}
 
@@ -227,7 +224,7 @@ export default function ArticlePage() {
                 {/* More images interspersed */}
                 {article.images[2] && (
                   <div className="relative my-6 overflow-hidden" style={{ paddingBottom: '50%' }}>
-                    <Image src={article.images[2]} alt={`${article.title} image 3`} fill className="object-cover" sizes="65vw" />
+                    <img src={article.images[2]} alt={`${article.title} image 3`} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}} onError={(e)=>{(e.target as HTMLImageElement).src="https://picsum.photos/seed/tb3/800/600"}} />
                   </div>
                 )}
 
