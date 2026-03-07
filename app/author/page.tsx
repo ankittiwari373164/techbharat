@@ -10,12 +10,12 @@ export const metadata: Metadata = {
 
 const AUTHORS = [
   {
-    name: 'Arjun Mehta',
+    name: 'Vijay Yadav',
     role: 'Senior Mobile Editor',
-    initials: 'AM',
+    initials: 'VY',
     color: '#d4220a',
-    bio: 'Arjun has been covering the Indian smartphone market for 11 years, first at a print magazine in Mumbai, now leading mobile coverage at The Tech Bharat in Delhi. He\'s reviewed over 300 devices and has strong opinions on value-for-money flagships.',
-    expertise: ['Flagship Smartphones', 'Camera Reviews', 'Samsung & Apple'],
+    bio: 'Vijay has been covering the Indian smartphone market for 11 years, first at a print magazine in Mumbai, now leading mobile coverage at The Tech Bharat in Delhi. He\'s reviewed over 300 devices and has strong opinions on value-for-money flagships.',
+    expertise: ['Flagship Smartphones', 'AI', 'Gadgets'],
     location: 'New Delhi',
   },
   // {

@@ -106,7 +106,7 @@ export default function ArticlePage() {
             <nav className="font-sans text-xs text-muted mb-4 flex items-center gap-2">
               <Link href="/" className="hover:text-[#d4220a]">Home</Link>
               <span>/</span>
-              <Link href={`/${article.type}`} className="hover:text-[#d4220a] capitalize">{article.category}</Link>
+              <Link href={`/${article.type}`} className="hover:text-[#d4220a] capitalize">{article.type === 'review' ? 'Hands-On' : article.category}</Link>
               <span>/</span>
               <span className="text-ink line-clamp-1">{article.title}</span>
             </nav>
@@ -245,12 +245,23 @@ export default function ArticlePage() {
               </div>
             )}
 
+            {/* Internal Navigation Links - Fix 5 */}
+            <div className="mt-8 p-4 bg-[#f8f4ef] border-l-4 border-[#d4220a]">
+              <p className="font-sans text-xs font-bold text-[#d4220a] uppercase tracking-wider mb-3">Explore More on The Tech Bharat</p>
+              <div className="flex flex-wrap gap-2">
+                <a href="/mobile-news" className="font-sans text-xs text-ink border border-border bg-white px-3 py-1.5 hover:border-[#d4220a] hover:text-[#d4220a] transition-colors">📱 Mobile News</a>
+                <a href="/reviews" className="font-sans text-xs text-ink border border-border bg-white px-3 py-1.5 hover:border-[#d4220a] hover:text-[#d4220a] transition-colors">⭐ Phone Reviews</a>
+                <a href="/compare" className="font-sans text-xs text-ink border border-border bg-white px-3 py-1.5 hover:border-[#d4220a] hover:text-[#d4220a] transition-colors">⚖️ Compare Phones</a>
+                {article.brand && <a href={`/mobile-news?brand=${article.brand}`} className="font-sans text-xs text-ink border border-border bg-white px-3 py-1.5 hover:border-[#d4220a] hover:text-[#d4220a] transition-colors">🔍 More {article.brand} News</a>}
+              </div>
+            </div>
+
             {/* Similar Articles Section */}
             {similar.length > 0 && (
               <section className="mt-10 pt-6 border-t-2 border-border">
                 <div className="flex items-center gap-3 mb-5">
                   <div className="w-6 h-0.5 bg-[#d4220a]" />
-                  <h2 className="font-playfair text-xl font-bold">Similar Articles</h2>
+                  <h2 className="font-playfair text-xl font-bold">You May Also Like</h2>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {similar.map(a => (

@@ -53,6 +53,28 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
         <link rel="icon" href="/favicon.ico" />
         <meta name="google-site-verification" content="YOUR_VERIFICATION_CODE" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "NewsMediaOrganization",
+            "name": "The Tech Bharat",
+            "alternateName": "TTB",
+            "url": "https://thetechbharat.com",
+            "logo": "https://thetechbharat.com/logo.png",
+            "description": "India\'s independent mobile technology news publication covering smartphones, reviews, and comparisons for Indian buyers.",
+            "foundingDate": "2025",
+            "areaServed": "IN",
+            "inLanguage": "en-IN",
+            "sameAs": [
+              "https://t.me/techbharat",
+              "https://twitter.com/techbharat"
+            ],
+            "masthead": "https://thetechbharat.com/about",
+            "verificationFactCheckingPolicy": "https://thetechbharat.com/editorial-policy",
+            "correctionsPolicy": "https://thetechbharat.com/corrections-policy"
+          })}}
+        />
       </head>
       <body className={`${isAdmin ? 'bg-gray-50' : 'bg-paper text-ink'} min-h-screen flex flex-col`}>
         {!isAdmin && <div id="reading-progress" style={{ width: '0%' }} />}

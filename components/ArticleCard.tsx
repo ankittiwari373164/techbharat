@@ -11,7 +11,7 @@ interface Props {
 
 const TYPE_LABELS: Record<string, { label: string; color: string }> = {
   'mobile-news': { label: 'Mobile News', color: 'bg-[#1a3a5c]' },
-  'review': { label: 'Review', color: 'bg-[#d4220a]' },
+  'review': { label: 'Hands-On', color: 'bg-[#d4220a]' },
   'compare': { label: 'Compare', color: 'bg-[#2a6b3c]' },
 }
 

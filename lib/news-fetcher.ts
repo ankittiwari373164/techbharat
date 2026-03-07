@@ -169,7 +169,7 @@ INDIA GROUNDING (makes content uniquely non-generic):
 ═══ THE BANNED PHRASE LIST — NEVER USE THESE ═══
 If you write any of these phrases, your article fails completely:
 
-"In conclusion" | "To conclude" | "In summary" | "To summarize"
+"Review" (as standalone article label — use "First Look", "Hands-On", "Specs Breakdown", "Real-World Test" instead) | "In conclusion" | "To conclude" | "In summary" | "To summarize"
 "Furthermore" | "Moreover" | "Additionally" | "In addition to this"
 "It is important to note" | "It is worth noting" | "It is crucial to"
 "It goes without saying" | "Needless to say" | "As we all know"
@@ -231,6 +231,7 @@ function buildUserPrompt(raw: RawArticle, brand: string, type: string): string {
   return `Write a 1500-word article for TechBharat about this topic.
 
 TODAY'S DATE: ${today} — All dates, timelines, and references must be consistent with this date. Never mention years before ${new Date().getFullYear()}.
+UNIQUE VALUE MANDATE: This article MUST offer something the reader cannot get from just reading the press release or spec sheet. Add at least ONE of: (a) your honest opinion on whether it's worth buying, (b) a comparison to a rival at similar price, (c) an India-specific insight about availability/value/5G, (d) a prediction or concern about this product's future. Generic spec summaries fail this test.
 TOPIC: ${raw.title}
 TITLE REWRITE RULE: If the topic title is a plain spec/launch announcement (e.g. "Samsung Galaxy X specs", "Phone Y launch"), rewrite it as a question or opinion title that real readers would click. Examples:
   - "Samsung Galaxy S26 specs" → "Samsung Galaxy S26: Is India's ₹80K Investment Actually Worth It?"  
@@ -284,7 +285,7 @@ Return ONLY valid JSON. No markdown fences. No text outside the JSON object.
 Escape all internal quotes with backslash.
 
 {
-  "title": "Headline 55–65 chars. Start with brand name. Newsy, specific, curious — NOT clickbait.",
+  "title": "CRITICAL TITLE RULES — all must be followed:\n1. NEVER write plain spec/launch/review titles like \'Samsung Galaxy X Review\' or \'Phone Y Launch\'\n2. ALWAYS write curiosity or question titles: \'Is X Worth ₹50K?\', \'X vs Y — Who Wins Under ₹30K?\', \'Why X Is The Surprise Hit of 2026\'\n3. If it\'s a review, use \'First Look\', \'Hands-On\', \'Specs Breakdown\', \'Real-World Test\' — NOT \'Review\'\n4. 55–70 chars. Can start with question word (Is, Why, How, Can, Should).\nExamples of GOOD titles: \'Is Samsung Galaxy Book6 Ultra Powerful Enough to Beat MacBook?\' | \'Honor Magic V6 Survives Zipline Test — But Can It Survive India?\'",
   "brand": "${brand}",
   "type": "${type}",
   "summary": "3 sentences. Sentence 1: most surprising/interesting fact. Sentence 2: India price or context. Sentence 3: what makes this worth reading. Conversational — like you're telling a friend. NO banned phrases.",
@@ -297,6 +298,7 @@ Escape all internal quotes with backslash.
   ],
   "fullContent": "Full 1500-word HTML article. Tags: <p>, <h2>, <h3>, <table>, <tr>, <th>, <td>, <strong>, <ul>, <li> only. Follow structure above. Apply ALL sentence variety rules. Use banned phrase list strictly. British English. NO source names anywhere.",
   "tags": ["brand name", "model name", "brand model India price", "brand model review India", "best phone under Xk", "brand model 5G India"],
+  "relatedTopics": ["suggest 3 related article topics from the same brand or price segment that would make good internal links — e.g. \'Samsung Galaxy S25 Review\', \'Best Samsung phones under ₹60K\'"]
   "quickBullets": ["Spec or fact, max 7 words", "Price point, max 7 words", "One-line verdict, max 7 words"]
 }`
 }
