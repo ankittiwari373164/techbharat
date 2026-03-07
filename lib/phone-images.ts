@@ -81,7 +81,9 @@ export async function getPhoneImage(
       )
       if (res.ok) {
         const data = await res.json()
-        return `${data.urls.regular}&w=1200&q=80`
+        const rawUrl = `${data.urls.regular}&w=1200&q=80`
+        const siteUrl = process.env.SITE_URL || 'https://thetechbharat.com'
+        return `${siteUrl}/api/img?u=${encodeURIComponent(rawUrl)}`
       }
     } catch {
       // fall through to picsum
