@@ -30,7 +30,7 @@ export async function GET() {
       lastmod:    (a.updatedDate || a.publishDate).split('T')[0],
       priority:   '0.8',
       changefreq: 'weekly',
-      image:      a.imageUrl || '',
+      image:      a.featuredImage || '',
       title:      a.title,
     }))
   } catch { /* no articles yet */ }
