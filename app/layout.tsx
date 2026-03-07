@@ -5,22 +5,22 @@ import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://techbharat.com'),
+  metadataBase: new URL('https://thetechbharat.com'),
   title: {
-    template: '%s | TechBharat',
-    default: "TechBharat – India's Mobile Technology News",
+    template: '%s | The Tech Bharat',
+    default: "The Tech Bharat – India's Mobile Technology News",
   },
-  description: 'TechBharat delivers original mobile technology news, smartphone reviews, comparisons, and in-depth analysis for Indian readers.',
+  description: 'The Tech Bharat delivers original mobile technology news, smartphone reviews, comparisons, and in-depth analysis for Indian readers.',
   keywords: ['mobile news India', 'smartphone reviews', 'tech news India', 'phone comparison'],
-  authors: [{ name: 'TechBharat Editorial Team' }],
-  creator: 'TechBharat',
-  publisher: 'TechBharat',
+  authors: [{ name: 'The Tech Bharat Editorial Team' }],
+  creator: 'The Tech Bharat',
+  publisher: 'The Tech Bharat',
   openGraph: {
     type: 'website',
     locale: 'en_IN',
-    url: 'https://techbharat.com',
-    siteName: 'TechBharat',
-    title: "TechBharat – India's Mobile Technology News",
+    url: 'https://thetechbharat.com',
+    siteName: 'The Tech Bharat',
+    title: "The Tech Bharat – India's Mobile Technology News",
     description: 'Latest mobile news, phone reviews, and smartphone comparisons for Indian readers.',
     images: [{ url: '/og-image.jpg', width: 1200, height: 630 }],
   },
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     follow: true,
     googleBot: { index: true, follow: true, 'max-image-preview': 'large' },
   },
-  alternates: { canonical: 'https://techbharat.com' },
+  alternates: { canonical: 'https://thetechbharat.com' },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
