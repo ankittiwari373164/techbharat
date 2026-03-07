@@ -261,12 +261,12 @@ Specs table (HTML): key specs in a clean table
 Pros & Cons table (HTML): honest, not marketing fluff
 Closing verdict: Exactly who should and shouldn't buy this` : ''}
 ${isCompare ? `
-Opening: Set up the real buying dilemma — who is actually choosing between these two
-Section 1: Quick specs comparison (HTML table)
-Section 2: Where they differ in real use (camera, battery, performance)
-Section 3: Software & updates situation in India
-Section 4: Value — which is actually worth the money in India
-Closing: Clear, direct recommendation — not "both are good in their own ways"` : ''}
+Opening: Set up the real buying dilemma — who is actually choosing between these two and why it's not obvious
+Section 1: Quick specs comparison (HTML <table> with at least 6 rows: price, display, chip, battery, camera, 5G)
+Section 2: Real-world differences that specs don't show (camera quality, software, heat management)
+Section 3: India-specific factors — service centres, warranty, Flipkart/Amazon pricing, EMI options
+Section 4: Value verdict — which is worth buying at what price point
+Closing: ONE clear winner recommendation — who should buy which phone. Never say "depends on your needs" without a concrete answer"` : ''}
 
 ━━━ SENTENCE VARIETY CHECKLIST ━━━
 Before writing, plan to include:
@@ -500,7 +500,8 @@ export async function fetchSingleArticle(
       return t.includes('review') || t.includes('verdict') || t.includes('hands-on') || t.includes('rating') || t.includes('tested')
     }
     if (type === 'compare') {
-      return t.includes(' vs ') || t.includes('compare') || t.includes('comparison') || t.includes('versus') || t.includes('better')
+      // Accept any comparison signal OR any news about 2 different phones we can compare
+      return t.includes(' vs ') || t.includes('compare') || t.includes('comparison') || t.includes('versus') || t.includes('better') || t.includes('alternative') || t.includes('worth')
     }
     // mobile-news: anything that isn't a review or compare
     return !t.includes('review') && !t.includes(' vs ') && !t.includes('comparison')
@@ -511,14 +512,39 @@ export async function fetchSingleArticle(
   const fresh = candidates.filter(a => !isDuplicate(a.title, brand(a.title), existingArticles))
 
   if (fresh.length === 0) {
-    // If no type-specific fresh articles, fall back to any fresh mobile-tech article
+    // For compare: synthesize a vs article from 2 recent mobile articles
+    if (type === 'compare') {
+      const pool = rawArticles
+        .filter(a => a.title && a.title !== '[Removed]' && isMobileTech(a.title, a.description))
+        .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+      
+      if (pool.length >= 2) {
+        const phoneA = pool[0]
+        const phoneB = pool.find(a => detectBrand(a.title) !== detectBrand(phoneA.title)) || pool[1]
+        const brandA = detectBrand(phoneA.title)
+        const brandB = detectBrand(phoneB.title)
+        // Create a synthetic comparison raw article
+        const synthetic: RawArticle = {
+          title: `${phoneA.title.split(':')[0]} vs ${phoneB.title.split(':')[0]} — Which Should You Buy in India?`,
+          description: `Comparing ${phoneA.title} against ${phoneB.title} for Indian buyers. ${phoneA.description} vs ${phoneB.description}`,
+          content: `Phone A: ${phoneA.title}. ${phoneA.description} ${phoneA.content?.slice(0,300) || ''}
+Phone B: ${phoneB.title}. ${phoneB.description} ${phoneB.content?.slice(0,300) || ''}`,
+          publishedAt: new Date().toISOString(),
+          url: '',
+        }
+        const rewritten = await rewriteArticle(synthetic, Math.floor(Math.random() * 5))
+        rewritten.type = 'compare'
+        return rewritten
+      }
+    }
+
+    // Fall back to any fresh mobile-tech article
     const fallback = rawArticles
       .filter(a => a.title && a.title !== '[Removed]' && isMobileTech(a.title, a.description))
       .filter(a => !isDuplicate(a.title, brand(a.title), existingArticles))
 
     if (fallback.length === 0) return null
 
-    // Sort by recency
     fallback.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
     return rewriteArticle({ ...fallback[0] }, Math.floor(Math.random() * 5))
   }
