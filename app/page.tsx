@@ -131,8 +131,8 @@ export default async function HomePage() {
           <h2 className="font-playfair text-3xl font-bold text-white mb-3">Stay Ahead of Every Launch</h2>
           <p className="font-sans text-gray-400 mb-6 text-sm">Join 50,000+ Indian tech enthusiasts. Get breaking phone news instantly.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <a href="https://t.me/techbharat" target="_blank" rel="noopener noreferrer" className="bg-[#2AABEE] text-white font-sans font-semibold px-6 py-3 text-sm hover:opacity-90 transition-opacity">Join Telegram Channel</a>
-            <a href="https://whatsapp.com/channel/techbharat" target="_blank" rel="noopener noreferrer" className="bg-[#25D366] text-white font-sans font-semibold px-6 py-3 text-sm hover:opacity-90 transition-opacity">Join WhatsApp Channel</a>
+            <a href="https://t.me/the_tech_bharat" target="_blank" rel="noopener noreferrer" className="bg-[#2AABEE] text-white font-sans font-semibold px-6 py-3 text-sm hover:opacity-90 transition-opacity">Join Telegram Channel</a>
+            <a href="https://whatsapp.com/channel/0029VbCXZfAJJhzh46IrfI2W" target="_blank" rel="noopener noreferrer" className="bg-[#25D366] text-white font-sans font-semibold px-6 py-3 text-sm hover:opacity-90 transition-opacity">Join WhatsApp Channel</a>
           </div>
         </div>
       </section>

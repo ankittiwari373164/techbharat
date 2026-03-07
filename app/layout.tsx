@@ -67,7 +67,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             "areaServed": "IN",
             "inLanguage": "en-IN",
             "sameAs": [
-              "https://t.me/techbharat",
+              "https://t.me/the_tech_bharat",
               "https://twitter.com/techbharat"
             ],
             "masthead": "https://thetechbharat.com/about",
