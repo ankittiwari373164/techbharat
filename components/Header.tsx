@@ -6,7 +6,6 @@ const NAV_ITEMS = [
   { label: 'Home', href: '/' },
   { label: 'Mobile News', href: '/mobile-news' },
   { label: 'Reviews', href: '/reviews' },
-  { label: 'Compare', href: '/compare' },
   { label: 'Web Stories', href: '/web-stories' },
   { label: 'Samsung', href: '/mobile-news?brand=Samsung' },
   { label: 'Apple', href: '/mobile-news?brand=Apple' },
@@ -67,7 +66,7 @@ export default function Header() {
             </a>
             <Link href="/about" className="opacity-80 hover:opacity-100">About</Link>
             <Link href="/contact" className="opacity-80 hover:opacity-100">Contact</Link>
-            <Link href="/admin" className="opacity-80 hover:opacity-100 border border-white/30 px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase">⚙ Admin</Link>
+            {/* <Link href="/admin" className="opacity-80 hover:opacity-100 border border-white/30 px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase">⚙ Admin</Link> */}
           </div>
         </div>
       </div>
@@ -94,7 +93,7 @@ export default function Header() {
               <span className="w-2 h-2 bg-white rounded-full pulse-dot" />
               LIVE
             </div>
-            <button
+            {/* <button
               onClick={() => {
                 if (typeof window !== 'undefined') {
                   window.location.href = '/api/fetch-news'
@@ -103,7 +102,7 @@ export default function Header() {
               className="hidden md:block bg-[#1a3a5c] hover:bg-[#0f2d4a] text-white px-4 py-2 text-xs font-sans font-semibold rounded transition-colors"
             >
               Fetch Latest News
-            </button>
+            </button> */}
             {/* Mobile menu toggle */}
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
@@ -149,12 +148,12 @@ export default function Header() {
               {item.label}
             </Link>
           ))}
-          <button
+          {/* <button
             onClick={() => { window.location.href = '/api/fetch-news'; setMobileOpen(false) }}
             className="w-full text-left text-[#d4220a] font-sans text-sm font-semibold px-5 py-3"
           >
             🔄 Fetch Latest News
-          </button>
+          </button> */}
         </nav>
       )}
 
