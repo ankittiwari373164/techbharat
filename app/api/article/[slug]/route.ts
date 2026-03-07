@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getArticleBySlug, getSimilarArticles } from '@/lib/store'
+import { getArticleBySlugAsync, getSimilarArticlesAsync } from '@/lib/store'
+
+export const dynamic = 'force-dynamic'
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { slug: string } }
 ) {
-  const article = getArticleBySlug(params.slug)
+  const article = await getArticleBySlugAsync(params.slug)
   if (!article) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
-  const similar = getSimilarArticles(article, 3)
+  const similar = await getSimilarArticlesAsync(article, 3)
   return NextResponse.json({ article, similar })
 }

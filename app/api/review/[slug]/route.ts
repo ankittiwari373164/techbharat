@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getArticleBySlug, getAllArticles, saveArticles } from '@/lib/store'
+import { getArticleBySlugAsync, getAllArticlesAsync, saveArticlesAsync } from '@/lib/store'
+
+export const dynamic = 'force-dynamic'
 
 export async function POST(
   request: NextRequest,
@@ -13,7 +15,7 @@ export async function POST(
       return NextResponse.json({ error: 'Name and review text required' }, { status: 400 })
     }
 
-    const article = getArticleBySlug(params.slug)
+    const article = await getArticleBySlugAsync(params.slug)
     if (!article) {
       return NextResponse.json({ error: 'Article not found' }, { status: 404 })
     }
@@ -29,12 +31,11 @@ export async function POST(
     article.reviews = article.reviews || []
     article.reviews.push(review)
 
-    // Save back to store
-    const all = getAllArticles()
+    const all = await getAllArticlesAsync()
     const idx = all.findIndex(a => a.slug === params.slug)
     if (idx >= 0) {
       all[idx] = article
-      saveArticles(all)
+      await saveArticlesAsync(all)
     }
 
     return NextResponse.json({ success: true, article })
