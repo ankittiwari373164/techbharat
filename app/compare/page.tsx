@@ -1,4 +1,4 @@
-import { getAllArticles } from '@/lib/store'
+import { getAllArticlesAsync } from '@/lib/store'
 import ArticleCard from '@/components/ArticleCard'
 import type { Metadata } from 'next'
 
@@ -7,10 +7,10 @@ export const metadata: Metadata = {
   description: 'Side-by-side smartphone comparisons to help Indian buyers choose the best phone for their budget.',
 }
 
-export const revalidate = 300
+export const revalidate = 60
 
-export default function ComparePage() {
-  const articles = getAllArticles().filter(a => a.type === 'compare')
+export default async function ComparePage() {
+  const allA = await getAllArticlesAsync(); const articles = allA.filter(a => a.type === 'compare')
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">

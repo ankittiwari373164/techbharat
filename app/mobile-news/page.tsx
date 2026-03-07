@@ -1,4 +1,4 @@
-import { getAllArticles } from '@/lib/store'
+import { getAllArticlesAsync } from '@/lib/store'
 import ArticleCard from '@/components/ArticleCard'
 import type { Metadata } from 'next'
 
@@ -7,14 +7,14 @@ export const metadata: Metadata = {
   description: 'Latest mobile phone news, launches, leaks, and updates from Samsung, Apple, Xiaomi, OnePlus and more Indian smartphone brands.',
 }
 
-export const revalidate = 300
+export const revalidate = 60
 
-export default function MobileNewsPage({
+export default async function MobileNewsPage({
   searchParams,
 }: {
   searchParams: { brand?: string }
 }) {
-  let articles = getAllArticles().filter(a => a.type === 'mobile-news')
+  const allArticles = await getAllArticlesAsync(); let articles = allArticles.filter(a => a.type === 'mobile-news')
 
   if (searchParams.brand) {
     articles = articles.filter(a =>

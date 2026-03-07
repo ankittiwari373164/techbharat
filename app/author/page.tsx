@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { getAllArticles } from '@/lib/store'
+import { getAllArticlesAsync } from '@/lib/store'
 import ArticleCard from '@/components/ArticleCard'
 
 export const metadata: Metadata = {
@@ -7,8 +7,8 @@ export const metadata: Metadata = {
   description: 'Meet the TechBharat editorial team – experienced mobile technology journalists covering the Indian smartphone market.',
 }
 
-export default function AuthorPage() {
-  const articles = getAllArticles().slice(0, 6)
+export default async function AuthorPage() {
+  const articles = await getAllArticlesAsync().slice(0, 6)
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">
