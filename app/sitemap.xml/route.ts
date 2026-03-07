@@ -2,6 +2,10 @@ export const dynamic = 'force-dynamic'
 
 const SITE_URL = process.env.SITE_URL || 'https://thetechbharat.com'
 
+function esc(s: string): string {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;')
+}
+
 interface SitemapEntry {
   url: string
   priority: string
@@ -9,6 +13,20 @@ interface SitemapEntry {
   lastmod: string
   image?: string
   title?: string
+}
+
+function entryXml(entry: SitemapEntry): string {
+  let out = `  <url>\n    <loc>${SITE_URL}${esc(entry.url)}</loc>\n`
+  if (entry.lastmod) out += `    <lastmod>${entry.lastmod}</lastmod>\n`
+  out += `    <changefreq>${entry.changefreq}</changefreq>\n`
+  out += `    <priority>${entry.priority}</priority>\n`
+  if (entry.image) {
+    out += `    <image:image>\n      <image:loc>${esc(entry.image)}</image:loc>\n`
+    if (entry.title) out += `      <image:title>${esc(entry.title)}</image:title>\n`
+    out += `    </image:image>\n`
+  }
+  out += `  </url>`
+  return out
 }
 
 export async function GET() {
@@ -36,11 +54,11 @@ export async function GET() {
     const articles = await getAllArticlesAsync()
     articleEntries = articles.map(a => ({
       url:        `/article/${a.slug}`,
-      lastmod:    ((a as any).updatedDate || a.publishDate).split('T')[0],
+      lastmod:    ((a as any).updatedDate || a.publishDate || '').split('T')[0],
       priority:   '0.8',
       changefreq: 'weekly',
-      image:      (a as any).featuredImage || (a as any).imageUrl || '',
-      title:      a.title,
+      image:      (a as any).featuredImage || '',
+      title:      a.title || '',
     }))
   } catch { /* no articles yet */ }
 
@@ -49,39 +67,22 @@ export async function GET() {
     const stories = await getPublishedStoriesAsync()
     storyEntries = stories.map(s => ({
       url:        `/web-stories/${s.slug}`,
-      lastmod:    s.publishDate.split('T')[0],
+      lastmod:    (s.publishDate || '').split('T')[0],
       priority:   '0.9',
       changefreq: 'weekly',
       image:      s.coverImage || '',
-      title:      s.title,
+      title:      s.title || '',
     }))
   } catch { /* no stories yet */ }
 
-  const allEntries: SitemapEntry[] = [...staticPages, ...articleEntries, ...storyEntries]
-
-  const urlTags = allEntries.map(entry => {
-    const imgTag = entry.image
-      ? `    <image:image>\n      <image:loc>${entry.image}</image:loc>\n      ${entry.title ? `<image:title>${entry.title.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</image:title>` : ''}\n    </image:image>`
-      : ''
-    return `  <url>
-    <loc>${SITE_URL}${entry.url}</loc>
-    ${entry.lastmod ? `<lastmod>${entry.lastmod}</lastmod>` : ''}
-    <changefreq>${entry.changefreq}</changefreq>
-    <priority>${entry.priority}</priority>
-    ${imgTag}
-  </url>`
-  }).join('\n')
+  const all: SitemapEntry[] = [...staticPages, ...articleEntries, ...storyEntries]
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
-${urlTags}
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+${all.map(entryXml).join('\n')}
 </urlset>`
 
   return new Response(xml, {
-    headers: {
-      'Content-Type': 'application/xml',
-      'Cache-Control': 'no-store',
-    },
+    headers: { 'Content-Type': 'application/xml', 'Cache-Control': 'no-store' },
   })
 }
