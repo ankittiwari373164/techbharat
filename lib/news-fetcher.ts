@@ -204,7 +204,20 @@ If you write any of these phrases, your article fails completely:
 - Ending articles with a positive balanced summary
 - Writing spec tables where every row has the same sentence structure
 - Repeating the brand name at the start of every paragraph
-- Generic calls to action at the end`
+- Generic calls to action at the end
+- "This smartphone comes with powerful performance"
+- "It is expected to launch soon in India"  
+- "Users can enjoy a seamless experience"
+- "The device packs impressive specifications"
+- Any sentence that could apply to ANY phone with just the name swapped
+- Spec lists without opinion or India context attached
+
+MANDATORY HUMAN FEEL (every article needs all of these):
+1. One "Vijay's Take:" or "My honest assessment:" paragraph with a clear opinion
+2. One India market comparison: "At this price, it competes with [competitor] which [specific difference]"
+3. One real-usage scenario: "If you commute on Delhi Metro daily and..." or "For a college student in India..."
+4. Battery/heat/5G India-specific note (even for non-phone articles, find the India angle)
+5. One sentence of mild skepticism OR genuine excitement — not both, pick what fits`
 
 function getSystemPrompt(_authorIndex: number): string {
   return HUMAN_SYSTEM_PROMPT.replace(
@@ -222,6 +235,11 @@ function buildUserPrompt(raw: RawArticle, brand: string, type: string): string {
   return `Write a 1500-word article for TechBharat about this topic.
 
 TODAY'S DATE: ${today} — All dates, timelines, and references must be consistent with this date. Never mention years before ${new Date().getFullYear()}.
+INTERNAL LINKS MANDATE: Every article must include exactly 2 internal links to other sections of thetechbharat.com using this format:
+<a href="/mobile-news?brand=BRAND">More BRAND news on The Tech Bharat</a>
+<a href="/compare">Compare phones on The Tech Bharat</a>
+OR link to /reviews, /mobile-news, /web-stories as relevant. Place them naturally inside paragraphs — not in a list at the bottom.
+
 UNIQUE VALUE MANDATE: This article MUST offer something the reader cannot get from just reading the press release or spec sheet. Add at least ONE of: (a) your honest opinion on whether it's worth buying, (b) a comparison to a rival at similar price, (c) an India-specific insight about availability/value/5G, (d) a prediction or concern about this product's future. Generic spec summaries fail this test.
 TOPIC: ${raw.title}
 TITLE REWRITE RULE: If the topic title is a plain spec/launch announcement (e.g. "Samsung Galaxy X specs", "Phone Y launch"), rewrite it as a question or opinion title that real readers would click. Examples:
@@ -241,7 +259,9 @@ Section 2: Technical breakdown — what the specs/features actually mean for rea
 Section 3: India angle — price in ₹, Flipkart/Amazon availability, who will buy this
 Section 4: How it fits into the current Indian market (competitors, value proposition)
 Section 5 (H2): Your honest analysis — what's good, what's concerning, what's missing
-Closing: Direct verdict — should Indian buyers care about this?` : ''}
+Closing: Direct verdict — should Indian buyers care about this?
+IMPORTANT FOR NEWS/LEAKS: If article is based on leaks or analyst reports, add a clearly labelled section:
+<p><strong>Source Note:</strong> This article is based on [analyst reports / leaked specifications / industry sources]. These details are unconfirmed until official launch. Treat pricing and specs as estimates.</p>` : ''}
 ${isReview ? `
 Opening: Your immediate impression — what surprised you or stood out first
 Section 1: Design & build — how it actually feels (India heat/humidity context)
@@ -276,7 +296,7 @@ Return ONLY valid JSON. No markdown fences. No text outside the JSON object.
 Escape all internal quotes with backslash.
 
 {
-  "title": "CRITICAL TITLE RULES — all must be followed:\n1. NEVER write plain spec/launch/review titles like \'Samsung Galaxy X Review\' or \'Phone Y Launch\'\n2. ALWAYS write curiosity or question titles: \'Is X Worth ₹50K?\', \'X vs Y — Who Wins Under ₹30K?\', \'Why X Is The Surprise Hit of 2026\'\n3. If it\'s a review, use \'First Look\', \'Hands-On\', \'Specs Breakdown\', \'Real-World Test\' — NOT \'Review\'\n4. 55–70 chars. Can start with question word (Is, Why, How, Can, Should).\nExamples of GOOD titles: \'Is Samsung Galaxy Book6 Ultra Powerful Enough to Beat MacBook?\' | \'Honor Magic V6 Survives Zipline Test — But Can It Survive India?\'",
+  "title": "CRITICAL TITLE RULES:\n1. NO clickbait. Titles must be factual and specific.\n2. NO speculative pricing claims stated as fact (use \'expected\', \'rumoured\', \'analyst estimates\')\n3. NO competitor-attack framing like \'Why Google/Apple Can\'t Compete\' — report facts, not attacks\n4. NO pure spec dumps like \'X Review\' or \'Y Launch\' — make it specific and useful\n5. OK to use questions: \'Is X Worth ₹50K?\' · \'X vs Y: Which Should You Buy?\'\n6. For leaks/speculation, title must signal it: \'Galaxy S26: What Leaks Suggest So Far\' not \'Galaxy S26 to Launch with X Feature\'\n7. 55–70 chars\nGOOD examples: \'Motorola Edge 70 Fusion: 7,000mAh Battery at Expected ₹20K\' | \'iPhone 17e First Look: Spec Breakdown and India Price Estimate\'\nBAD examples: \'MacBook Neo at $599: Why Google\'s Android PCs Can\'t Compete\' (attack tone) | \'Motorola Edge 70 India: ₹20K pricing\' (unconfirmed price stated as fact)",
   "brand": "${brand}",
   "type": "${type}",
   "summary": "3 sentences. Sentence 1: most surprising/interesting fact. Sentence 2: India price or context. Sentence 3: what makes this worth reading. Conversational — like you're telling a friend. NO banned phrases.",

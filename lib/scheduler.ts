@@ -77,10 +77,11 @@ export function getTodaySchedule(): ScheduleSlot[] {
   // Content mix: cycles every 3 days
   const day = nowIST().getDate()
   const mixCycle = day % 3
+  // Discover-optimal mix: 2 news + 1 compare + 1 review + 1 news (per ChatGPT audit)
   const typeMix: ArticleType[][] = [
-    ['mobile-news', 'review',      'mobile-news', 'compare',     'mobile-news'],
-    ['mobile-news', 'mobile-news', 'review',      'mobile-news', 'compare'   ],
-    ['mobile-news', 'review',      'mobile-news', 'mobile-news', 'compare'   ],
+    ['mobile-news', 'mobile-news', 'compare',     'review',      'mobile-news'],
+    ['mobile-news', 'compare',     'mobile-news', 'review',      'mobile-news'],
+    ['mobile-news', 'mobile-news', 'review',      'compare',     'mobile-news'],
   ]
   const types = typeMix[mixCycle]
 

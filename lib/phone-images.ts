@@ -81,7 +81,7 @@ export async function getPhoneImage(
       )
       if (res.ok) {
         const data = await res.json()
-        const rawUrl = `${data.urls.regular}&w=1200&q=80`
+        const rawUrl = `${data.urls.regular}&w=1600&q=85&fit=crop&crop=center`
         const siteUrl = process.env.SITE_URL || 'https://thetechbharat.com'
         return `${siteUrl}/api/img?u=${encodeURIComponent(rawUrl)}`
       }
@@ -94,7 +94,7 @@ export async function getPhoneImage(
   const seed = phoneName
     .split('')
     .reduce((acc, c) => acc + c.charCodeAt(0), index * 100)
-  return `https://picsum.photos/seed/${seed}/1200/675`
+  return `https://picsum.photos/seed/${seed}/1600/900`
 }
 
 /**
