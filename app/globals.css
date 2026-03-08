@@ -160,3 +160,16 @@ body {
 .pulse-dot {
   animation: pulseDot 1.5s infinite;
 }
+
+/* Internal anchor links in article content */
+.article-content a.internal-link {
+  color: #d4220a;
+  text-decoration: underline;
+  text-decoration-color: #d4220a40;
+  text-underline-offset: 2px;
+  font-weight: 500;
+  transition: text-decoration-color 0.2s;
+}
+.article-content a.internal-link:hover {
+  text-decoration-color: #d4220a;
+}

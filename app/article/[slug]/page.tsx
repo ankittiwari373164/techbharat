@@ -5,6 +5,57 @@ import Link from 'next/link'
 import type { Article } from '@/lib/store'
 import ArticleCard from '@/components/ArticleCard'
 
+
+// ── AUTO INTERNAL LINKER ──────────────────────────────────────────
+// Maps keywords → category URLs on thetechbharat.com
+const INTERNAL_LINK_MAP: [RegExp, string, string][] = [
+  // Brand pages
+  [/\b(Samsung Galaxy [A-Z][\w\s]*?)(?=[\s,.<])/g, '/mobile-news?brand=Samsung', 'Samsung news'],
+  [/\b(Apple iPhone [\w\s]*?)(?=[\s,.<])/g, '/mobile-news?brand=Apple', 'Apple news'],
+  [/\b(Xiaomi [\w\s]*?)(?=[\s,.<])/g, '/mobile-news?brand=Xiaomi', 'Xiaomi news'],
+  [/\b(OnePlus [\w\s]*?)(?=[\s,.<])/g, '/mobile-news?brand=OnePlus', 'OnePlus news'],
+  [/\b(Nothing Phone[\w\s]*?)(?=[\s,.<])/g, '/mobile-news?brand=Nothing', 'Nothing news'],
+  [/\b(Motorola [\w\s]*?)(?=[\s,.<])/g, '/mobile-news?brand=Motorola', 'Motorola news'],
+  [/\b(Realme [\w\s]*?)(?=[\s,.<])/g, '/mobile-news?brand=Realme', 'Realme news'],
+  [/\b(Vivo [\w\s]*?)(?=[\s,.<])/g, '/mobile-news?brand=Vivo', 'Vivo news'],
+  [/\b(OPPO [\w\s]*?)(?=[\s,.<])/g, '/mobile-news?brand=OPPO', 'OPPO news'],
+  // Category keywords
+  [/\b(smartphone review|phone review|hands-on review)s?\b/gi, '/reviews', 'Phone reviews'],
+  [/\b(compare|comparison|vs\.|versus)\b/gi, '/compare', 'Compare phones'],
+  [/\b(best phone|best smartphone|top phone)s?\b/gi, '/compare', 'Best phones'],
+  [/\b(5G phone|5G smartphone|5G support|5G band)s?\b/gi, '/mobile-news', 'Latest 5G phones'],
+  [/\b(budget phone|budget smartphone|affordable phone)s?\b/gi, '/mobile-news', 'Budget phones India'],
+  [/\b(flagship phone|premium smartphone|flagship smartphone)s?\b/gi, '/mobile-news', 'Flagship phones'],
+  [/\b(web stor(?:y|ies))\b/gi, '/web-stories', 'Web stories'],
+]
+
+function addInternalLinks(html: string, currentSlug: string): string {
+  // Don't touch existing <a> tags or content inside HTML tags
+  // Split on HTML tags, only process text nodes
+  const parts = html.split(/(<[^>]+>)/g)
+  const linked = new Set<string>() // track which URLs already linked (max 1 per URL)
+
+  return parts.map((part, i) => {
+    // Skip HTML tags themselves
+    if (part.startsWith('<')) return part
+
+    let text = part
+    for (const [regex, url, title] of INTERNAL_LINK_MAP) {
+      if (linked.has(url)) continue // only link each category once per article
+      const newText = text.replace(regex, (match) => {
+        if (linked.has(url)) return match
+        linked.add(url)
+        return `<a href="${url}" title="${title}" class="internal-link">${match}</a>`
+      })
+      if (newText !== text) {
+        text = newText
+        break // one replacement per text node to avoid nesting
+      }
+    }
+    return text
+  }).join('')
+}
+
 export default function ArticlePage() {
   const params = useParams()
   const slug = params?.slug as string
@@ -147,7 +198,7 @@ export default function ArticlePage() {
                   className="font-sans text-xs bg-[#25D366] text-white px-2.5 py-1 hover:opacity-80"
                 >Share</a>
                 <a
-                  href={`https://t.me/share/url?url=${encodeURIComponent((process.env.NEXT_PUBLIC_SITE_URL || 'https://thetechbharat.com') + '/article/' + article.slug)}&text=${encodeURIComponent(article.title)}`}
+                  href={`https://t.me/share/url?url=${encodeURIComponent((process.env.NEXT_PUBLIC_SITE_URL || 'https://techbharat.com') + '/article/' + article.slug)}&text=${encodeURIComponent(article.title)}`}
                   target="_blank" rel="noopener noreferrer"
                   className="font-sans text-xs bg-[#2AABEE] text-white px-2.5 py-1 hover:opacity-80"
                 >Telegram</a>
@@ -224,7 +275,7 @@ export default function ArticlePage() {
                 {/* Full Content */}
                 <div
                   className="article-content"
-                  dangerouslySetInnerHTML={{ __html: article.content }}
+                  dangerouslySetInnerHTML={{ __html: addInternalLinks(article.content, article.slug) }}
                 />
 
                 {/* More images interspersed */}
@@ -404,11 +455,11 @@ export default function ArticlePage() {
               <p className="font-playfair text-lg font-bold mb-2">Never Miss a Launch</p>
               <p className="font-sans text-xs opacity-80 mb-3">Get instant phone news on your phone.</p>
               <div className="space-y-2">
-                <a href="https://t.me/the_tech_bharat" target="_blank" rel="noopener noreferrer"
+                <a href="https://t.me/techbharat" target="_blank" rel="noopener noreferrer"
                   className="block bg-[#2AABEE] text-white font-sans text-xs font-semibold text-center py-2 hover:opacity-90">
                   Join Telegram →
                 </a>
-                <a href="https://whatsapp.com/channel/0029VbCXZfAJJhzh46IrfI2W" target="_blank" rel="noopener noreferrer"
+                <a href="https://whatsapp.com/channel/techbharat" target="_blank" rel="noopener noreferrer"
                   className="block bg-[#25D366] text-white font-sans text-xs font-semibold text-center py-2 hover:opacity-90">
                   Join WhatsApp →
                 </a>
