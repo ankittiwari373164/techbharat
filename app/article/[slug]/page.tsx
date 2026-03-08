@@ -9,48 +9,63 @@ import ArticleCard from '@/components/ArticleCard'
 // ── AUTO INTERNAL LINKER ──────────────────────────────────────────
 // Maps keywords → category URLs on thetechbharat.com
 const INTERNAL_LINK_MAP: [RegExp, string, string][] = [
-  // Brand pages
-  [/\b(Samsung Galaxy [A-Z][\w\s]*?)(?=[\s,.<])/g, '/mobile-news?brand=Samsung', 'Samsung news'],
-  [/\b(Apple iPhone [\w\s]*?)(?=[\s,.<])/g, '/mobile-news?brand=Apple', 'Apple news'],
-  [/\b(Xiaomi [\w\s]*?)(?=[\s,.<])/g, '/mobile-news?brand=Xiaomi', 'Xiaomi news'],
-  [/\b(OnePlus [\w\s]*?)(?=[\s,.<])/g, '/mobile-news?brand=OnePlus', 'OnePlus news'],
-  [/\b(Nothing Phone[\w\s]*?)(?=[\s,.<])/g, '/mobile-news?brand=Nothing', 'Nothing news'],
-  [/\b(Motorola [\w\s]*?)(?=[\s,.<])/g, '/mobile-news?brand=Motorola', 'Motorola news'],
-  [/\b(Realme [\w\s]*?)(?=[\s,.<])/g, '/mobile-news?brand=Realme', 'Realme news'],
-  [/\b(Vivo [\w\s]*?)(?=[\s,.<])/g, '/mobile-news?brand=Vivo', 'Vivo news'],
-  [/\b(OPPO [\w\s]*?)(?=[\s,.<])/g, '/mobile-news?brand=OPPO', 'OPPO news'],
-  // Category keywords
-  [/\b(smartphone review|phone review|hands-on review)s?\b/gi, '/reviews', 'Phone reviews'],
-  [/\b(compare|comparison|vs\.|versus)\b/gi, '/compare', 'Compare phones'],
-  [/\b(best phone|best smartphone|top phone)s?\b/gi, '/compare', 'Best phones'],
-  [/\b(5G phone|5G smartphone|5G support|5G band)s?\b/gi, '/mobile-news', 'Latest 5G phones'],
-  [/\b(budget phone|budget smartphone|affordable phone)s?\b/gi, '/mobile-news', 'Budget phones India'],
-  [/\b(flagship phone|premium smartphone|flagship smartphone)s?\b/gi, '/mobile-news', 'Flagship phones'],
-  [/\b(web stor(?:y|ies))\b/gi, '/web-stories', 'Web stories'],
+  // ── BRAND NAMES → brand filtered news pages ──
+  [/\bSamsung\b/g, '/mobile-news?brand=Samsung', 'Latest Samsung news'],
+  [/\b(Apple|iPhone)\b/g, '/mobile-news?brand=Apple', 'Latest Apple iPhone news'],
+  [/\bXiaomi\b/g, '/mobile-news?brand=Xiaomi', 'Latest Xiaomi news'],
+  [/\bOnePlus\b/g, '/mobile-news?brand=OnePlus', 'Latest OnePlus news'],
+  [/\bNothing\b/g, '/mobile-news?brand=Nothing', 'Latest Nothing Phone news'],
+  [/\bMotorola\b/g, '/mobile-news?brand=Motorola', 'Latest Motorola news'],
+  [/\bRealme\b/g, '/mobile-news?brand=Realme', 'Latest Realme news'],
+  [/\bVivo\b/g, '/mobile-news?brand=Vivo', 'Latest Vivo news'],
+  [/\bOPPO\b/g, '/mobile-news?brand=OPPO', 'Latest OPPO news'],
+  [/\biQOO\b/g, '/mobile-news?brand=iQOO', 'Latest iQOO news'],
+  [/\bPoco\b/g, '/mobile-news?brand=Poco', 'Latest Poco news'],
+  [/\bRedmi\b/g, '/mobile-news?brand=Xiaomi', 'Latest Xiaomi Redmi news'],
+  [/\bGoogle Pixel\b/g, '/mobile-news', 'Latest mobile news'],
+  [/\bHonor\b/g, '/mobile-news', 'Latest mobile news'],
+  [/\bInfinix\b/g, '/mobile-news', 'Latest mobile news'],
+  [/\bTecno\b/g, '/mobile-news', 'Latest mobile news'],
+  [/\bLava\b/g, '/mobile-news', 'Latest mobile news'],
+  // ── PRODUCT CATEGORIES ──
+  [/\b(action camera|action cam)s?\b/gi, '/mobile-news', 'Latest tech news'],
+  [/\b(smartphone|mobile phone|android phone)s?\b/gi, '/mobile-news', 'Latest mobile phone news'],
+  [/\b(phone review|hands-on|first look|specs breakdown)s?\b/gi, '/reviews', 'Phone reviews India'],
+  [/\b(compare|head-to-head|versus|vs\.)\b/gi, '/compare', 'Compare phones India'],
+  [/\b(best phone|best smartphone|top phone|worth buying)s?\b/gi, '/compare', 'Best phones India'],
+  [/\b5G (phone|smartphone|band|support|network)s?\b/gi, '/mobile-news', 'Latest 5G phones India'],
+  [/\b(budget phone|budget smartphone|affordable phone|mid-range phone)s?\b/gi, '/mobile-news', 'Budget phones India'],
+  [/\b(flagship phone|premium smartphone|flagship smartphone)s?\b/gi, '/mobile-news', 'Flagship phones India'],
+  [/\b(foldable phone|foldable smartphone)s?\b/gi, '/mobile-news', 'Foldable phones India'],
+  [/\b(tablet|smartwatch|TWS earbuds|wireless earbuds|earphones)s?\b/gi, '/mobile-news', 'Latest tech news'],
+  [/\b(Flipkart|Amazon India)\b/g, '/mobile-news', 'Best phone deals India'],
+  [/\b(Jio|Airtel|Vi Vodafone)\b/g, '/mobile-news', 'Latest 5G news India'],
+  [/\b(web stor(?:y|ies))\b/gi, '/web-stories', 'Web Stories'],
 ]
 
-function addInternalLinks(html: string, currentSlug: string): string {
-  // Don't touch existing <a> tags or content inside HTML tags
-  // Split on HTML tags, only process text nodes
+function addInternalLinks(html: string, _currentSlug: string): string {
   const parts = html.split(/(<[^>]+>)/g)
-  const linked = new Set<string>() // track which URLs already linked (max 1 per URL)
+  const linked = new Set<string>() // each URL linked max once per article
+  let insideAnchor = false
 
-  return parts.map((part, i) => {
-    // Skip HTML tags themselves
-    if (part.startsWith('<')) return part
+  return parts.map((part) => {
+    // Track if we are inside an existing <a>...</a> — never nest links
+    if (part.startsWith('<a ') || part.startsWith('<a>')) { insideAnchor = true; return part }
+    if (part.startsWith('</a>')) { insideAnchor = false; return part }
+    if (part.startsWith('<')) return part // other HTML tags — skip
+    if (insideAnchor) return part // inside existing link — don't touch
 
     let text = part
     for (const [regex, url, title] of INTERNAL_LINK_MAP) {
-      if (linked.has(url)) continue // only link each category once per article
+      if (linked.has(url)) continue // this URL already linked once, skip
+      // Reset lastIndex for global regexes
+      regex.lastIndex = 0
       const newText = text.replace(regex, (match) => {
         if (linked.has(url)) return match
         linked.add(url)
         return `<a href="${url}" title="${title}" class="internal-link">${match}</a>`
       })
-      if (newText !== text) {
-        text = newText
-        break // one replacement per text node to avoid nesting
-      }
+      if (newText !== text) text = newText
     }
     return text
   }).join('')
