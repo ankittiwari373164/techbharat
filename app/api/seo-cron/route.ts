@@ -2,7 +2,8 @@
 // Auto-index new articles to Google + refresh GSC cache
 // Called by Vercel cron every hour
 import { NextRequest, NextResponse } from 'next/server'
-import { kv } from '@/lib/kv'
+import { Redis } from '@upstash/redis'
+const kv = new Redis({ url: process.env.KV_REST_API_URL!, token: process.env.KV_REST_API_TOKEN! })
 
 const SITE_URL = process.env.SITE_URL || 'https://thetechbharat.com'
 

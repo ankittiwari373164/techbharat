@@ -1,7 +1,8 @@
 // app/api/seo/route.ts
 // SEO Automation Hub — Google Search Console + Indexing API + Trends + AI Meta
 import { NextRequest, NextResponse } from 'next/server'
-import { kv } from '@/lib/kv'
+import { Redis } from '@upstash/redis'
+const kv = new Redis({ url: process.env.KV_REST_API_URL!, token: process.env.KV_REST_API_TOKEN! })
 
 const SITE_URL = process.env.SITE_URL || 'https://thetechbharat.com'
 
