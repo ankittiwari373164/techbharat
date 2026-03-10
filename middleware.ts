@@ -41,10 +41,14 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  if (pathname.startsWith('/api/scheduler')) {
+  if (pathname.startsWith('/api/scheduler') || pathname.startsWith('/api/seo-cron')) {
     const secret = process.env.CRON_SECRET
-    if (secret && request.headers.get('authorization') !== `Bearer ${secret}`) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    if (secret) {
+      const qSecret = request.nextUrl.searchParams.get('secret')
+      const hSecret = request.headers.get('authorization')?.replace('Bearer ', '')
+      if (qSecret !== secret && hSecret !== secret) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
     }
   }
 

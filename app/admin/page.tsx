@@ -22,6 +22,7 @@ function emptyStory() { return { title:'', brand:'TechBharat', category:'Mobile 
 export default function AdminPage() {
   const [tab,setTab]                   = useState<Tab>('dashboard')
   const [articles,setArticles]         = useState<Article[]>([])
+  const [articleViews,setArticleViews]  = useState<Record<string,number>>({})
   const [stats,setStats]               = useState<Stats|null>(null)
   const [schedule,setSchedule]         = useState<ScheduleStatus|null>(null)
   const [apiStatus,setApiStatus]       = useState<Record<string,string>>({})
@@ -72,6 +73,8 @@ export default function AdminPage() {
       const statusData  = await statusRes.json()
       const storiesData = await storiesRes.json()
       setArticles(artData.articles||[])
+      // Load view counts
+      fetch('/api/admin/views').then(r=>r.json()).then(d=>setArticleViews(d.views||{})).catch(()=>{})
       setStats(artData.stats||null)
       setSchedule(statusData.schedule||null)
       setApiStatus(statusData.keys||{})
@@ -366,7 +369,7 @@ export default function AdminPage() {
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 border-b border-gray-200">
-                    <tr><th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Title</th><th className="text-left px-3 py-3 text-xs font-semibold text-gray-500 uppercase w-20">Brand</th><th className="text-left px-3 py-3 text-xs font-semibold text-gray-500 uppercase w-24">Type</th><th className="text-left px-3 py-3 text-xs font-semibold text-gray-500 uppercase w-20">Date</th><th className="text-center px-3 py-3 text-xs font-semibold text-gray-500 uppercase w-10">★</th><th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase w-28">Actions</th></tr>
+                    <tr><th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Title</th><th className="text-left px-3 py-3 text-xs font-semibold text-gray-500 uppercase w-20">Brand</th><th className="text-left px-3 py-3 text-xs font-semibold text-gray-500 uppercase w-24">Type</th><th className="text-left px-3 py-3 text-xs font-semibold text-gray-500 uppercase w-20">Date</th><th className="text-center px-3 py-3 text-xs font-semibold text-gray-500 uppercase w-16">👁 Views</th><th className="text-center px-3 py-3 text-xs font-semibold text-gray-500 uppercase w-10">★</th><th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase w-28">Actions</th></tr>
                   </thead>
                   <tbody>
                     {filtered.map(a=>(
@@ -375,11 +378,12 @@ export default function AdminPage() {
                         <td className="px-3 py-2.5 text-xs text-gray-500">{a.brand}</td>
                         <td className="px-3 py-2.5"><span className={`text-[10px] font-bold px-2 py-0.5 rounded ${typeColor[a.type]||'bg-gray-100 text-gray-600'}`}>{a.type}</span></td>
                         <td className="px-3 py-2.5 text-xs text-gray-400">{pubDate(a.publishDate)}</td>
+                        <td className="px-3 py-2.5 text-center"><span className="text-xs font-semibold text-gray-700">{(articleViews[a.slug]||0).toLocaleString()}</span></td>
                         <td className="px-3 py-2.5 text-center"><button onClick={()=>handleToggleFeat(a.id)} className={`text-base ${a.isFeatured?'opacity-100':'opacity-20 hover:opacity-50'}`}>⭐</button></td>
                         <td className="px-4 py-2.5 text-right"><div className="flex items-center justify-end gap-2"><button onClick={()=>setEditArticle(a)} className="text-xs text-blue-600 hover:text-blue-800 font-medium">Edit</button><a href={`/article/${a.slug}`} target="_blank" className="text-xs text-gray-400 hover:text-gray-600">View</a><button onClick={()=>setDeleteId(a.id)} className="text-xs text-red-500 hover:text-red-700 font-medium">Del</button></div></td>
                       </tr>
                     ))}
-                    {filtered.length===0 && <tr><td colSpan={6} className="px-4 py-10 text-center text-gray-400 text-sm">No articles.</td></tr>}
+                    {filtered.length===0 && <tr><td colSpan={7} className="px-4 py-10 text-center text-gray-400 text-sm">No articles.</td></tr>}
                   </tbody>
                 </table>
               </div>
