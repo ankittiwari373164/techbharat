@@ -650,7 +650,7 @@ export default function AdminPage() {
                       <span className="text-[10px] text-gray-400">{seoGsc.period}</span>
                     </div>
                     {gscQueries.length===0
-                      ? <p className="text-xs text-gray-400 italic p-3 bg-amber-50 rounded-lg">No data — add GOOGLE_SERVICE_KEY to Vercel env to enable this</p>
+                      ? <p className="text-xs text-gray-400 italic p-3 bg-blue-50 rounded-lg">✅ GSC connected — no search clicks yet. Data appears after Google indexes your articles and users click them (usually 7-14 days for new sites).</p>
                       : <>
                           <div className="grid grid-cols-12 text-[10px] font-bold text-gray-400 uppercase px-2 pb-2">
                             <span className="col-span-6">Query</span><span className="col-span-2 text-center">Clicks</span><span className="col-span-2 text-center">Impr.</span><span className="col-span-2 text-center">Pos.</span>
@@ -672,7 +672,7 @@ export default function AdminPage() {
                       <span className="text-[10px] text-gray-400">{seoGsc.period}</span>
                     </div>
                     {gscPages.length===0
-                      ? <p className="text-xs text-gray-400 italic p-3 bg-amber-50 rounded-lg">No data yet — GSC needs 48-72h after verification</p>
+                      ? <p className="text-xs text-gray-400 italic p-3 bg-blue-50 rounded-lg">✅ GSC connected — page impressions will appear once Google starts showing your pages in search results.</p>
                       : <>
                           <div className="grid grid-cols-12 text-[10px] font-bold text-gray-400 uppercase px-2 pb-2">
                             <span className="col-span-7">Page</span><span className="col-span-2 text-center">Clicks</span><span className="col-span-3 text-center">CTR</span>
