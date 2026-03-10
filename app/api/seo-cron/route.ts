@@ -156,9 +156,10 @@ async function indexNew(log: string[]): Promise<void> {
   let n = 0
   for (const key of keys) {
     const art = await kv.get(key) as Record<string, unknown> | null
+    if (!art) continue
     // Support both publishedAt (number) and publishDate (ISO string)
-    const artTime = (art.publishedAt as number) || new Date(art.publishDate as string || 0).getTime()
-    if (!art || artTime <= twoHrsAgo || (art.googleIndexed as boolean)) continue
+    const artTime = (art.publishedAt as number) || new Date((art.publishDate as string) || 0).getTime()
+    if (artTime <= twoHrsAgo || (art.googleIndexed as boolean)) continue
     const url = `${SITE_URL}/article/${key.replace('article:', '')}`
     try {
       const r      = await fetch('https://indexing.googleapis.com/v3/urlNotifications:publish', { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ url, type: 'URL_UPDATED' }) })
