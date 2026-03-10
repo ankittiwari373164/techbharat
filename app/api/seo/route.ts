@@ -159,8 +159,9 @@ async function fetchTrendingTopics(): Promise<{ title: string; traffic: string; 
     )
     const xml = await res.text()
     const items: { title: string; traffic: string; link: string }[] = []
-    const matches = xml.matchAll(/<item>([\s\S]*?)<\/item>/g)
-    for (const match of matches) {
+    const itemRegex = /<item>([\s\S]*?)<\/item>/g
+    let match: RegExpExecArray | null
+    while ((match = itemRegex.exec(xml)) !== null) {
       const block   = match[1]
       const title   = block.match(/<title><!\[CDATA\[(.*?)\]\]>/)?.[1] || block.match(/<title>(.*?)<\/title>/)?.[1] || ''
       const traffic = block.match(/<ht:approx_traffic>(.*?)<\/ht:approx_traffic>/)?.[1] || ''
