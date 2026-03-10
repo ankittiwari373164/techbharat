@@ -93,3 +93,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: false, error: (err as Error).message }, { status: 500 })
   }
 }
+
+// UptimeRobot sends HEAD requests for uptime checks — respond 200 so monitor stays green
+export async function HEAD(request: NextRequest) {
+  const secret = process.env.CRON_SECRET
+  if (secret) {
+    const { searchParams } = new URL(request.url)
+    const qSecret = searchParams.get('secret')
+    if (qSecret !== secret) return new NextResponse(null, { status: 403 })
+  }
+  return new NextResponse(null, { status: 200 })
+}

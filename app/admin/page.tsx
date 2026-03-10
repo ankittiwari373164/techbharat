@@ -603,9 +603,9 @@ export default function AdminPage() {
                   {label:'🤖 Auto-Fix All Meta',action:async()=>{
                     if(!confirm('Generate AI SEO meta for all articles missing it? (max 30)')) return
                     setSeoLoading(true); setSeoMsg('Generating...')
-                    const r=await fetch('/api/seo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'generate_all_meta'})})
+                    const r=await fetch('/api/seo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'generate_all_meta',force:true})})
                     const d=await r.json()
-                    setSeoMsg(`✅ Generated meta for ${d.generated} articles`); setSeoLoading(false)
+                    setSeoMsg(`✅ Generated meta for ${d.generated} articles (${d.skipped||0} skipped, ${d.total||0} total)`); setSeoLoading(false)
                   }},
                 ].map(btn=>(
                   <button key={btn.label} onClick={btn.action} disabled={seoLoading}

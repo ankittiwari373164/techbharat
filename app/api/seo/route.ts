@@ -316,7 +316,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const body   = await req.json()
+  let body: Record<string, unknown> = {}
+  try { body = await req.json() } catch { /* empty body */ }
   const action = body.action
 
   if (action === 'generate_meta') {
@@ -353,26 +354,27 @@ export async function POST(req: NextRequest) {
   }
 
   if (action === 'generate_all_meta') {
-    // Background: generate meta for all articles missing it
-    const keys = await kv.keys('article:*')
-    let done = 0
-    for (const key of keys.slice(0, 30)) { // max 30 at a time (cost control)
+    const force = body.force === true
+    const keys  = await kv.keys('article:*')
+    let done = 0; let skipped = 0
+    for (const key of keys.slice(0, 30)) {
       const art = await kv.get(key) as Record<string, unknown> | null
-      if (art && !art.seoTitle && art.title) {
-        const meta = await generateSeoMeta(art.title as string, (art.content as string) || '')
-        if (!meta.error) {
-          await kv.set(key, JSON.stringify({
-            ...art,
-            seoTitle:       meta.seoTitle,
-            seoDescription: meta.metaDescription,
-            focusKeyword:   meta.focusKeyword,
-          }))
-          done++
-        }
-        await new Promise(r => setTimeout(r, 200))
+      if (!art || !art.title) { skipped++; continue }
+      if (!force && art.seoTitle) { skipped++; continue } // already has meta
+      const meta = await generateSeoMeta(art.title as string, (art.content as string) || '')
+      if (!meta.error) {
+        await kv.set(key, {
+          ...art,
+          seoTitle:       meta.seoTitle,
+          seoDescription: meta.metaDescription,
+          focusKeyword:   meta.focusKeyword,
+          seoKeywords:    meta.secondaryKeywords || [],
+        })
+        done++
       }
+      await new Promise(r => setTimeout(r, 300))
     }
-    return NextResponse.json({ generated: done })
+    return NextResponse.json({ generated: done, skipped, total: keys.length })
   }
 
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
