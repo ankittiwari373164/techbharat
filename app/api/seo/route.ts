@@ -230,10 +230,11 @@ async function getCached<T>(key: string, ttlSeconds: number, fetcher: () => Prom
 // ── Route handlers ────────────────────────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
-  // Auth check
-  const session = req.cookies.get('admin_session')?.value
-  const valid   = await kv.get('admin_session:' + session)
-  if (!valid) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  // Auth check — same as middleware
+  const token = req.cookies.get('__tb_admin')?.value
+  if (!token || !token.startsWith('TBOK:') || Date.now() > parseInt(token.split(':')[1] || '0')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
 
   const { searchParams } = new URL(req.url)
   const action = searchParams.get('action')
@@ -272,10 +273,11 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  // Auth check
-  const session = req.cookies.get('admin_session')?.value
-  const valid   = await kv.get('admin_session:' + session)
-  if (!valid) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  // Auth check — same as middleware
+  const token = req.cookies.get('__tb_admin')?.value
+  if (!token || !token.startsWith('TBOK:') || Date.now() > parseInt(token.split(':')[1] || '0')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
 
   const body   = await req.json()
   const action = body.action

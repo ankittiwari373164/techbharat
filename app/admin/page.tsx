@@ -48,6 +48,9 @@ export default function AdminPage() {
   const [phoneImages,setPhoneImages]   = useState<{name:string;slug:string;count:number}[]>([])
   // seo
   const [seoGsc,setSeoGsc]             = useState<{queries:unknown[];pages:unknown[];period:string}|null>(null)
+  // ensure safe array access
+  const gscQueries = (seoGsc?.queries || []) as Array<{keys:string[];clicks:number;impressions:number;position:number}>
+  const gscPages   = (seoGsc?.pages   || []) as Array<{keys:string[];clicks:number;impressions:number;ctr:number}>
   const [seoTrends,setSeoTrends]       = useState<{title:string;traffic:string;link:string}[]>([])
   const [seoLoading,setSeoLoading]     = useState(false)
   const [seoMsg,setSeoMsg]             = useState('')
@@ -580,8 +583,10 @@ export default function AdminPage() {
                   {label:'📊 Load GSC Traffic',action:async()=>{
                     setSeoLoading(true); setSeoMsg('')
                     const r=await fetch('/api/seo?action=gsc&days=28'); const d=await r.json()
-                    setSeoGsc(d); setSeoLoading(false)
-                    setSeoMsg(d.error?`GSC Error: ${d.error}`:`Loaded ${(d.queries||[]).length} queries, ${(d.pages||[]).length} pages`)
+                    setSeoLoading(false)
+                    if(d.error) { setSeoMsg(`GSC Error: ${d.error}`); return }
+                    setSeoGsc({ queries: d.queries||[], pages: d.pages||[], period: d.period||'' })
+                    setSeoMsg(`Loaded ${(d.queries||[]).length} queries, ${(d.pages||[]).length} pages`)
                   }},
                   {label:'📈 India Trends',action:async()=>{
                     setSeoLoading(true); setSeoMsg('')
@@ -644,13 +649,13 @@ export default function AdminPage() {
                       <h2 className="text-sm font-bold text-gray-800">🔍 Top Search Queries</h2>
                       <span className="text-[10px] text-gray-400">{seoGsc.period}</span>
                     </div>
-                    {(seoGsc.queries as Array<{keys:string[];clicks:number;impressions:number;position:number}>).length===0
+                    {gscQueries.length===0
                       ? <p className="text-xs text-gray-400 italic p-3 bg-amber-50 rounded-lg">No data — add GOOGLE_SERVICE_KEY to Vercel env to enable this</p>
                       : <>
                           <div className="grid grid-cols-12 text-[10px] font-bold text-gray-400 uppercase px-2 pb-2">
                             <span className="col-span-6">Query</span><span className="col-span-2 text-center">Clicks</span><span className="col-span-2 text-center">Impr.</span><span className="col-span-2 text-center">Pos.</span>
                           </div>
-                          {(seoGsc.queries as Array<{keys:string[];clicks:number;impressions:number;position:number}>).map((row,i)=>(
+                          {gscQueries.map((row,i)=>(
                             <div key={i} className="grid grid-cols-12 text-xs px-2 py-1.5 rounded hover:bg-gray-50 border-b border-gray-50">
                               <span className="col-span-6 text-gray-700 truncate">{row.keys[0]}</span>
                               <span className="col-span-2 text-center text-green-600 font-bold">{row.clicks}</span>
@@ -666,13 +671,13 @@ export default function AdminPage() {
                       <h2 className="text-sm font-bold text-gray-800">📄 Top Pages</h2>
                       <span className="text-[10px] text-gray-400">{seoGsc.period}</span>
                     </div>
-                    {(seoGsc.pages as Array<{keys:string[];clicks:number;impressions:number;ctr:number}>).length===0
+                    {gscPages.length===0
                       ? <p className="text-xs text-gray-400 italic p-3 bg-amber-50 rounded-lg">No data yet — GSC needs 48-72h after verification</p>
                       : <>
                           <div className="grid grid-cols-12 text-[10px] font-bold text-gray-400 uppercase px-2 pb-2">
                             <span className="col-span-7">Page</span><span className="col-span-2 text-center">Clicks</span><span className="col-span-3 text-center">CTR</span>
                           </div>
-                          {(seoGsc.pages as Array<{keys:string[];clicks:number;impressions:number;ctr:number}>).map((row,i)=>(
+                          {gscPages.map((row,i)=>(
                             <div key={i} className="grid grid-cols-12 text-xs px-2 py-1.5 rounded hover:bg-gray-50 border-b border-gray-50">
                               <span className="col-span-7 text-gray-700 truncate">{row.keys[0].replace('https://thetechbharat.com','') || '/'}</span>
                               <span className="col-span-2 text-center text-green-600 font-bold">{row.clicks}</span>
