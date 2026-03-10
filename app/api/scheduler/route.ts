@@ -1,3 +1,4 @@
+// v2 - query param auth for UptimeRobot free plan
 import { NextRequest, NextResponse } from 'next/server'
 import { fetchSingleArticle, buildArticles } from '@/lib/news-fetcher'
 import { getAllArticlesAsync, addArticleAsync } from '@/lib/store'

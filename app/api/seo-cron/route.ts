@@ -55,19 +55,60 @@ const PAGE_CTX: Record<PageKey, string> = {
   'author':      'Vijay Yadav - Senior Mobile Editor with 11 years experience reviewing smartphones',
 }
 
-async function genPageMeta(page: PageKey, trends: { title: string }[]): Promise<PageSeoData | null> {
+// Fixed titles/descriptions per page — never change
+const FIXED_PAGE_META: Record<PageKey, { title: string; description: string }> = {
+  'home':        { title: "The Tech Bharat – India's Mobile Technology News", description: "The Tech Bharat delivers original mobile technology news, smartphone reviews, comparisons, and in-depth analysis for Indian readers." },
+  'mobile-news': { title: "Mobile News – Latest Smartphone News India | The Tech Bharat", description: "Latest mobile phone news, launches, leaks, and updates from Samsung, Apple, Xiaomi, OnePlus and more. India-first coverage." },
+  'reviews':     { title: "Smartphone Reviews India – Hands-On Tests | The Tech Bharat", description: "Expert smartphone reviews and hands-on tests from The Tech Bharat. India pricing, real-world battery tests, and camera analysis." },
+  'compare':     { title: "Compare Phones India – Side-by-Side Comparison | The Tech Bharat", description: "Compare smartphones side-by-side with India pricing, specifications, camera tests, and battery life. Find the best phone for your budget." },
+  'web-stories': { title: "Tech Web Stories – Mobile News India | The Tech Bharat", description: "Quick visual stories about the latest smartphones, tech news and mobile launches in India." },
+  'about':       { title: "About The Tech Bharat – India's Trusted Mobile Tech News", description: "The Tech Bharat is India's independent mobile technology news publication. Meet our team and learn about our editorial standards." },
+  'author':      { title: "Vijay Yadav – Senior Mobile Editor | The Tech Bharat", description: "Vijay Yadav has 11 years of experience reviewing smartphones for Indian buyers. Senior Mobile Editor at The Tech Bharat." },
+}
+
+// Fixed base keywords always included — trends are appended to these
+const FIXED_KEYWORDS: Record<PageKey, string[]> = {
+  'home':        ['mobile news India', 'smartphone news India', 'tech news India', 'phone launches India', 'best smartphones India 2026'],
+  'mobile-news': ['mobile news India', 'smartphone launch India', 'new phone India', 'phone price India', 'latest Android phone India'],
+  'reviews':     ['smartphone review India', 'phone review India', 'best phone under 20000', 'camera test India', 'battery life test'],
+  'compare':     ['compare phones India', 'best phone to buy India', 'phone vs phone India', 'which phone to buy', 'smartphone comparison India'],
+  'web-stories': ['smartphone news story', 'mobile tech story India', 'phone launch story', 'tech news India'],
+  'about':       ['The Tech Bharat', 'Indian tech news site', 'mobile technology India'],
+  'author':      ['Vijay Yadav', 'mobile editor India', 'smartphone reviewer India'],
+}
+
+async function genPageKeywords(page: PageKey, trends: { title: string }[]): Promise<PageSeoData | null> {
   const apiKey = process.env.ANTHROPIC_API_KEY
-  if (!apiKey) return null
-  try {
-    const res  = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 350, messages: [{ role: 'user', content: `SEO expert for Indian tech site "The Tech Bharat". Page: ${page}. Context: ${PAGE_CTX[page]}. Trending in India: ${trends.slice(0,6).map(t=>t.title).join(', ')}. Return ONLY JSON: {"title":"max 60 chars","description":"150-160 chars India-focused","keywords":["kw1","kw2","kw3","kw4","kw5","kw6"],"focusKeyword":"main kw","trendKeywords":["t1","t2","t3"]}` }] })
-    })
-    const data = await res.json()
-    const meta = JSON.parse((data.content?.[0]?.text || '').replace(/```json|```/g, '').trim())
-    return { title: meta.title, description: meta.description, keywords: meta.keywords || [], focusKeyword: meta.focusKeyword || '', trendKeywords: meta.trendKeywords || [], lastUpdated: Date.now() }
-  } catch { return null }
+  // Trend keywords — filter to tech-relevant ones
+  const trendTitles = trends.slice(0, 8).map(t => t.title)
+  
+  let trendKeywords: string[] = []
+  if (apiKey) {
+    try {
+      const res  = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+        body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 200, messages: [{ role: 'user', content: `You are an SEO expert. From these trending India topics: ${trendTitles.join(', ')} — pick 4-5 that are relevant to a mobile tech/smartphone news site. Convert them into SEO keyword phrases. Return ONLY a JSON array of strings, nothing else. Example: ["samsung galaxy s26 price India","5G phone launch 2026"]` }] })
+      })
+      const data = await res.json()
+      const text = (data.content?.[0]?.text || '').replace(/```json|```/g, '').trim()
+      trendKeywords = JSON.parse(text)
+    } catch { trendKeywords = trendTitles.slice(0, 3) }
+  } else {
+    trendKeywords = trendTitles.slice(0, 3)
+  }
+
+  const fixed = FIXED_PAGE_META[page]
+  const allKeywords = [...FIXED_KEYWORDS[page], ...trendKeywords]
+  
+  return {
+    title:         fixed.title,        // NEVER changes
+    description:   fixed.description,  // NEVER changes  
+    keywords:      allKeywords,
+    focusKeyword:  FIXED_KEYWORDS[page][0],
+    trendKeywords: trendKeywords,
+    lastUpdated:   Date.now(),
+  }
 }
 
 async function genArticleMeta(slug: string, title: string, content: string, trends: { title: string }[]): Promise<boolean> {
@@ -169,7 +210,7 @@ export async function GET(req: NextRequest) {
 
   // All pages
   for (const page of PAGE_KEYS) {
-    const meta = await genPageMeta(page, trends)
+    const meta = await genPageKeywords(page, trends)
     if (meta) { await setPageSeo(page, meta); log.push(`Page updated: ${page}`) }
     await new Promise(r => setTimeout(r, 500))
   }

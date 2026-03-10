@@ -4,25 +4,27 @@ import { headers } from 'next/headers'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 
+// Fixed — never change
+const SITE_TITLE = "The Tech Bharat – India's Mobile Technology News"
+const SITE_DESC  = 'The Tech Bharat delivers original mobile technology news, smartphone reviews, comparisons, and in-depth analysis for Indian readers.'
+
 export async function generateMetadata(): Promise<Metadata> {
-  let dynamicSeo = null
+  // Only keywords are dynamic — updated every 20h with Google Trends
+  let dynKeywords: string[] = ['mobile news India', 'smartphone reviews', 'tech news India', 'phone comparison India', 'best smartphones 2026']
   try {
     const { getPageSeo } = await import('@/lib/seo-store')
-    dynamicSeo = await getPageSeo('home')
-  } catch { /* fallback to static */ }
-
-  const dynTitle = dynamicSeo?.title       || "The Tech Bharat – India's Mobile Technology News"
-  const dynDesc  = dynamicSeo?.description || 'The Tech Bharat delivers original mobile technology news, smartphone reviews, comparisons, and in-depth analysis for Indian readers.'
-  const dynKw    = dynamicSeo?.keywords    || ['mobile news India', 'smartphone reviews', 'tech news India', 'phone comparison']
+    const seo = await getPageSeo('home')
+    if (seo?.keywords?.length) dynKeywords = seo.keywords
+  } catch { /* use defaults */ }
 
   return {
     metadataBase: new URL('https://thetechbharat.com'),
     title: {
       template: '%s | The Tech Bharat',
-      default: dynTitle,
+      default: SITE_TITLE,
     },
-    description: dynDesc,
-    keywords: dynKw,
+    description: SITE_DESC,
+    keywords: dynKeywords,
     authors:   [{ name: 'The Tech Bharat Editorial Team' }],
     creator:   'The Tech Bharat',
     publisher: 'The Tech Bharat',
@@ -31,8 +33,8 @@ export async function generateMetadata(): Promise<Metadata> {
       locale:      'en_IN',
       url:         'https://thetechbharat.com',
       siteName:    'The Tech Bharat',
-      title:       dynTitle,
-      description: dynDesc,
+      title:       SITE_TITLE,
+      description: SITE_DESC,
       images: [{ url: '/og-image.jpg', width: 1200, height: 630 }],
     },
     twitter: { card: 'summary_large_image', site: '@techbharat' },

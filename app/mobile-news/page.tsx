@@ -17,13 +17,18 @@ async function getDynamicSeo(pageKey: string) {
 
 export async function generateMetadata({ searchParams }: { searchParams: { brand?: string } }): Promise<Metadata> {
   const brand = searchParams.brand
-  const seo   = !brand ? await getDynamicSeo('mobile-news') : null
+  // Only keywords are dynamic
+  let dynKeywords: string[] = ['mobile news India', 'smartphone launch India', 'new phone India', 'phone price India']
+  if (!brand) {
+    const seo = await getDynamicSeo('mobile-news')
+    if (seo?.keywords?.length) dynKeywords = seo.keywords
+  }
   return {
-    title: brand ? `${brand} News India – Latest ${brand} Smartphones | The Tech Bharat` : (seo?.title || 'Mobile News – Latest Smartphone News India | The Tech Bharat'),
+    title: brand ? `${brand} News India – Latest ${brand} Smartphones | The Tech Bharat` : 'Mobile News – Latest Smartphone News India | The Tech Bharat',
     description: brand
       ? `Latest ${brand} smartphone news, launches, prices, and updates for India. Expert analysis from The Tech Bharat.`
-      : (seo?.description || 'Latest mobile phone news, launches, leaks, and updates from Samsung, Apple, Xiaomi, OnePlus and more. India-first coverage.'),
-    keywords: seo?.keywords || ['mobile news India', 'smartphone launch India', 'phone news'],
+      : 'Latest mobile phone news, launches, leaks, and updates from Samsung, Apple, Xiaomi, OnePlus and more. India-first coverage.',
+    keywords: dynKeywords,
     alternates: { canonical: brand ? `https://thetechbharat.com/mobile-news?brand=${brand}` : 'https://thetechbharat.com/mobile-news' },
     openGraph: {
       title: brand ? `${brand} News India | The Tech Bharat` : 'Mobile News India | The Tech Bharat',
