@@ -9,11 +9,11 @@ export async function generateMetadata(): Promise<Metadata> {
   try {
     const { getPageSeo } = await import('@/lib/seo-store')
     dynamicSeo = await getPageSeo('home')
-  } catch { /* fallback */ }
+  } catch { /* fallback to static */ }
 
-  const dynTitle = dynamicSeo?.title || "The Tech Bharat – India's Mobile Technology News"
+  const dynTitle = dynamicSeo?.title       || "The Tech Bharat – India's Mobile Technology News"
   const dynDesc  = dynamicSeo?.description || 'The Tech Bharat delivers original mobile technology news, smartphone reviews, comparisons, and in-depth analysis for Indian readers.'
-  const dynKw    = dynamicSeo?.keywords || ['mobile news India', 'smartphone reviews', 'tech news India', 'phone comparison']
+  const dynKw    = dynamicSeo?.keywords    || ['mobile news India', 'smartphone reviews', 'tech news India', 'phone comparison']
 
   return {
     metadataBase: new URL('https://thetechbharat.com'),
@@ -23,29 +23,29 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description: dynDesc,
     keywords: dynKw,
-  authors: [{ name: 'The Tech Bharat Editorial Team' }],
-  creator: 'The Tech Bharat',
-  publisher: 'The Tech Bharat',
-  openGraph: {
-    type: 'website',
-    locale: 'en_IN',
-    url: 'https://thetechbharat.com',
-    siteName: 'The Tech Bharat',
-    title: "The Tech Bharat – India's Mobile Technology News",
-    description: 'Latest mobile news, phone reviews, and smartphone comparisons for Indian readers.',
-    images: [{ url: '/og-image.jpg', width: 1200, height: 630 }],
-  },
-  twitter: { card: 'summary_large_image', site: '@techbharat' },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: { index: true, follow: true, 'max-image-preview': 'large' },
-  },
-  alternates: { canonical: 'https://thetechbharat.com' },
+    authors:   [{ name: 'The Tech Bharat Editorial Team' }],
+    creator:   'The Tech Bharat',
+    publisher: 'The Tech Bharat',
+    openGraph: {
+      type:        'website',
+      locale:      'en_IN',
+      url:         'https://thetechbharat.com',
+      siteName:    'The Tech Bharat',
+      title:       dynTitle,
+      description: dynDesc,
+      images: [{ url: '/og-image.jpg', width: 1200, height: 630 }],
+    },
+    twitter: { card: 'summary_large_image', site: '@techbharat' },
+    robots: {
+      index:  true,
+      follow: true,
+      googleBot: { index: true, follow: true, 'max-image-preview': 'large' },
+    },
+    alternates: { canonical: 'https://thetechbharat.com' },
+  }
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  // Detect admin routes server-side — hide site Header/Footer for admin
   const headersList = headers()
   const pathname    = headersList.get('x-pathname') ||
                       headersList.get('next-url') ||
@@ -73,7 +73,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             "alternateName": "TTB",
             "url": "https://thetechbharat.com",
             "logo": "https://thetechbharat.com/logo.png",
-            "description": "India\'s independent mobile technology news publication covering smartphones, reviews, and comparisons for Indian buyers.",
+            "description": "India's independent mobile technology news publication covering smartphones, reviews, and comparisons for Indian buyers.",
             "foundingDate": "2025",
             "areaServed": "IN",
             "inLanguage": "en-IN",
