@@ -321,7 +321,9 @@ export async function POST(req: NextRequest) {
   const action = body.action
 
   if (action === 'generate_meta') {
-    const { slug, title, content } = body
+    const slug    = body.slug    as string | undefined
+    const title   = body.title   as string | undefined
+    const content = body.content as string | undefined
     if (!slug || !title) return NextResponse.json({ error: 'Missing slug/title' }, { status: 400 })
 
     const meta = await generateSeoMeta(title, content || '')
@@ -342,7 +344,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (action === 'index_url') {
-    const { url } = body
+    const url = body.url as string | undefined
     if (!url) return NextResponse.json({ error: 'Missing url' }, { status: 400 })
     const result = await submitUrlToGoogle(url)
     return NextResponse.json(result)
