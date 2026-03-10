@@ -557,90 +557,197 @@ export default function AdminPage() {
           {/* ── SEO TOOLS ── */}
           {tab==='seo' && (
             <div className="space-y-5">
-              <div className="flex items-center justify-between">
-                <h1 className="text-lg font-bold text-gray-900">🔍 SEO Automation</h1>
-                <span className="text-xs text-gray-400">Powered by Google APIs + AI</span>
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div>
+                  <h1 className="text-lg font-bold text-gray-900">🔍 SEO Automation Hub</h1>
+                  <p className="text-xs text-gray-400 mt-0.5">Auto-refreshes every 20 hours using Google Trends India</p>
+                </div>
+                <button onClick={async()=>{
+                  setSeoLoading(true); setSeoMsg('Running full SEO refresh...')
+                  const r=await fetch(`/api/seo-cron?secret=${encodeURIComponent(process.env.NEXT_PUBLIC_CRON_SECRET||'')}&force=1`)
+                  const d=await r.json()
+                  setSeoMsg(d.log?.[d.log.length-1]||'Done'); setSeoLoading(false)
+                }} disabled={seoLoading} className="bg-[#d4220a] text-white text-xs font-bold px-4 py-2 rounded-lg disabled:opacity-50">
+                  ⚡ Force Full Refresh Now
+                </button>
               </div>
 
-              {seoMsg && <div className="bg-green-50 border border-green-200 text-green-800 text-sm px-4 py-2.5 rounded-lg">{seoMsg}</div>}
+              {seoMsg && <div className="bg-blue-50 border border-blue-200 text-blue-800 text-sm px-4 py-2.5 rounded-lg">{seoMsg}</div>}
 
-              {/* Quick Actions */}
+              {/* ── QUICK ACTIONS ── */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {[
-                  {label:'🔍 Load GSC Data',action:async()=>{
+                  {label:'📊 Load GSC Traffic',action:async()=>{
                     setSeoLoading(true); setSeoMsg('')
                     const r=await fetch('/api/seo?action=gsc&days=28'); const d=await r.json()
                     setSeoGsc(d); setSeoLoading(false)
+                    setSeoMsg(d.error?`GSC Error: ${d.error}`:`Loaded ${(d.queries||[]).length} queries, ${(d.pages||[]).length} pages`)
                   }},
-                  {label:'📈 Trending Topics',action:async()=>{
+                  {label:'📈 India Trends',action:async()=>{
                     setSeoLoading(true); setSeoMsg('')
                     const r=await fetch('/api/seo?action=trends'); const d=await r.json()
                     setSeoTrends(d.trends||[]); setSeoLoading(false)
+                    setSeoMsg(`Loaded ${(d.trends||[]).length} trending topics`)
                   }},
                   {label:'🏷️ Find Missing Meta',action:async()=>{
                     setSeoLoading(true); setSeoMsg('')
                     const r=await fetch('/api/seo?action=meta_batch'); const d=await r.json()
                     setSeoMissingMeta(d.missing||[]); setSeoLoading(false)
-                    setSeoMsg(`Found ${(d.missing||[]).length} articles missing SEO meta (of ${d.total} total)`)
+                    setSeoMsg(`${(d.missing||[]).length} of ${d.total} articles missing SEO meta`)
                   }},
-                  {label:'⚡ Auto-Generate All Meta',action:async()=>{
-                    if(!confirm('Generate AI meta for all articles missing it? (max 30 at a time)')) return
-                    setSeoLoading(true); setSeoMsg('')
+                  {label:'🤖 Auto-Fix All Meta',action:async()=>{
+                    if(!confirm('Generate AI SEO meta for all articles missing it? (max 30)')) return
+                    setSeoLoading(true); setSeoMsg('Generating...')
                     const r=await fetch('/api/seo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'generate_all_meta'})})
                     const d=await r.json()
                     setSeoMsg(`✅ Generated meta for ${d.generated} articles`); setSeoLoading(false)
                   }},
                 ].map(btn=>(
                   <button key={btn.label} onClick={btn.action} disabled={seoLoading}
-                    className="bg-[#1a3a5c] text-white text-xs font-bold px-3 py-3 rounded-lg hover:bg-[#0f2a48] disabled:opacity-50 text-center">
+                    className="bg-[#1a3a5c] text-white text-xs font-bold px-3 py-3 rounded-lg hover:bg-[#0f2a48] disabled:opacity-50 text-center leading-tight">
                     {btn.label}
                   </button>
                 ))}
               </div>
 
-              {/* Google Indexing */}
+              {/* ── AUTOMATION STATUS ── */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-white rounded-xl border border-gray-200 p-4">
+                  <h3 className="text-xs font-bold text-gray-500 uppercase mb-2">🔄 Auto-Refresh Cycle</h3>
+                  <p className="text-2xl font-black text-[#d4220a]">20h</p>
+                  <p className="text-xs text-gray-500 mt-1">All pages + articles updated every 20 hours with fresh Google Trends keywords</p>
+                </div>
+                <div className="bg-white rounded-xl border border-gray-200 p-4">
+                  <h3 className="text-xs font-bold text-gray-500 uppercase mb-2">🤖 What Auto-Updates</h3>
+                  <ul className="text-xs text-gray-600 space-y-1">
+                    <li>✅ Home, Mobile News, Reviews, Compare pages</li>
+                    <li>✅ All article SEO titles + descriptions</li>
+                    <li>✅ Focus keywords from trending topics</li>
+                    <li>✅ Google indexing for new articles</li>
+                  </ul>
+                </div>
+                <div className="bg-white rounded-xl border border-gray-200 p-4">
+                  <h3 className="text-xs font-bold text-gray-500 uppercase mb-2">📋 UptimeRobot Setup</h3>
+                  <p className="text-xs text-gray-600 mb-2">Add this monitor (free):</p>
+                  <code className="text-[10px] bg-gray-100 px-2 py-1 rounded block break-all text-gray-700">
+                    thetechbharat.com/api/seo-cron?secret=YOUR_CRON_SECRET
+                  </code>
+                  <p className="text-[10px] text-gray-400 mt-1">Interval: 60 min</p>
+                </div>
+              </div>
+
+              {/* ── GSC TRAFFIC ── */}
+              {seoGsc && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="bg-white rounded-xl border border-gray-200 p-5">
+                    <div className="flex items-center justify-between mb-3">
+                      <h2 className="text-sm font-bold text-gray-800">🔍 Top Search Queries</h2>
+                      <span className="text-[10px] text-gray-400">{seoGsc.period}</span>
+                    </div>
+                    {(seoGsc.queries as Array<{keys:string[];clicks:number;impressions:number;position:number}>).length===0
+                      ? <p className="text-xs text-gray-400 italic p-3 bg-amber-50 rounded-lg">No data — add GOOGLE_SERVICE_KEY to Vercel env to enable this</p>
+                      : <>
+                          <div className="grid grid-cols-12 text-[10px] font-bold text-gray-400 uppercase px-2 pb-2">
+                            <span className="col-span-6">Query</span><span className="col-span-2 text-center">Clicks</span><span className="col-span-2 text-center">Impr.</span><span className="col-span-2 text-center">Pos.</span>
+                          </div>
+                          {(seoGsc.queries as Array<{keys:string[];clicks:number;impressions:number;position:number}>).map((row,i)=>(
+                            <div key={i} className="grid grid-cols-12 text-xs px-2 py-1.5 rounded hover:bg-gray-50 border-b border-gray-50">
+                              <span className="col-span-6 text-gray-700 truncate">{row.keys[0]}</span>
+                              <span className="col-span-2 text-center text-green-600 font-bold">{row.clicks}</span>
+                              <span className="col-span-2 text-center text-gray-400">{row.impressions}</span>
+                              <span className="col-span-2 text-center text-blue-500">#{row.position?.toFixed(1)}</span>
+                            </div>
+                          ))}
+                        </>
+                    }
+                  </div>
+                  <div className="bg-white rounded-xl border border-gray-200 p-5">
+                    <div className="flex items-center justify-between mb-3">
+                      <h2 className="text-sm font-bold text-gray-800">📄 Top Pages</h2>
+                      <span className="text-[10px] text-gray-400">{seoGsc.period}</span>
+                    </div>
+                    {(seoGsc.pages as Array<{keys:string[];clicks:number;impressions:number;ctr:number}>).length===0
+                      ? <p className="text-xs text-gray-400 italic p-3 bg-amber-50 rounded-lg">No data yet — GSC needs 48-72h after verification</p>
+                      : <>
+                          <div className="grid grid-cols-12 text-[10px] font-bold text-gray-400 uppercase px-2 pb-2">
+                            <span className="col-span-7">Page</span><span className="col-span-2 text-center">Clicks</span><span className="col-span-3 text-center">CTR</span>
+                          </div>
+                          {(seoGsc.pages as Array<{keys:string[];clicks:number;impressions:number;ctr:number}>).map((row,i)=>(
+                            <div key={i} className="grid grid-cols-12 text-xs px-2 py-1.5 rounded hover:bg-gray-50 border-b border-gray-50">
+                              <span className="col-span-7 text-gray-700 truncate">{row.keys[0].replace('https://thetechbharat.com','') || '/'}</span>
+                              <span className="col-span-2 text-center text-green-600 font-bold">{row.clicks}</span>
+                              <span className="col-span-3 text-center text-blue-500">{(row.ctr*100).toFixed(1)}%</span>
+                            </div>
+                          ))}
+                        </>
+                    }
+                  </div>
+                </div>
+              )}
+
+              {/* ── GOOGLE TRENDS ── */}
+              {seoTrends.length>0 && (
+                <div className="bg-white rounded-xl border border-gray-200 p-5">
+                  <h2 className="text-sm font-bold text-gray-800 mb-1">📈 Trending in India Right Now</h2>
+                  <p className="text-xs text-gray-400 mb-3">These keywords are auto-injected into your page metadata every 20 hours</p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    {seoTrends.map((t,i)=>(
+                      <a key={i} href={`https://news.google.com/search?q=${encodeURIComponent(t.title)}+smartphone`} target="_blank" rel="noopener"
+                        className="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg hover:bg-blue-50 group">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-[10px] text-gray-400 font-bold shrink-0">{i+1}</span>
+                          <span className="text-xs text-gray-800 font-medium truncate group-hover:text-blue-700">{t.title}</span>
+                        </div>
+                        {t.traffic && <span className="text-[10px] text-green-600 font-bold ml-1 shrink-0">{t.traffic}</span>}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ── GOOGLE INDEXING ── */}
               <div className="bg-white rounded-xl border border-gray-200 p-5">
-                <h2 className="text-sm font-bold text-gray-800 mb-3">⚡ Google Indexing API</h2>
-                <p className="text-xs text-gray-500 mb-4">Auto-submit URLs to Google for faster indexing. New articles are submitted automatically every hour via cron.</p>
-                <div className="flex gap-2 mb-4">
+                <h2 className="text-sm font-bold text-gray-800 mb-1">⚡ Google Indexing API</h2>
+                <p className="text-xs text-gray-500 mb-3">New articles are auto-submitted to Google every hour. Use manual submit if you want to force-index all articles now.</p>
+                <div className="flex gap-2 flex-wrap">
                   <button onClick={async()=>{
-                    if(!confirm('Submit ALL articles to Google Indexing API? (200/day limit)')) return
-                    setSeoLoading(true); setSeoMsg('')
+                    if(!confirm('Submit ALL articles to Google? (200/day limit)')) return
+                    setSeoLoading(true); setSeoMsg('Submitting to Google...')
                     const r=await fetch('/api/seo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'index_all'})})
                     const d=await r.json()
                     setIndexLog(d.results||[])
                     setSeoMsg(`✅ Submitted ${d.submitted} URLs to Google`); setSeoLoading(false)
                   }} disabled={seoLoading} className="bg-[#d4220a] text-white text-xs font-bold px-4 py-2 rounded-lg hover:opacity-80 disabled:opacity-50">
-                    📤 Submit All Articles
+                    📤 Submit All Articles to Google
                   </button>
                   <button onClick={async()=>{
                     setSeoLoading(true)
                     const r=await fetch('/api/seo?action=index_status'); const d=await r.json()
-                    if(d.lastBatch) setIndexLog(d.lastBatch.results||[])
-                    setSeoLoading(false)
+                    if(d.lastBatch?.results) setIndexLog(d.lastBatch.results)
+                    setSeoLoading(false); setSeoMsg('Loaded last batch results')
                   }} disabled={seoLoading} className="border border-gray-200 text-gray-700 text-xs font-bold px-4 py-2 rounded-lg hover:bg-gray-50">
                     📋 View Last Batch
                   </button>
                 </div>
                 {indexLog.length>0 && (
-                  <div className="max-h-40 overflow-y-auto space-y-1">
-                    {indexLog.slice(0,20).map((r,i)=>(
+                  <div className="mt-3 max-h-36 overflow-y-auto space-y-1 p-2 bg-gray-50 rounded-lg">
+                    {indexLog.slice(0,15).map((r,i)=>(
                       <div key={i} className="flex items-center gap-2 text-xs">
-                        <span className={r.status==='submitted'?'text-green-600':'text-red-500'}>{r.status==='submitted'?'✅':'⚠️'}</span>
-                        <span className="text-gray-500 truncate">{r.url}</span>
-                        <span className={`ml-auto font-mono ${r.status==='submitted'?'text-green-600':'text-red-500'}`}>{r.status}</span>
+                        <span>{r.status==='submitted'?'✅':'⚠️'}</span>
+                        <span className="text-gray-500 truncate flex-1">{r.url.replace('https://thetechbharat.com','')}</span>
+                        <span className={`font-mono text-[10px] ${r.status==='submitted'?'text-green-600':'text-red-400'}`}>{r.status}</span>
                       </div>
                     ))}
                   </div>
                 )}
               </div>
 
-              {/* Single URL Meta Generator */}
+              {/* ── AI META GENERATOR ── */}
               <div className="bg-white rounded-xl border border-gray-200 p-5">
-                <h2 className="text-sm font-bold text-gray-800 mb-3">🏷️ AI Meta Generator</h2>
-                <p className="text-xs text-gray-500 mb-3">Generate SEO title + description for a specific article. Saved back to Redis automatically.</p>
+                <h2 className="text-sm font-bold text-gray-800 mb-1">🏷️ Manual AI Meta Generator</h2>
+                <p className="text-xs text-gray-500 mb-3">Generate for a specific article by slug. Saves automatically to Redis.</p>
                 <div className="flex gap-2 mb-3">
-                  <input type="text" placeholder="Article slug (e.g. gopro-lit-hero-india-review)" value={seoMetaSlug}
+                  <input type="text" placeholder="article slug (e.g. gopro-lit-hero-india-review)" value={seoMetaSlug}
                     onChange={e=>setSeoMetaSlug(e.target.value)}
                     className="flex-1 text-sm border border-gray-200 px-3 py-2 rounded-lg outline-none" />
                   <button onClick={async()=>{
@@ -648,41 +755,59 @@ export default function AdminPage() {
                     setSeoLoading(true); setSeoMetaResult(null)
                     const r=await fetch('/api/seo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'generate_meta',slug:seoMetaSlug,title:seoMetaSlug})})
                     const d=await r.json(); setSeoMetaResult(d); setSeoLoading(false)
-                  }} disabled={seoLoading} className="bg-[#1a3a5c] text-white text-xs font-bold px-4 py-2 rounded-lg disabled:opacity-50">
+                    if(!d.error) setSeoMsg(`✅ Meta generated and saved for: ${seoMetaSlug}`)
+                  }} disabled={seoLoading} className="bg-[#1a3a5c] text-white text-xs font-bold px-5 py-2 rounded-lg disabled:opacity-50">
                     Generate
                   </button>
                 </div>
                 {seoMetaResult && !seoMetaResult.error && (
-                  <div className="space-y-2 p-3 bg-blue-50 rounded-lg">
-                    <div><span className="text-[10px] font-bold text-blue-600 uppercase">SEO Title</span><p className="text-sm text-gray-800 font-semibold">{seoMetaResult.seoTitle}</p><span className="text-[10px] text-gray-400">{seoMetaResult.seoTitle?.length} chars</span></div>
-                    <div><span className="text-[10px] font-bold text-blue-600 uppercase">Meta Description</span><p className="text-sm text-gray-700">{seoMetaResult.metaDescription}</p><span className="text-[10px] text-gray-400">{seoMetaResult.metaDescription?.length} chars</span></div>
-                    <div><span className="text-[10px] font-bold text-blue-600 uppercase">Focus Keyword</span><p className="text-xs text-gray-600 font-mono">{seoMetaResult.focusKeyword}</p></div>
-                    {seoMetaResult.secondaryKeywords && <div><span className="text-[10px] font-bold text-blue-600 uppercase">Secondary Keywords</span><p className="text-xs text-gray-600">{(seoMetaResult.secondaryKeywords as unknown as string[]).join(', ')}</p></div>}
-                    {seoMetaResult.readabilityTip && <div className="mt-1 p-2 bg-yellow-50 rounded text-xs text-yellow-800">💡 {seoMetaResult.readabilityTip}</div>}
+                  <div className="space-y-3 p-4 bg-blue-50 rounded-lg">
+                    <div>
+                      <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wide">SEO Title</span>
+                      <p className="text-sm text-gray-800 font-semibold mt-0.5">{seoMetaResult.seoTitle}</p>
+                      <span className="text-[10px] text-gray-400">{String(seoMetaResult.seoTitle||'').length}/60 chars</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wide">Meta Description</span>
+                      <p className="text-sm text-gray-700 mt-0.5">{seoMetaResult.metaDescription}</p>
+                      <span className="text-[10px] text-gray-400">{String(seoMetaResult.metaDescription||'').length}/160 chars</span>
+                    </div>
+                    <div className="flex gap-4">
+                      <div><span className="text-[10px] font-bold text-blue-600 uppercase">Focus Keyword</span><p className="text-xs font-mono text-gray-700 mt-0.5">{seoMetaResult.focusKeyword}</p></div>
+                      {seoMetaResult.secondaryKeywords && <div><span className="text-[10px] font-bold text-blue-600 uppercase">Secondary</span><p className="text-xs text-gray-600 mt-0.5">{(seoMetaResult.secondaryKeywords as unknown as string[]).join(', ')}</p></div>}
+                    </div>
                   </div>
                 )}
                 {seoMetaResult?.error && <p className="text-xs text-red-500 mt-2">Error: {seoMetaResult.error}</p>}
               </div>
 
-              {/* Missing meta list */}
+              {/* ── MISSING META LIST ── */}
               {seoMissingMeta.length>0 && (
                 <div className="bg-white rounded-xl border border-gray-200 p-5">
-                  <h2 className="text-sm font-bold text-gray-800 mb-3">⚠️ Articles Missing SEO Meta ({seoMissingMeta.length})</h2>
-                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-sm font-bold text-gray-800">⚠️ Articles Missing SEO Meta ({seoMissingMeta.length})</h2>
+                    <button onClick={async()=>{
+                      setSeoLoading(true); setSeoMsg('Generating all missing meta...')
+                      const r=await fetch('/api/seo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'generate_all_meta'})})
+                      const d=await r.json()
+                      setSeoMsg(`✅ Generated ${d.generated} metas`); setSeoMissingMeta([]); setSeoLoading(false)
+                    }} disabled={seoLoading} className="text-xs bg-[#1a3a5c] text-white font-bold px-4 py-1.5 rounded-lg disabled:opacity-50">
+                      Fix All
+                    </button>
+                  </div>
+                  <div className="space-y-2 max-h-56 overflow-y-auto">
                     {seoMissingMeta.map(art=>(
-                      <div key={art.slug} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
-                        <div>
-                          <p className="text-xs font-semibold text-gray-800 truncate max-w-xs">{art.title}</p>
+                      <div key={art.slug} className="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-semibold text-gray-800 truncate">{art.title}</p>
                           <p className="text-[10px] text-gray-400 font-mono">{art.slug}</p>
                         </div>
                         <button onClick={async()=>{
                           setSeoLoading(true)
-                          const r=await fetch('/api/seo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'generate_meta',slug:art.slug,title:art.title})})
-                          const d=await r.json()
-                          if(!d.error) setSeoMsg(`✅ Meta saved for: ${art.title}`)
+                          await fetch('/api/seo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'generate_meta',slug:art.slug,title:art.title})})
                           setSeoMissingMeta(prev=>prev.filter(a=>a.slug!==art.slug))
                           setSeoLoading(false)
-                        }} disabled={seoLoading} className="text-[10px] bg-[#d4220a] text-white font-bold px-3 py-1.5 rounded-lg disabled:opacity-40">
+                        }} disabled={seoLoading} className="ml-3 text-[10px] bg-[#d4220a] text-white font-bold px-3 py-1.5 rounded-lg disabled:opacity-40 shrink-0">
                           Generate
                         </button>
                       </div>
@@ -691,84 +816,34 @@ export default function AdminPage() {
                 </div>
               )}
 
-              {/* Google Trends */}
-              {seoTrends.length>0 && (
-                <div className="bg-white rounded-xl border border-gray-200 p-5">
-                  <h2 className="text-sm font-bold text-gray-800 mb-3">📈 Trending in India Right Now</h2>
-                  <p className="text-xs text-gray-500 mb-3">Use these to inspire article topics. Click to search on Google News.</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {seoTrends.map((t,i)=>(
-                      <a key={i} href={`https://news.google.com/search?q=${encodeURIComponent(t.title)}`} target="_blank" rel="noopener"
-                        className="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg hover:bg-gray-100">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] text-gray-400 font-bold w-4">{i+1}</span>
-                          <span className="text-xs text-gray-800 font-medium">{t.title}</span>
-                        </div>
-                        {t.traffic && <span className="text-[10px] text-green-600 font-bold ml-2 shrink-0">{t.traffic}</span>}
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* GSC Data */}
-              {seoGsc && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  {/* Top Queries */}
-                  <div className="bg-white rounded-xl border border-gray-200 p-5">
-                    <h2 className="text-sm font-bold text-gray-800 mb-1">🔍 Top Search Queries</h2>
-                    <p className="text-[10px] text-gray-400 mb-3">{seoGsc.period}</p>
-                    {(seoGsc.queries as Array<{keys:string[];clicks:number;impressions:number;position:number}>).length===0
-                      ? <p className="text-xs text-gray-400 italic">No data yet — add GOOGLE_SERVICE_KEY to Vercel env vars</p>
-                      : <div className="space-y-1">
-                          <div className="grid grid-cols-4 text-[10px] font-bold text-gray-400 uppercase px-2 pb-1">
-                            <span className="col-span-2">Query</span><span>Clicks</span><span>Pos.</span>
-                          </div>
-                          {(seoGsc.queries as Array<{keys:string[];clicks:number;impressions:number;position:number}>).map((row,i)=>(
-                            <div key={i} className="grid grid-cols-4 text-xs px-2 py-1.5 rounded hover:bg-gray-50">
-                              <span className="col-span-2 text-gray-700 truncate">{row.keys[0]}</span>
-                              <span className="text-green-600 font-bold">{row.clicks}</span>
-                              <span className="text-gray-500">#{row.position?.toFixed(1)}</span>
-                            </div>
-                          ))}
-                        </div>
-                    }
-                  </div>
-
-                  {/* Top Pages */}
-                  <div className="bg-white rounded-xl border border-gray-200 p-5">
-                    <h2 className="text-sm font-bold text-gray-800 mb-1">📄 Top Pages</h2>
-                    <p className="text-[10px] text-gray-400 mb-3">{seoGsc.period}</p>
-                    {(seoGsc.pages as Array<{keys:string[];clicks:number;impressions:number;ctr:number}>).length===0
-                      ? <p className="text-xs text-gray-400 italic">No data yet — need GSC verification first</p>
-                      : <div className="space-y-1">
-                          <div className="grid grid-cols-4 text-[10px] font-bold text-gray-400 uppercase px-2 pb-1">
-                            <span className="col-span-2">Page</span><span>Clicks</span><span>CTR</span>
-                          </div>
-                          {(seoGsc.pages as Array<{keys:string[];clicks:number;impressions:number;ctr:number}>).map((row,i)=>(
-                            <div key={i} className="grid grid-cols-4 text-xs px-2 py-1.5 rounded hover:bg-gray-50">
-                              <span className="col-span-2 text-gray-700 truncate">{row.keys[0].replace('https://thetechbharat.com','')}</span>
-                              <span className="text-green-600 font-bold">{row.clicks}</span>
-                              <span className="text-gray-500">{(row.ctr*100).toFixed(1)}%</span>
-                            </div>
-                          ))}
-                        </div>
-                    }
-                  </div>
-                </div>
-              )}
-
-              {/* Setup Instructions */}
+              {/* ── SETUP GUIDE ── */}
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-5">
-                <h2 className="text-sm font-bold text-amber-800 mb-2">📋 Setup Required: Google Service Account</h2>
-                <ol className="space-y-1 text-xs text-amber-700 list-decimal list-inside">
-                  <li>Go to <strong>console.cloud.google.com</strong> → Create project → Enable <strong>Search Console API</strong> + <strong>Indexing API</strong></li>
-                  <li>IAM & Admin → Service Accounts → Create → Download JSON key</li>
-                  <li>Add to Vercel env: <code className="bg-amber-100 px-1 rounded">GOOGLE_SERVICE_KEY</code> = paste the entire JSON (minified)</li>
-                  <li>In Google Search Console → Settings → Users → Add your service account email as <strong>Owner</strong></li>
-                  <li>For Indexing API: your site must use <strong>sitemaps</strong> (already done ✅)</li>
-                </ol>
+                <h2 className="text-sm font-bold text-amber-800 mb-3">📋 One-Time Setup: Google Service Account</h2>
+                <div className="grid md:grid-cols-2 gap-4 text-xs text-amber-700">
+                  <div>
+                    <p className="font-bold mb-1">For GSC Traffic Data + Indexing API:</p>
+                    <ol className="space-y-1 list-decimal list-inside">
+                      <li>Go to <strong>console.cloud.google.com</strong></li>
+                      <li>Enable <strong>Search Console API</strong> + <strong>Indexing API</strong></li>
+                      <li>IAM → Service Accounts → Create → Download JSON</li>
+                      <li>Add Vercel env: <code className="bg-amber-100 px-1 rounded">GOOGLE_SERVICE_KEY</code> = entire JSON minified</li>
+                      <li>GSC → Settings → Users → add service account email as <strong>Owner</strong></li>
+                    </ol>
+                  </div>
+                  <div>
+                    <p className="font-bold mb-1">For UptimeRobot Free Cron:</p>
+                    <ol className="space-y-1 list-decimal list-inside">
+                      <li>Sign up at <strong>uptimerobot.com</strong> (free)</li>
+                      <li>New Monitor → HTTP(s) → paste URL:</li>
+                    </ol>
+                    <code className="block mt-2 bg-amber-100 px-2 py-1.5 rounded text-[10px] break-all">
+                      https://thetechbharat.com/api/seo-cron?secret=qwertyuiopasdfghjklzxcvbnm
+                    </code>
+                    <p className="mt-1 text-[10px]">Interval: 60 min — runs full refresh every 20h automatically</p>
+                  </div>
+                </div>
               </div>
+
             </div>
           )}
 

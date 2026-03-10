@@ -4,14 +4,25 @@ import { headers } from 'next/headers'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 
-export const metadata: Metadata = {
-  metadataBase: new URL('https://thetechbharat.com'),
-  title: {
-    template: '%s | The Tech Bharat',
-    default: "The Tech Bharat – India's Mobile Technology News",
-  },
-  description: 'The Tech Bharat delivers original mobile technology news, smartphone reviews, comparisons, and in-depth analysis for Indian readers.',
-  keywords: ['mobile news India', 'smartphone reviews', 'tech news India', 'phone comparison'],
+export async function generateMetadata(): Promise<Metadata> {
+  let dynamicSeo = null
+  try {
+    const { getPageSeo } = await import('@/lib/seo-store')
+    dynamicSeo = await getPageSeo('home')
+  } catch { /* fallback */ }
+
+  const dynTitle = dynamicSeo?.title || "The Tech Bharat – India's Mobile Technology News"
+  const dynDesc  = dynamicSeo?.description || 'The Tech Bharat delivers original mobile technology news, smartphone reviews, comparisons, and in-depth analysis for Indian readers.'
+  const dynKw    = dynamicSeo?.keywords || ['mobile news India', 'smartphone reviews', 'tech news India', 'phone comparison']
+
+  return {
+    metadataBase: new URL('https://thetechbharat.com'),
+    title: {
+      template: '%s | The Tech Bharat',
+      default: dynTitle,
+    },
+    description: dynDesc,
+    keywords: dynKw,
   authors: [{ name: 'The Tech Bharat Editorial Team' }],
   creator: 'The Tech Bharat',
   publisher: 'The Tech Bharat',
@@ -67,7 +78,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             "areaServed": "IN",
             "inLanguage": "en-IN",
             "sameAs": [
-              "https://t.me/the_tech_bharat",
+              "https://t.me/techbharat",
               "https://twitter.com/techbharat"
             ],
             "masthead": "https://thetechbharat.com/about",
