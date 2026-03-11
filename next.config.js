@@ -8,12 +8,29 @@ const nextConfig = {
       { protocol: 'https', hostname: 'thetechbharat.com' },
     ],
   },
+  async redirects() {
+    return [
+      // Fix: redirect old Blogger feed URLs showing in GSC as
+      // "Duplicate without user-selected canonical" — leftover from Hostinger parked page.
+      {
+        source: '/feeds/:path*',
+        destination: '/',
+        permanent: true,
+      },
+      // Fix: redirect www to non-www to prevent duplicate content issues in GSC
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'www.thetechbharat.com' }],
+        destination: 'https://thetechbharat.com/:path*',
+        permanent: true,
+      },
+    ]
+  },
   async headers() {
     return [
       {
         source: '/(.*)',
         headers: [
-          // Issue 5 fix: Tell Google to show large images in Discover
           { key: 'X-Robots-Tag', value: 'max-image-preview:large' },
         ],
       },

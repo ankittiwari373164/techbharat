@@ -43,7 +43,9 @@ export async function generateMetadata(): Promise<Metadata> {
       follow: true,
       googleBot: { index: true, follow: true, 'max-image-preview': 'large' },
     },
-    alternates: { canonical: 'https://thetechbharat.com' },
+    // NOTE: No global canonical here — each page sets its own via alternates.canonical
+    // Setting a canonical at root layout level was causing ALL pages (including articles)
+    // to report canonical = homepage, which blocked Google from indexing them.
   }
 }
 

@@ -232,9 +232,24 @@ function buildUserPrompt(raw: RawArticle, brand: string, type: string): string {
 
   const today = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
 
-  return `Write a 1500-word article for TechBharat about this topic.
+  return `Write a 1500-word article for The Tech Bharat about this topic.
 
 TODAY'S DATE: ${today} — All dates, timelines, and references must be consistent with this date. Never mention years before ${new Date().getFullYear()}.
+
+CONTENT RATIO RULE — THIS IS THE MOST IMPORTANT INSTRUCTION:
+60% of this article must be ANALYSIS, OPINION, and INSIGHT — not reporting.
+40% can be factual news/specs reporting.
+This means: for every spec or fact you mention, follow it with your opinion on what it means,
+who it helps, whether it's actually good for Indian buyers, and how it compares to rivals.
+A journalist's job is not to repeat a press release. It's to tell readers what it MEANS.
+
+VIJAY'S VOICE — MANDATORY ELEMENTS (every article must have all 5):
+1. "Vijay's Take:" H2 section — 3–4 sentences of personal, opinionated verdict with no hedging
+2. "What Indian Buyers Should Know:" section — 3 bullet points specific to India (not generic)
+3. One sentence of genuine skepticism about the brand's claims or product
+4. One direct competitor comparison: "At ₹X, this competes with [rival] which [specific point]"
+5. One real-usage scenario starting with "If you're a [type of Indian user] who [use case]..."
+
 INTERNAL LINKS MANDATE: Every article must include exactly 2 internal links to other sections of thetechbharat.com using this format:
 <a href="/mobile-news?brand=BRAND">More BRAND news on The Tech Bharat</a>
 <a href="/compare">Compare phones on The Tech Bharat</a>
@@ -253,32 +268,33 @@ ARTICLE TYPE: ${type}
 
 ━━━ CONTENT STRUCTURE ━━━
 ${isNews ? `
-Opening: Jump straight into what happened or what was announced — no scene-setting preamble.
-Section 1: What exactly was revealed/announced (specific details)
-Section 2: Technical breakdown — what the specs/features actually mean for real users
-Section 3: India angle — price in ₹, Flipkart/Amazon availability, who will buy this
-Section 4: How it fits into the current Indian market (competitors, value proposition)
-Section 5 (H2): Your honest analysis — what's good, what's concerning, what's missing
-Closing: Direct verdict — should Indian buyers care about this?
-IMPORTANT FOR NEWS/LEAKS: If article is based on leaks or analyst reports, add a clearly labelled section:
-<p><strong>Source Note:</strong> This article is based on [analyst reports / leaked specifications / industry sources]. These details are unconfirmed until official launch. Treat pricing and specs as estimates.</p>` : ''}
+Opening: Lead with your OPINION or most surprising observation — not with "X has announced Y". Hook the reader with your take first.
+Section 1 (facts 40%): What was revealed/announced — specific details, specs, pricing
+Section 2 (analysis 60%): Your analysis — what these specs actually mean for real Indian users, what's good, what's a red flag
+Section 3: India angle — ₹ pricing reality check, Flipkart/Amazon availability, who will actually buy this vs who it's marketed to
+Section 4: Market context — how this fits (or disrupts) the Indian market right now
+<h2>Vijay's Take</h2>: Your personal, opinionated verdict — 3–4 sentences, no hedging, take a side
+<h2>What Indian Buyers Should Know</h2>: 3 bullet points specific to India buyers
+IMPORTANT FOR NEWS/LEAKS: If article is based on leaks or analyst reports, add:
+<p><strong>Source Note:</strong> This article is based on [analyst reports / leaked specifications / industry sources]. These details are unconfirmed until official launch.</p>` : ''}
 ${isReview ? `
-Opening: Your immediate impression — what surprised you or stood out first
-Section 1: Design & build — how it actually feels (India heat/humidity context)
-Section 2: Display — daily use experience, not just specs
-Section 3: Camera — real-world results, not megapixel count
-Section 4: Performance & battery — honest assessment including weaknesses
-Section 5 (H2): India pricing & competition — who else is in this price bracket
-Specs table (HTML): key specs in a clean table
-Pros & Cons table (HTML): honest, not marketing fluff
-Closing verdict: Exactly who should and shouldn't buy this` : ''}
+Opening: Your strongest one-sentence opinion first — the thing that surprised you most
+Section 1: Design & build — how it actually feels in the hand (India heat/humidity context), your honest take
+Section 2: Display — daily use experience, not just specs — what you personally liked or hated
+Section 3: Camera — real-world comparison to rivals at similar price, not megapixel count
+Section 4: Performance & battery — your honest weaknesses, no sugarcoating anything
+Section 5: India pricing & competition — who wins at this price point and why
+<h2>Vijay's Take</h2>: 3–4 sentences. Clear verdict + who should buy + who definitely should not.
+Specs table (HTML): key specs
+Pros & Cons (HTML table): brutally honest — not generic marketing points` : ''}
 ${isCompare ? `
-Opening: Set up the real buying dilemma — who is actually choosing between these two and why it's not obvious
-Section 1: Quick specs comparison (HTML <table> with at least 6 rows: price, display, chip, battery, camera, 5G)
-Section 2: Real-world differences that specs don't show (camera quality, software, heat management)
-Section 3: India-specific factors — service centres, warranty, Flipkart/Amazon pricing, EMI options
-Section 4: Value verdict — which is worth buying at what price point
-Closing: ONE clear winner recommendation — who should buy which phone. Never say "depends on your needs" without a concrete answer"` : ''}
+Opening: Tell the reader exactly what kind of person is choosing between these two — make them feel seen
+Section 1: Quick specs comparison (HTML <table>, 6+ rows: price, display, chip, battery, camera, 5G)
+Section 2: Where they genuinely differ — camera processing, software update timeline, heat under load
+Section 3: India-specific factors — service centre density in Tier 2/3 cities, Flipkart vs Amazon pricing, EMI
+Section 4: Who each phone is actually for — specific buyer type, not vague "it depends"
+<h2>Vijay's Take</h2>: Pick ONE winner. Say which you'd buy with your own money and why.
+<h2>What Indian Buyers Should Know</h2>: 3 bullet points India-specific` : ''}
 
 ━━━ SENTENCE VARIETY CHECKLIST ━━━
 Before writing, plan to include:
