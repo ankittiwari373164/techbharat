@@ -130,10 +130,12 @@ export default function SeoAnalyticsTab() {
     setCronRunning(true)
     setCronMsg('Running SEO automation...')
     try {
-      const secret = ''  // Will be filled from env on server side via cookie auth
-      const res  = await fetch(`/api/seo-cron?${force ? 'force=1&' : ''}secret=${secret}`)
+      // Call via admin API proxy — auth handled by cookie, secret injected server-side
+      const res  = await fetch(`/api/admin/run-seo-cron${force ? '?force=1' : ''}`, { method: 'POST' })
       const json = await res.json()
       if (json.log) setCronMsg(json.log.slice(-3).join(' · '))
+      else if (json.error) setCronMsg('Error: ' + json.error)
+      else setCronMsg('✅ Done')
       await load()
     } catch (e) {
       setCronMsg('Error: ' + String(e))
@@ -508,28 +510,6 @@ export default function SeoAnalyticsTab() {
         </div>
       )}
 
-      {/* ── Setup instructions ─────────────────────────────────────────── */}
-      <div style={{ ...card, border: '1px solid #1e3a5f', background: '#0a1628' }}>
-        <div style={{ ...label, marginBottom: 12, color: '#7dd3fc' }}>⚙️ Setup: Add Analytics Tracking to Your App</div>
-        <p style={{ margin: '0 0 8px', fontSize: 13, color: '#94a3b8' }}>
-          Add this to <code style={{ color: '#f43f5e' }}>middleware.ts</code> to automatically track every page view:
-        </p>
-        <pre style={{ background: '#0f172a', borderRadius: 6, padding: 12, fontSize: 11, color: '#7dd3fc', overflow: 'auto', margin: 0 }}>
-{`// In middleware.ts — after auth checks, before NextResponse.next()
-// Fire-and-forget analytics ping
-if (!req.nextUrl.pathname.startsWith('/api') && 
-    !req.nextUrl.pathname.startsWith('/_next')) {
-  fetch(\`\${process.env.NEXT_PUBLIC_SITE_URL}/api/analytics\`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      path: req.nextUrl.pathname,
-      referrer: req.headers.get('referer') || '',
-    }),
-  }).catch(() => {})
-}`}
-        </pre>
-      </div>
 
     </div>
   )
