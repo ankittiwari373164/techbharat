@@ -1,7 +1,10 @@
 // lib/phone-images.ts
 // Resolves phone images from the local phone-images directory
-// Structure: public/phone-images/{brand-model}/1.jpg, 2.jpg, 3.jpg ...
-// Falls back to Unsplash API if no local images found
+// Structure: public/phone-images/{Brand}/1.png, 2.png, 3.png ...
+//   Folders are named by brand: Apple/, Samsung/, OnePlus/, iQOO/ etc.
+//   news-fetcher calls getArticleImages("Samsung smartphone", 5)
+//   → this strips " smartphone" and maps to the correct folder.
+// Falls back to Unsplash API (proxied) if no local images found
 
 import fs from 'fs'
 import path from 'path'
@@ -12,8 +15,54 @@ const UNSPLASH_ACCESS_KEY = process.env.UNSPLASH_ACCESS_KEY || ''
 // Supported image extensions
 const EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp']
 
+// Maps brand keywords (as passed by news-fetcher) → actual folder names
+// news-fetcher passes: "Samsung smartphone", "Apple smartphone", "iQOO smartphone" etc.
+const BRAND_FOLDER_MAP: Record<string, string> = {
+  'samsung':      'Samsung',
+  'apple':        'Apple',
+  'iphone':       'Apple',
+  'xiaomi':       'Xiaomi',
+  'redmi':        'Xiaomi',
+  'poco':         'Poco',
+  'oneplus':      'OnePlus',
+  'one plus':     'OnePlus',
+  'realme':       'Realme',
+  'vivo':         'Vivo',
+  'oppo':         'OPPO',
+  'iqoo':         'iQOO',
+  'motorola':     'Motorola',
+  'moto':         'Motorola',
+  'nothing':      'Nothing',
+  'google pixel': 'Google',
+  'google':       'Google',
+  'pixel':        'Google',
+}
+
 /**
- * Normalize a phone name to a directory-safe slug
+ * Resolve a phone name / brand string to the correct local folder name.
+ * Handles inputs like "Samsung smartphone", "Apple", "iQOO smartphone".
+ * Returns the exact folder name (case-sensitive) or null if no match.
+ */
+export function resolveBrandFolder(phoneName: string): string | null {
+  // Strip common suffixes added by news-fetcher
+  const cleaned = phoneName
+    .toLowerCase()
+    .replace(/\s*(smartphone|phone|mobile|device)s?\s*/gi, '')
+    .trim()
+
+  // Direct lookup
+  if (BRAND_FOLDER_MAP[cleaned]) return BRAND_FOLDER_MAP[cleaned]
+
+  // Partial match — check if any key is contained in the name
+  for (const [key, folder] of Object.entries(BRAND_FOLDER_MAP)) {
+    if (cleaned.includes(key)) return folder
+  }
+  return null
+}
+
+/**
+ * Normalize a phone name to a directory-safe slug.
+ * Used for specific phone model subfolders if they exist.
  * e.g. "Samsung Galaxy S25 Ultra" → "samsung-galaxy-s25-ultra"
  */
 export function normalizePhoneName(name: string): string {
@@ -25,14 +74,29 @@ export function normalizePhoneName(name: string): string {
 }
 
 /**
- * Get all local images for a phone model.
- * Looks in public/phone-images/{phoneName}/
- * Images should be named: 1.jpg, 2.jpg, 3.jpg etc.
+ * Get all local images for a phone/brand.
+ * Resolution order:
+ *   1. public/phone-images/{brand-model-slug}/  (specific model folder)
+ *   2. public/phone-images/{Brand}/             (brand folder — e.g. Apple/, Samsung/)
+ * Images named: 1.png, 2.png, 3.png etc.
  */
 export function getLocalPhoneImages(phoneName: string): string[] {
   try {
+    // Try specific model slug first (e.g. "samsung-galaxy-s25")
     const slug = normalizePhoneName(phoneName)
-    const dir = path.join(PHONE_IMAGES_DIR, slug)
+    const modelDir = path.join(PHONE_IMAGES_DIR, slug)
+    if (fs.existsSync(modelDir)) {
+      const files = fs.readdirSync(modelDir)
+        .filter(f => EXTENSIONS.some(ext => f.toLowerCase().endsWith(ext)))
+        .sort((a, b) => (parseInt(a) || 0) - (parseInt(b) || 0))
+        .map(f => `/phone-images/${slug}/${f}`)
+      if (files.length > 0) return files
+    }
+
+    // Fall back to brand folder (Apple/, Samsung/, OnePlus/ etc.)
+    const brandFolder = resolveBrandFolder(phoneName)
+    if (!brandFolder) return []
+    const dir = path.join(PHONE_IMAGES_DIR, brandFolder)
     if (!fs.existsSync(dir)) return []
 
     const files = fs.readdirSync(dir)
@@ -44,7 +108,7 @@ export function getLocalPhoneImages(phoneName: string): string[] {
         const numB = parseInt(b.split('.')[0]) || 0
         return numA - numB
       })
-      .map(f => `/phone-images/${slug}/${f}`)
+      .map(f => `/phone-images/${brandFolder}/${f}`)
 
     return images
   } catch {
@@ -83,7 +147,7 @@ export async function getPhoneImage(
         const data = await res.json()
         const rawUrl = `${data.urls.regular}&w=1600&q=85&fit=crop&crop=center`
         const siteUrl = process.env.SITE_URL || 'https://thetechbharat.com'
-        return `${siteUrl}/api/img?u=${encodeURIComponent(rawUrl)}`
+        return `${siteUrl}/api/img?url=${encodeURIComponent(rawUrl)}`
       }
     } catch {
       // fall through to picsum
