@@ -52,6 +52,24 @@ export function middleware(request: NextRequest) {
     }
   }
 
+  // Analytics tracking — fire-and-forget, never blocks page load
+  // Skips: API routes, admin, static files, and the analytics route itself
+  if (
+    !pathname.startsWith('/api') &&
+    !pathname.startsWith('/admin') &&
+    !pathname.includes('.')
+  ) {
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://thetechbharat.com'
+    fetch(`${siteUrl}/api/analytics`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({
+        path:     pathname,
+        referrer: request.headers.get('referer') || '',
+      }),
+    }).catch(() => { /* never throws */ })
+  }
+
   return NextResponse.next({ request: { headers: requestHeaders } })
 }
 
