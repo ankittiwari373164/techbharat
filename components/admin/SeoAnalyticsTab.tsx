@@ -23,6 +23,7 @@ interface AnalyticsData {
     bounceRate: number
     avgTime: string
     period: string
+    hasLiveData: boolean
   }
   trafficTrend:  TrafficDay[]
   deviceSplit:   { desktop: number; mobile: number }
@@ -206,7 +207,24 @@ export default function SeoAnalyticsTab() {
         </div>
       </div>
 
-      {/* ── Stat cards row ─────────────────────────────────────────────── */}
+      {/* ── Live data notice ───────────────────────────────────────────── */}
+      {data && !data.summary.hasLiveData && (
+        <div style={{
+          background: '#0f2742', border: '1px solid #1e4a7a',
+          borderRadius: 8, padding: '10px 16px',
+          display: 'flex', alignItems: 'center', gap: 10, fontSize: 13,
+        }}>
+          <span style={{ fontSize: 18 }}>ℹ️</span>
+          <div>
+            <strong style={{ color: '#7dd3fc' }}>Showing data from article view counts</strong>
+            <span style={{ color: '#64748b', marginLeft: 8 }}>
+              Live per-page tracking starts after your next Vercel deployment. Push the updated <code style={{ color: '#f43f5e' }}>middleware.ts</code> to GitHub to activate.
+            </span>
+          </div>
+        </div>
+      )}
+
+
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 16 }}>
         <div style={statCard}>
           <span style={label}>Total Clicks</span>
@@ -293,7 +311,7 @@ export default function SeoAnalyticsTab() {
           </div>
           {(!data?.liveLog?.length) && (
             <p style={{ color: '#475569', fontSize: 12, textAlign: 'center', padding: '20px 0' }}>
-              No visitor data yet. Add the analytics script to your app.
+              No live visits recorded yet. Push <code style={{ color: '#f43f5e' }}>middleware.ts</code> to GitHub → Vercel will redeploy and tracking starts automatically.
             </p>
           )}
         </div>

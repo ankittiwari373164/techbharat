@@ -52,8 +52,8 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // Analytics tracking — fire-and-forget, never blocks page load
-  // Skips: API routes, admin, static files, and the analytics route itself
+  // ── Analytics tracking (fire-and-forget, never blocks page load) ──────
+  // Skips API routes, admin pages, and paths with file extensions
   if (
     !pathname.startsWith('/api') &&
     !pathname.startsWith('/admin') &&
