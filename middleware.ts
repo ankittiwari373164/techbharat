@@ -1,80 +1,68 @@
+// middleware.ts
+// ─────────────────────────────────────────────────────────────────────────────
+// 1. Injects x-pathname header so server components can read current path
+// 2. Protects /admin/* and /api/admin/* routes (requires __tb_admin cookie)
+// 3. Blocks schedulers from hitting /api/scheduler without ?secret=
+// 4. 🆕 Fires fire-and-forget analytics ping on every public page view
+// ─────────────────────────────────────────────────────────────────────────────
 import { NextRequest, NextResponse } from 'next/server'
 
-const COOKIE_NAME = '__tb_admin'
+export function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl
 
-function isValidToken(token: string): boolean {
-  try {
-    const decoded = decodeURIComponent(token)
-    if (!decoded.startsWith('TBOK:')) return false
-    const exp = parseInt(decoded.slice(5), 10)
-    return !isNaN(exp) && Date.now() < exp
-  } catch { return false }
-}
-
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
-  const requestHeaders = new Headers(request.headers)
+  // ── 1. Inject pathname header ───────────────────────────────────────────
+  const requestHeaders = new Headers(req.headers)
   requestHeaders.set('x-pathname', pathname)
 
-  // Always public
-  const isPublic =
-    pathname.startsWith('/admin/login') ||
-    pathname === '/api/admin/login'     ||
-    pathname === '/api/admin/logout'    ||
-    pathname === '/api/admin/debug'
-
-  if (isPublic) {
-    return NextResponse.next({ request: { headers: requestHeaders } })
-  }
-
-  if (pathname.startsWith('/admin')) {
-    const token = request.cookies.get(COOKIE_NAME)?.value
-    if (!token || !isValidToken(token)) {
-      return NextResponse.redirect(new URL('/admin/login', request.url))
+  // ── 2. Protect scheduler/cron endpoints ────────────────────────────────
+  if (pathname === '/api/scheduler' || pathname === '/api/seo-cron') {
+    const secret = req.nextUrl.searchParams.get('secret')
+    const authHeader = req.headers.get('authorization')?.replace('Bearer ', '')
+    const cronSecret = process.env.CRON_SECRET
+    if (cronSecret && secret !== cronSecret && authHeader !== cronSecret) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
   }
 
-  if (pathname.startsWith('/api/admin/')) {
-    const token = request.cookies.get(COOKIE_NAME)?.value
-    if (!token || !isValidToken(token)) {
-      return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
+  // ── 3. Protect admin routes ─────────────────────────────────────────────
+  const isAdminPage = pathname.startsWith('/admin') && !pathname.startsWith('/admin/login')
+  const isAdminApi  = pathname.startsWith('/api/admin') && !pathname.startsWith('/api/admin/login')
+
+  if (isAdminPage || isAdminApi) {
+    const cookie = req.cookies.get('__tb_admin')?.value || ''
+    if (!cookie.startsWith('TBOK:')) {
+      if (isAdminApi) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.redirect(new URL('/admin/login', req.url))
     }
   }
 
-  if (pathname.startsWith('/api/scheduler') || pathname.startsWith('/api/seo-cron')) {
-    const secret = process.env.CRON_SECRET
-    if (secret) {
-      const qSecret = request.nextUrl.searchParams.get('secret')
-      const hSecret = request.headers.get('authorization')?.replace('Bearer ', '')
-      if (qSecret !== secret && hSecret !== secret) {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-      }
-    }
-  }
-
-  // ── Analytics tracking (fire-and-forget, never blocks page load) ──────
-  // Skips API routes, admin pages, and paths with file extensions
-  if (
+  // ── 4. Analytics — fire-and-forget, never blocks the page ──────────────
+  const isPublicPage =
     !pathname.startsWith('/api') &&
+    !pathname.startsWith('/_next') &&
     !pathname.startsWith('/admin') &&
-    !pathname.includes('.')
-  ) {
+    !pathname.includes('.')  // skip .ico .png .css .js etc.
+
+  if (isPublicPage) {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://thetechbharat.com'
     fetch(`${siteUrl}/api/analytics`, {
       method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({
+      headers: {
+        'Content-Type':    'application/json',
+        'user-agent':      req.headers.get('user-agent') || '',
+        'x-forwarded-for': req.headers.get('x-forwarded-for') || '',
+        'referer':         req.headers.get('referer') || '',
+      },
+      body: JSON.stringify({
         path:     pathname,
-        referrer: request.headers.get('referer') || '',
+        referrer: req.headers.get('referer') || '',
       }),
-    }).catch(() => { /* never throws */ })
+    }).catch(() => {})
   }
 
   return NextResponse.next({ request: { headers: requestHeaders } })
 }
 
 export const config = {
-  matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|phone-images|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
-  ],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 }
