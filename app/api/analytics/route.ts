@@ -100,29 +100,34 @@ export async function GET(req: NextRequest) {
 
   try {
     // ── Pull article view counts from existing views:{slug} keys ─────────
-    // These are already being tracked by /api/article/[slug] route
-    // Use them to populate top_pages and estimate total traffic
-    const articleKeys = await kv.keys('article:*')
+    // Use article_index list (same as lib/store.ts) — kv.keys() times out on Upstash free
+    const slugList = await kv.lrange('article_index', 0, 99) as string[]
     let existingTotalViews = 0
     const articleViewMap: Record<string, number> = {}
 
-    for (const key of articleKeys.slice(0, 50)) {
-      const slug = key.replace('article:', '')
-      const views = await kv.get(`views:${slug}`) as number | null
+    // Batch fetch all view counts at once
+    const viewResults = await Promise.all(
+      slugList.map(slug => kv.get(`views:${slug}`).catch(() => null))
+    )
+    for (let i = 0; i < slugList.length; i++) {
+      const slug  = slugList[i]
+      const views = viewResults[i] as number | null
       if (views && views > 0) {
         articleViewMap[`/article/${slug}`] = views
         existingTotalViews += views
-        // Back-fill top_pages zset from article views if not already tracked
-        const existing = await kv.zscore('analytics:top_pages', `/article/${slug}`)
-        if (!existing) {
-          await kv.zadd('analytics:top_pages', { score: views, member: `/article/${slug}` })
-        }
+        try {
+          const existing = await kv.zscore('analytics:top_pages', `/article/${slug}`)
+          if (!existing) {
+            await kv.zadd('analytics:top_pages', { score: views, member: `/article/${slug}` })
+          }
+        } catch { /* skip */ }
       }
     }
 
     // ── Traffic trend (new analytics system) ─────────────────────────────
     const pvKeys = Array.from({ length: days }, (_, i) => `analytics:pv:${dateKey(days - 1 - i)}`)
-    const pvRaw  = await Promise.all(pvKeys.map(k => kv.get(k)))
+    let pvRaw: (number | null)[] = []
+    try { pvRaw = await Promise.all(pvKeys.map(k => kv.get(k))) as (number | null)[] } catch { pvRaw = pvKeys.map(() => null) }
     const trafficTrend = pvRaw.map((v, i) => ({
       date:  dateKey(days - 1 - i),
       views: Number(v) || 0,
