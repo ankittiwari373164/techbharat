@@ -145,3 +145,12 @@ export function getAvailableLocalBrands(): { brand: string; folder: string; coun
 export function normalizePhoneName(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '-').trim()
 }
+
+// ── Legacy export alias (used by app/api/phone-images/route.ts) ──────────
+export function listPhonesWithImages(): { name: string; slug: string; count: number }[] {
+  return getAvailableLocalBrands().map(b => ({
+    name:  b.brand.replace(/-/g, ' '),
+    slug:  b.folder,
+    count: b.count,
+  }))
+}
