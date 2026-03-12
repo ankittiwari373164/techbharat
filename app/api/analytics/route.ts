@@ -203,33 +203,45 @@ export async function GET(req: NextRequest) {
     }).filter(Boolean)
 
     // ── Top pages ─────────────────────────────────────────────────────────
-    const topPagesRaw = await kv.zrange('analytics:top_pages', 0, 9, { rev: true, withScores: true })
-    const topPages: { path: string; views: number }[] = []
-    for (let i = 0; i < topPagesRaw.length; i += 2) {
-      topPages.push({ path: String(topPagesRaw[i]), views: Number(topPagesRaw[i + 1]) })
-    }
+    // Upstash SDK: zrange withScores returns [{member, score}] objects, not flat array
+    // Use separate zscore calls to avoid SDK version differences
+    let topPages: { path: string; views: number }[] = []
+    try {
+      const topMembers = await kv.zrange('analytics:top_pages', 0, 9, { rev: true }) as string[]
+      if (topMembers?.length) {
+        const scores = await Promise.all(topMembers.map(m => kv.zscore('analytics:top_pages', m).catch(() => null)))
+        topPages = topMembers.map((path, i) => ({ path, views: Number(scores[i]) || 0 }))
+      }
+    } catch { topPages = [] }
 
     // ── Bounce rate ───────────────────────────────────────────────────────
     const bounceRaw  = await kv.get('analytics:bounce_rate') as number | null
     const bounceRate = bounceRaw ? Math.round(bounceRaw) : 42
 
     // ── Trends ────────────────────────────────────────────────────────────
-    const trendsRaw = await kv.get('seo:trends:india') as string | null
-    const trends    = trendsRaw
-      ? (JSON.parse(trendsRaw) as { trends: { title: string; traffic: string }[]; ts: number }).trends.slice(0, 10)
-      : []
+    const trendsRaw = await kv.get('seo:trends:india') as unknown
+    let trends: { title: string; traffic: string }[] = []
+    try {
+      const trendsObj = typeof trendsRaw === 'string' ? JSON.parse(trendsRaw) : trendsRaw
+      trends = (trendsObj as { trends: { title: string; traffic: string }[] })?.trends?.slice(0, 10) ?? []
+    } catch { trends = [] }
 
     // ── SEO page metadata ─────────────────────────────────────────────────
     const pages    = ['home', 'mobile-news', 'reviews', 'compare', 'web-stories']
     const seoPages = await Promise.all(
       pages.map(async (page) => {
-        const data = await kv.get(`seo:page:${page}`) as Record<string, unknown> | null
-        return { page, ...data }
+        const raw = await kv.get(`seo:page:${page}`) as unknown
+        const pageData = typeof raw === 'string' ? JSON.parse(raw) : (raw as Record<string, unknown> | null)
+        return { page, ...(pageData ?? {}) }
       })
     )
 
     // ── Cron log ──────────────────────────────────────────────────────────
-    const cronLog = await kv.get('seo:cron_log') as { log: string[]; ts: number } | null
+    let cronLog: { log: string[]; ts: number } | null = null
+    try {
+      const cronRaw = await kv.get('seo:cron_log') as unknown
+      cronLog = typeof cronRaw === 'string' ? JSON.parse(cronRaw) : (cronRaw as { log: string[]; ts: number } | null)
+    } catch { cronLog = null }
 
     return NextResponse.json({
       summary: {
