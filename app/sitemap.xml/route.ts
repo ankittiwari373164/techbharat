@@ -1,3 +1,5 @@
+// app/sitemap.xml/route.ts
+// Fixed: proper lastmod on all pages, removed thin policy pages, better cache header
 export const dynamic = 'force-dynamic'
 
 const SITE_URL = process.env.SITE_URL || 'https://thetechbharat.com'
@@ -30,20 +32,17 @@ function entryXml(entry: SitemapEntry): string {
 }
 
 export async function GET() {
+  const today = new Date().toISOString().split('T')[0]
+
+  // Only include pages with real content — policy pages excluded (thin content, waste crawl budget)
   const staticPages: SitemapEntry[] = [
-    { url: '/',                   priority: '1.0', changefreq: 'hourly',  lastmod: '' },
-    { url: '/mobile-news',        priority: '0.9', changefreq: 'hourly',  lastmod: '' },
-    { url: '/reviews',            priority: '0.9', changefreq: 'daily',   lastmod: '' },
-    { url: '/compare',            priority: '0.9', changefreq: 'daily',   lastmod: '' },
-    { url: '/web-stories',        priority: '0.8', changefreq: 'daily',   lastmod: '' },
-    { url: '/about',              priority: '0.6', changefreq: 'monthly', lastmod: '' },
-    { url: '/contact',            priority: '0.6', changefreq: 'monthly', lastmod: '' },
-    { url: '/privacy-policy',     priority: '0.4', changefreq: 'yearly',  lastmod: '' },
-    { url: '/disclaimer',         priority: '0.4', changefreq: 'yearly',  lastmod: '' },
-    { url: '/terms',              priority: '0.4', changefreq: 'yearly',  lastmod: '' },
-    { url: '/editorial-policy',   priority: '0.5', changefreq: 'yearly',  lastmod: '' },
-    { url: '/corrections-policy', priority: '0.5', changefreq: 'yearly',  lastmod: '' },
-    { url: '/author',             priority: '0.6', changefreq: 'monthly', lastmod: '' },
+    { url: '/',              priority: '1.0', changefreq: 'hourly',  lastmod: today },
+    { url: '/mobile-news',   priority: '0.9', changefreq: 'hourly',  lastmod: today },
+    { url: '/reviews',       priority: '0.9', changefreq: 'daily',   lastmod: today },
+    { url: '/compare',       priority: '0.9', changefreq: 'daily',   lastmod: today },
+    { url: '/web-stories',   priority: '0.8', changefreq: 'daily',   lastmod: today },
+    { url: '/about',         priority: '0.6', changefreq: 'monthly', lastmod: today },
+    { url: '/author',        priority: '0.6', changefreq: 'monthly', lastmod: today },
   ]
 
   let articleEntries: SitemapEntry[] = []
@@ -54,10 +53,10 @@ export async function GET() {
     const articles = await getAllArticlesAsync()
     articleEntries = articles.map(a => ({
       url:        `/article/${a.slug}`,
-      lastmod:    ((a as any).updatedDate || a.publishDate || '').split('T')[0],
-      priority:   '0.8',
+      lastmod:    ((a as { updatedDate?: string }).updatedDate || a.publishDate || today).split('T')[0],
+      priority:   a.type === 'review' ? '0.85' : '0.8',
       changefreq: 'weekly',
-      image:      (a as any).featuredImage || '',
+      image:      (a as { featuredImage?: string }).featuredImage || '',
       title:      a.title || '',
     }))
   } catch { /* no articles yet */ }
@@ -67,8 +66,8 @@ export async function GET() {
     const stories = await getPublishedStoriesAsync()
     storyEntries = stories.map(s => ({
       url:        `/web-stories/${s.slug}`,
-      lastmod:    (s.publishDate || '').split('T')[0],
-      priority:   '0.9',
+      lastmod:    (s.publishDate || today).split('T')[0],
+      priority:   '0.75',
       changefreq: 'weekly',
       image:      s.coverImage || '',
       title:      s.title || '',
@@ -83,6 +82,9 @@ ${all.map(entryXml).join('\n')}
 </urlset>`
 
   return new Response(xml, {
-    headers: { 'Content-Type': 'application/xml', 'Cache-Control': 'no-store' },
+    headers: {
+      'Content-Type':  'application/xml',
+      'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400',
+    },
   })
 }
