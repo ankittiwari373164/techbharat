@@ -23,9 +23,13 @@ function entryXml(entry: SitemapEntry): string {
   out += `    <changefreq>${entry.changefreq}</changefreq>\n`
   out += `    <priority>${entry.priority}</priority>\n`
   if (entry.image) {
-    out += `    <image:image>\n      <image:loc>${esc(entry.image)}</image:loc>\n`
-    if (entry.title) out += `      <image:title>${esc(entry.title)}</image:title>\n`
-    out += `    </image:image>\n`
+    // Image URLs must be absolute — prefix relative paths with SITE_URL
+    const imgUrl = entry.image.startsWith('http') ? entry.image : `${SITE_URL}${entry.image.startsWith('/') ? '' : '/'}${entry.image}`
+    if (imgUrl && imgUrl !== SITE_URL && imgUrl !== SITE_URL + '/') {
+      out += `    <image:image>\n      <image:loc>${esc(imgUrl)}</image:loc>\n`
+      if (entry.title) out += `      <image:title>${esc(entry.title)}</image:title>\n`
+      out += `    </image:image>\n`
+    }
   }
   out += `  </url>`
   return out
