@@ -44,20 +44,28 @@ export function middleware(req: NextRequest) {
     !pathname.includes('.')  // skip .ico .png .css .js etc.
 
   if (isPublicPage) {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://thetechbharat.com'
-    fetch(`${siteUrl}/api/analytics`, {
-      method:  'POST',
-      headers: {
-        'Content-Type':    'application/json',
-        'user-agent':      req.headers.get('user-agent') || '',
-        'x-forwarded-for': req.headers.get('x-forwarded-for') || '',
-        'referer':         req.headers.get('referer') || '',
-      },
-      body: JSON.stringify({
-        path:     pathname,
-        referrer: req.headers.get('referer') || '',
-      }),
-    }).catch(() => {})
+    // Skip bots, crawlers, UptimeRobot, and Vercel preview deployments
+    const ua   = req.headers.get('user-agent') || ''
+    const host = req.headers.get('host') || ''
+    const isBot = /UptimeRobot|bot|crawl|spider|slurp|Googlebot|Bingbot|YandexBot|pingdom|GTmetrix|PageSpeed|HeadlessChrome|python-requests|axios|node-fetch/i.test(ua)
+    const isPreview = host.includes('.vercel.app')
+
+    if (!isBot && !isPreview) {
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://thetechbharat.com'
+      fetch(`${siteUrl}/api/analytics`, {
+        method:  'POST',
+        headers: {
+          'Content-Type':    'application/json',
+          'user-agent':      ua,
+          'x-forwarded-for': req.headers.get('x-forwarded-for') || '',
+          'referer':         req.headers.get('referer') || '',
+        },
+        body: JSON.stringify({
+          path:     pathname,
+          referrer: req.headers.get('referer') || '',
+        }),
+      }).catch(() => {})
+    }
   }
 
   return NextResponse.next({ request: { headers: requestHeaders } })

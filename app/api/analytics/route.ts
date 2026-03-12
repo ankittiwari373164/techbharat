@@ -39,7 +39,7 @@ function classifyReferrer(ref: string): string {
   if (ref.includes('whatsapp')) return 'WhatsApp'
   if (ref.includes('t.me') || ref.includes('telegram')) return 'Telegram'
   const url = ref.startsWith('http') ? new URL(ref).hostname : ref
-  if (url.includes('thetechbharat')) return 'Internal / Direct'
+  if (url.includes('thetechbharat') || url.includes('vercel.app')) return 'Internal / Direct'
   return url
 }
 
@@ -51,6 +51,15 @@ export async function POST(req: NextRequest) {
     const referrer  = (body.referrer || req.headers.get('referer')    || '')
     const userAgent = req.headers.get('user-agent') || ''
     const ip        = req.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown'
+
+    // ── Bot/crawler filter — reject UptimeRobot, Googlebot, preview URLs ──
+    const isBot = /UptimeRobot|bot|crawl|spider|slurp|Googlebot|Bingbot|YandexBot|DuckDuckBot|facebookexternalhit|Twitterbot|LinkedInBot|WhatsApp|Slack|Discordbot|DatadogSynthetics|pingdom|GTmetrix|PageSpeed|lighthouse|HeadlessChrome|Prerender|python-requests|axios|node-fetch|Go-http/i.test(userAgent)
+    if (isBot) return NextResponse.json({ ok: true, skipped: 'bot' })
+
+    // Reject Vercel preview/deployment URLs (not real visitors)
+    const host = req.headers.get('host') || ''
+    const isVercelPreview = host.includes('.vercel.app') || referrer.includes('.vercel.app')
+    if (isVercelPreview) return NextResponse.json({ ok: true, skipped: 'preview' })
 
     const today  = todayKey()
     const device = getDeviceType(userAgent)
