@@ -1,0 +1,2 @@
+public/phone-images/**/*.png filter=lfs diff=lfs merge=lfs -text
+public/phone-images/**/*.jpg filter=lfs diff=lfs merge=lfs -text
