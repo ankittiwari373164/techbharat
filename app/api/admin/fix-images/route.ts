@@ -38,7 +38,8 @@ export async function GET(req: NextRequest) {
 
   for (const slug of slugList) {
     try {
-      const art = await kv.get(`article:${slug}`) as Record<string, unknown> | null
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const art = await kv.get(`article:${slug}`) as any
       if (!art) continue
 
       const brand = (art.brand as string) || 'Mobile'
@@ -69,12 +70,11 @@ export async function GET(req: NextRequest) {
 
       if (apply) {
         // Update the article in Redis — cast to any to avoid TS strict errors
-        const updated = { ...(art as Record<string, unknown>), featuredImage: newImage }
-        // Also update images array first element if it exists
-        if (Array.isArray((art as Record<string, unknown>).images)) {
-          const imgs = [...((art as Record<string, unknown>).images as string[])]
-          imgs[0] = newImage
-          updated.images = imgs
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const updated: any = { ...art, featuredImage: newImage }
+        if (Array.isArray(art?.images)) {
+          updated.images = [...art.images]
+          updated.images[0] = newImage
         }
         await kv.set(`article:${slug}`, JSON.stringify(updated))
         fixed++
