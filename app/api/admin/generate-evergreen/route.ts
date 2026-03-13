@@ -7,7 +7,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { saveArticlesAsync, getAllArticlesAsync, generateSlug } from '@/lib/store'
 import { getUniqueUnsplashImage } from '@/lib/phone-images'
-import { EVERGREEN_TOPICS } from '@/lib/evergreen-topics'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 300
@@ -15,12 +14,33 @@ export const maxDuration = 300
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || ''
 const CRON_SECRET       = process.env.CRON_SECRET       || ''
 
+// ── Inline topic type + data (avoids Next.js named-export conflict) ──
+interface EvergreenTopic {
+  id:       string
+  title:    string
+  type:     string
+  brand:    string
+  keywords: string[]
+  prompt:   string
+}
+
+// Import from lib — keep this import; if the module is missing, copy
+// lib/evergreen-topics.ts from the previous step into your repo.
+let EVERGREEN_TOPICS: EvergreenTopic[] = []
+try {
+  // Dynamic require so Next.js doesn't treat it as a route export
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  EVERGREEN_TOPICS = require('@/lib/evergreen-topics').EVERGREEN_TOPICS
+} catch {
+  EVERGREEN_TOPICS = []
+}
+
 const SYSTEM_PROMPT = `You are Vijay Yadav, founder of The Tech Bharat. 11 years covering Indian smartphones. Direct, opinionated, India-focused.
 Rules: British English · prices in ₹ · personal opinions mandatory ("I think", "In my experience") · India-specific context always (Flipkart/Amazon, 5G bands, heat, EMI, service centres) · varied sentence length · NO banned phrases: "seamless", "robust", "cutting-edge", "revolutionary", "furthermore", "moreover", "in conclusion", "it is worth noting", "in today's world" · HTML only: <p><h2><h3><table><tr><th><td><strong><ul><li> · end with honest verdict`
 
 // ── Score topic against trending keywords ────────────────────────
-function scoreTopic(topic: typeof EVERGREEN_TOPICS[0], trends: string[]): number {
-  const trendLower = trends.map(t => t.toLowerCase())
+function scoreTopic(topic: EvergreenTopic, trends: string[]): number {
+  const trendLower = trends.map((t: string) => t.toLowerCase())
   let score = 0
   for (const kw of topic.keywords) {
     for (const trend of trendLower) {
@@ -49,7 +69,7 @@ async function fetchTrendingTopics(): Promise<string[]> {
 }
 
 // ── Generate article content via Anthropic ───────────────────────
-async function generateEvergreenContent(topic: typeof EVERGREEN_TOPICS[0]): Promise<string> {
+async function generateEvergreenContent(topic: EvergreenTopic): Promise<string> {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -92,7 +112,7 @@ Return ONLY valid JSON, no markdown fences:
 
 // ── Build full article object ────────────────────────────────────
 async function buildEvergreenArticle(
-  topic: typeof EVERGREEN_TOPICS[0],
+  topic: EvergreenTopic,
   parsed: Record<string, unknown>,
   sessionUsedIds: Set<string>
 ) {
@@ -143,10 +163,10 @@ export async function GET(request: NextRequest) {
   if (!cookie) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
 
   const existingArticles = await getAllArticlesAsync()
-  const existingSlugs    = new Set((existingArticles as { slug: string }[]).map(a => a.slug))
+  const existingSlugs    = new Set((existingArticles as { slug: string }[]).map((a: { slug: string }) => a.slug))
 
   return NextResponse.json({
-    topics: EVERGREEN_TOPICS.map(t => ({
+    topics: EVERGREEN_TOPICS.map((t: EvergreenTopic) => ({
       id:        t.id,
       title:     t.title,
       type:      t.type,
@@ -169,17 +189,17 @@ export async function POST(request: NextRequest) {
   }
 
   const existingArticles = await getAllArticlesAsync()
-  const existingSlugs    = new Set((existingArticles as { slug: string }[]).map(a => a.slug))
+  const existingSlugs    = new Set((existingArticles as { slug: string }[]).map((a: { slug: string }) => a.slug))
 
   const unpublished = EVERGREEN_TOPICS.filter(
-    t => !existingSlugs.has(generateSlug(t.title))
+    (t: EvergreenTopic) => !existingSlugs.has(generateSlug(t.title))
   )
 
   if (unpublished.length === 0) {
     return NextResponse.json({ success: true, message: 'All evergreen articles already published', skipped: [] })
   }
 
-  let topicsToGenerate: typeof EVERGREEN_TOPICS = []
+  let topicsToGenerate: EvergreenTopic[] = []
 
   if (isAuto) {
     // Pick unpublished topic that best matches today's India trends
@@ -196,7 +216,7 @@ export async function POST(request: NextRequest) {
     topicsToGenerate = [bestTopic]
 
   } else if (topicId) {
-    const found = EVERGREEN_TOPICS.find(t => t.id === topicId)
+    const found = EVERGREEN_TOPICS.find((t: EvergreenTopic) => t.id === topicId)
     if (!found) return NextResponse.json({ error: `Topic "${topicId}" not found` }, { status: 400 })
     topicsToGenerate = [found]
 
@@ -207,7 +227,8 @@ export async function POST(request: NextRequest) {
   const generated:   string[]  = []
   const skipped:     string[]  = []
   const errors:      string[]  = []
-  const newArticles: object[]  = []
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const newArticles: any[]     = []
   const sessionUsedIds = new Set<string>()
 
   for (const topic of topicsToGenerate) {
@@ -230,13 +251,18 @@ export async function POST(request: NextRequest) {
   }
 
   if (newArticles.length > 0) {
-    const allArticles = [...existingArticles, ...newArticles] as { slug: string; relatedSlugs: string[] }[]
-    allArticles.forEach((a, idx) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const allArticles: any[] = [...existingArticles, ...newArticles]
+    allArticles.forEach((a: any, idx: number) => {
       if (!a.relatedSlugs?.length) {
-        a.relatedSlugs = allArticles.filter((_, j) => j !== idx).slice(0, 4).map(b => b.slug)
+        a.relatedSlugs = allArticles
+          .filter((_: any, j: number) => j !== idx)
+          .slice(0, 4)
+          .map((b: any) => b.slug)
       }
     })
-    await saveArticlesAsync(allArticles)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await saveArticlesAsync(allArticles as any)
   }
 
   return NextResponse.json({
