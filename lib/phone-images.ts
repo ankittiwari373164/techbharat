@@ -6,19 +6,75 @@ const PHONE_IMAGES_DIR = path.join(process.cwd(), 'public', 'phone-images')
 const UNSPLASH_ACCESS_KEY = process.env.UNSPLASH_ACCESS_KEY || ''
 const EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp']
 
+// Maps brand keywords → exact folder names in public/phone-images/
+// Folder names: iphone, google_pixel, IQOO, motorola, nothing_, Oneplus, oppo, poco, Realme, Xiaomi
+const BRAND_FOLDERS: Record<string, string> = {
+  'apple':         'iphone',
+  'iphone':        'iphone',
+  'google pixel':  'google_pixel',
+  'google':        'google_pixel',
+  'pixel':         'google_pixel',
+  'iqoo':          'IQOO',
+  'motorola':      'motorola',
+  'moto':          'motorola',
+  'nothing':       'nothing_',
+  'oneplus':       'Oneplus',
+  'one plus':      'Oneplus',
+  'oppo':          'oppo',
+  'poco':          'poco',
+  'realme':        'Realme',
+  'xiaomi':        'Xiaomi',
+  'redmi':         'Xiaomi',
+}
+
 export function normalizePhoneName(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '-').trim()
 }
 
+// Resolve brand name → local folder name
+function resolveBrandFolder(phoneName: string): string | null {
+  const cleaned = phoneName
+    .toLowerCase()
+    .replace(/\s*(smartphone|phone|mobile|device)s?\s*/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  // Exact match
+  if (BRAND_FOLDERS[cleaned]) return BRAND_FOLDERS[cleaned]
+
+  // Partial match — longest key first so "google pixel" beats "google"
+  const keys = Object.keys(BRAND_FOLDERS).sort((a, b) => b.length - a.length)
+  for (const key of keys) {
+    if (cleaned.includes(key)) return BRAND_FOLDERS[key]
+  }
+  return null
+}
+
 export function getLocalPhoneImages(phoneName: string): string[] {
   try {
+    // First try brand folder mapping
+    const brandFolder = resolveBrandFolder(phoneName)
+    if (brandFolder) {
+      const dir = path.join(PHONE_IMAGES_DIR, brandFolder)
+      if (fs.existsSync(dir)) {
+        const files = fs.readdirSync(dir)
+          .filter(f => EXTENSIONS.some(ext => f.toLowerCase().endsWith(ext)))
+          .sort((a, b) => (parseInt(a.split('.')[0]) || 0) - (parseInt(b.split('.')[0]) || 0))
+          .map(f => `/phone-images/${brandFolder}/${f}`)
+        if (files.length > 0) return files
+      }
+    }
+
+    // Fallback: try normalized slug (for future model-specific folders)
     const slug = normalizePhoneName(phoneName)
-    const dir = path.join(PHONE_IMAGES_DIR, slug)
-    if (!fs.existsSync(dir)) return []
-    return fs.readdirSync(dir)
-      .filter(f => EXTENSIONS.some(ext => f.toLowerCase().endsWith(ext)))
-      .sort((a, b) => (parseInt(a.split('.')[0]) || 0) - (parseInt(b.split('.')[0]) || 0))
-      .map(f => `/phone-images/${slug}/${f}`)
+    const slugDir = path.join(PHONE_IMAGES_DIR, slug)
+    if (fs.existsSync(slugDir)) {
+      return fs.readdirSync(slugDir)
+        .filter(f => EXTENSIONS.some(ext => f.toLowerCase().endsWith(ext)))
+        .sort((a, b) => (parseInt(a.split('.')[0]) || 0) - (parseInt(b.split('.')[0]) || 0))
+        .map(f => `/phone-images/${slug}/${f}`)
+    }
+    return []
   } catch { return [] }
 }
 
@@ -46,7 +102,7 @@ export async function getPhoneImage(phoneName: string, index = 0, articleId?: st
     } catch { /* fall through */ }
   }
 
-  // 3. Unsplash source — no API key needed
+  // 3. Unsplash source — no API key, no Picsum ever
   const q = ['smartphone', 'android-phone', 'mobile-phone', 'tech-gadget', 'iphone']
   return `https://source.unsplash.com/1600x900/?${q[index % q.length]}`
 }
