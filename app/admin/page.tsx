@@ -8,7 +8,7 @@ interface ScheduleStatus { todaySlots:ScheduleSlot[]; publishedToday:number; nex
 interface StorySlide { id:string; headline:string; body:string; imageUrl:string; ctaText?:string; ctaLink?:string }
 interface WebStory { id:string; slug:string; title:string; brand:string; category:string; coverImage:string; slides:StorySlide[]; publishDate:string; isPublished:boolean; tags:string[] }
 
-type Tab = 'dashboard'|'schedule'|'articles'|'stories'|'fetch'|'images'|'seo'|'content-lab'|'settings'
+type Tab = 'dashboard'|'schedule'|'articles'|'stories'|'fetch'|'images'|'seo'|'settings'
 
 const typeColor:Record<string,string> = { 'mobile-news':'bg-blue-100 text-blue-800', 'review':'bg-red-100 text-red-800', 'compare':'bg-green-100 text-green-800' }
 const statusColor:Record<string,string> = { ok:'bg-green-100 text-green-700', missing:'bg-red-100 text-red-700', unknown:'bg-gray-100 text-gray-500' }
@@ -59,28 +59,8 @@ export default function AdminPage() {
   const [seoMetaResult,setSeoMetaResult] = useState<Record<string,string>|null>(null)
   const [seoMissingMeta,setSeoMissingMeta] = useState<{slug:string;title:string}[]>([])
   const [indexLog,setIndexLog]         = useState<{url:string;status:string}[]>([])
-  // content lab — evergreen
-  const evergreenList = [
-    {id:'best-phones-20k',              title:'Best Phones Under ₹20,000 in India (2026)',            badge:'compare'},
-    {id:'best-phones-30k',              title:'Best Phones Under ₹30,000 in India (2026)',            badge:'compare'},
-    {id:'battery-saving-guide-android', title:'Android Battery Saving Guide 2026',                   badge:'guide'},
-    {id:'5g-india-guide',               title:'5G in India 2026 — Complete Guide',                   badge:'guide'},
-    {id:'best-camera-phones-india',     title:'Best Camera Phones in India 2026',                    badge:'compare'},
-    {id:'how-to-choose-smartphone-india',title:'How to Choose a Smartphone in India 2026',           badge:'guide'},
-    {id:'xiaomi-vs-samsung-india',      title:'Xiaomi vs Samsung in India 2026',                     badge:'compare'},
-    {id:'best-gaming-phones-india',     title:'Best Gaming Phones Under ₹30,000 India 2026',         badge:'compare'},
-    {id:'oneplus-vs-nothing-comparison',title:'OnePlus vs Nothing Phone in India 2026',              badge:'compare'},
-    {id:'refurbished-phones-india-guide',title:'Buying Refurbished Phones in India 2026',            badge:'guide'},
-  ]
-  const [evergreenStatus,setEvergreenStatus] = useState<Record<string,'idle'|'running'|'done'|'error'|'exists'>>({})
-  const [evergreenMsg,setEvergreenMsg]   = useState<Record<string,string>>({})
-  // content lab — thin articles
-  const [thinArticles,setThinArticles]   = useState<{slug:string;title:string;wordCount:number;hasFix:boolean}[]>([])
-  const [thinSelected,setThinSelected]   = useState<Set<string>>(new Set())
-  const [thinLoading,setThinLoading]     = useState(false)
-  const [thinMsg,setThinMsg]             = useState('')
-  const [thinStatus,setThinStatus]       = useState<Record<string,'idle'|'running'|'done'|'error'>>({})
-  const [thinLoaded,setThinLoaded]       = useState(false)
+  const [autoEgStatus,setAutoEgStatus] = useState<'idle'|'running'|'done'|'error'>('idle')
+  const [autoEgMsg,setAutoEgMsg]       = useState('')
 
   const loadAll = useCallback(async () => {
     setLoading(true)
@@ -188,7 +168,6 @@ export default function AdminPage() {
     {id:'stories'   as Tab,icon:'📖',label:'Web Stories'},
     {id:'images'    as Tab,icon:'🖼️',label:'Phone Images'},
     {id:'seo'       as Tab,icon:'🔍',label:'SEO Tools'},
-    {id:'content-lab' as Tab,icon:'✍️',label:'Content Lab'},
     {id:'settings'  as Tab,icon:'🔧',label:'Settings'},
   ]
 
@@ -373,8 +352,54 @@ export default function AdminPage() {
                   </div>
                 )}
               </div>
-            </div>
-          )}
+
+              {/* ── EVERGREEN TRENDING FETCH ── */}
+              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+                <h2 className="text-sm font-bold text-gray-800 mb-1">🌿 Evergreen Article</h2>
+                <p className="text-xs text-gray-500 mb-4">Checks today&apos;s Google Trends India and publishes the best matching unpublished evergreen article.</p>
+                {autoEgStatus==='idle' && (
+                  <button onClick={async()=>{
+                    setAutoEgStatus('running')
+                    setAutoEgMsg('')
+                    try {
+                      const r=await fetch('/api/admin/generate-evergreen?auto=1',{method:'POST'})
+                      const d=await r.json()
+                      if(d.message?.includes('All evergreen')){
+                        setAutoEgStatus('done')
+                        setAutoEgMsg('All 10 evergreen articles already published ✅')
+                      } else if(d.errors?.length){
+                        setAutoEgStatus('error')
+                        setAutoEgMsg(d.errors[0])
+                      } else {
+                        setAutoEgStatus('done')
+                        setAutoEgMsg(`Published: ${d.generated?.[0]||'article'}`)
+                        loadAll()
+                      }
+                    } catch {
+                      setAutoEgStatus('error')
+                      setAutoEgMsg('Network error — try again')
+                    }
+                  }} className="bg-[#1a3a5c] hover:bg-[#0f2a48] text-white font-bold px-6 py-2.5 rounded-lg text-sm">
+                    🌿 Fetch &amp; Publish Trending Evergreen
+                  </button>
+                )}
+                {autoEgStatus==='running' && (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-[#1a3a5c] border-t-transparent rounded-full animate-spin"/>
+                    <span className="text-sm text-gray-600">Checking trends &amp; generating article…</span>
+                  </div>
+                )}
+                {(autoEgStatus==='done'||autoEgStatus==='error') && (
+                  <div className="space-y-3">
+                    <div className={`rounded-lg p-4 border ${autoEgStatus==='done'?'bg-green-50 border-green-200':'bg-red-50 border-red-200'}`}>
+                      <p className={`text-sm font-medium ${autoEgStatus==='done'?'text-green-800':'text-red-800'}`}>{autoEgStatus==='done'?'✅ ':''}{autoEgMsg}</p>
+                    </div>
+                    <button onClick={()=>{setAutoEgStatus('idle');setAutoEgMsg('')}} className="bg-[#1a3a5c] text-white text-sm font-bold px-4 py-2 rounded-lg">
+                      {autoEgStatus==='error'?'↺ Retry':'Publish Another'}
+                    </button>
+                  </div>
+                )}
+              </div>
 
           {/* ── ARTICLES ── */}
           {tab==='articles' && (
@@ -876,174 +901,6 @@ export default function AdminPage() {
                 </div>
               </div>
 
-            </div>
-          )}
-
-          {/* ── CONTENT LAB ── */}
-          {tab==='content-lab' && (
-            <div className="space-y-6">
-              <div>
-                <h1 className="text-lg font-bold text-gray-900">✍️ Content Lab</h1>
-                <p className="text-xs text-gray-400 mt-0.5">Publish evergreen articles one by one · Select and rewrite thin articles</p>
-              </div>
-
-              {/* ── EVERGREEN PUBLISHER ── */}
-              <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-                <div className="px-5 py-4 border-b border-gray-100">
-                  <h2 className="text-sm font-bold text-gray-800">🌿 Evergreen Articles</h2>
-                  <p className="text-xs text-gray-400 mt-0.5">High-traffic SEO articles. Publish one at a time — each takes ~30 seconds to generate.</p>
-                </div>
-                <div className="divide-y divide-gray-50">
-                  {evergreenList.map(item => {
-                    const st = evergreenStatus[item.id] || 'idle'
-                    const msg = evergreenMsg[item.id] || ''
-                    return (
-                      <div key={item.id} className="px-5 py-3.5 flex items-center gap-3">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-800 leading-tight">{item.title}</p>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${item.badge==='compare'?'bg-green-100 text-green-700':'bg-blue-100 text-blue-700'}`}>{item.badge}</span>
-                            {msg && <span className={`text-[10px] ${st==='error'?'text-red-500':st==='done'||st==='exists'?'text-green-600':'text-gray-400'}`}>{msg}</span>}
-                          </div>
-                        </div>
-                        <button
-                          disabled={st==='running'||st==='done'||st==='exists'}
-                          onClick={async () => {
-                            setEvergreenStatus(p=>({...p,[item.id]:'running'}))
-                            setEvergreenMsg(p=>({...p,[item.id]:'Generating...'}))
-                            try {
-                              const r = await fetch(`/api/admin/generate-evergreen?topic=${item.id}`,{method:'POST'})
-                              const d = await r.json()
-                              if (d.skipped?.includes(item.id)) {
-                                setEvergreenStatus(p=>({...p,[item.id]:'exists'}))
-                                setEvergreenMsg(p=>({...p,[item.id]:'Already published'}))
-                              } else if (d.errors?.length) {
-                                setEvergreenStatus(p=>({...p,[item.id]:'error'}))
-                                setEvergreenMsg(p=>({...p,[item.id]:d.errors[0]}))
-                              } else {
-                                setEvergreenStatus(p=>({...p,[item.id]:'done'}))
-                                setEvergreenMsg(p=>({...p,[item.id]:'✅ Published!'}))
-                                loadAll()
-                              }
-                            } catch(e) {
-                              setEvergreenStatus(p=>({...p,[item.id]:'error'}))
-                              setEvergreenMsg(p=>({...p,[item.id]:'Network error'}))
-                            }
-                          }}
-                          className={`shrink-0 text-xs font-bold px-4 py-2 rounded-lg transition-all ${
-                            st==='done'||st==='exists' ? 'bg-green-100 text-green-700 cursor-default' :
-                            st==='running' ? 'bg-gray-100 text-gray-400 cursor-not-allowed' :
-                            st==='error' ? 'bg-red-600 text-white hover:bg-red-700' :
-                            'bg-[#d4220a] text-white hover:bg-[#b81d09]'
-                          }`}>
-                          {st==='running' ? '⏳ Generating...' : st==='done' ? '✅ Done' : st==='exists' ? '✓ Exists' : st==='error' ? '↺ Retry' : '▶ Publish'}
-                        </button>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {/* ── THIN ARTICLE REWRITER ── */}
-              <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-                <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-                  <div>
-                    <h2 className="text-sm font-bold text-gray-800">🔧 Thin Article Rewriter</h2>
-                    <p className="text-xs text-gray-400 mt-0.5">Select articles to rewrite with deeper, more valuable content.</p>
-                  </div>
-                  {!thinLoaded ? (
-                    <button onClick={async () => {
-                      setThinLoading(true); setThinMsg('Scanning articles...')
-                      const r = await fetch('/api/admin/rewrite-thin')
-                      const d = await r.json()
-                      setThinArticles(d.thin_articles || [])
-                      setThinLoaded(true); setThinLoading(false)
-                      setThinMsg(d.thin_articles?.length ? `Found ${d.thin_articles.length} thin articles` : 'No thin articles found ✅')
-                    }} disabled={thinLoading} className="bg-[#1a3a5c] text-white text-xs font-bold px-4 py-2 rounded-lg disabled:opacity-50">
-                      🔍 Scan Articles
-                    </button>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      {thinSelected.size > 0 && (
-                        <button onClick={async () => {
-                          if (!confirm(`Rewrite ${thinSelected.size} selected article(s)? Each takes ~30 seconds.`)) return
-                          setThinLoading(true)
-                          const slugs = Array.from(thinSelected)
-                          for (const slug of slugs) {
-                            setThinStatus(p=>({...p,[slug]:'running'}))
-                            setThinMsg(`Rewriting: ${slug}...`)
-                            try {
-                              const r = await fetch(`/api/admin/rewrite-thin?slug=${slug}`,{method:'POST'})
-                              const d = await r.json()
-                              if (d.success) {
-                                setThinStatus(p=>({...p,[slug]:'done'}))
-                                setThinSelected(p=>{ const n=new Set(p); n.delete(slug); return n })
-                              } else {
-                                setThinStatus(p=>({...p,[slug]:'error'}))
-                              }
-                            } catch {
-                              setThinStatus(p=>({...p,[slug]:'error'}))
-                            }
-                          }
-                          setThinLoading(false); setThinMsg(`Done rewriting ${slugs.length} articles`)
-                          loadAll()
-                        }} disabled={thinLoading} className="bg-[#d4220a] text-white text-xs font-bold px-4 py-2 rounded-lg disabled:opacity-50">
-                          ✍️ Rewrite Selected ({thinSelected.size})
-                        </button>
-                      )}
-                      <button onClick={()=>{
-                        if (thinSelected.size===thinArticles.length) setThinSelected(new Set())
-                        else setThinSelected(new Set(thinArticles.map(a=>a.slug)))
-                      }} className="border border-gray-200 text-gray-600 text-xs font-bold px-3 py-2 rounded-lg hover:bg-gray-50">
-                        {thinSelected.size===thinArticles.length ? 'Deselect All' : 'Select All'}
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {thinMsg && <div className={`mx-5 mt-3 px-3 py-2 rounded-lg text-xs ${thinMsg.includes('Done')||thinMsg.includes('✅')?'bg-green-50 text-green-700':'bg-blue-50 text-blue-700'}`}>{thinMsg}</div>}
-
-                {thinLoaded && thinArticles.length === 0 && (
-                  <div className="px-5 py-8 text-center text-sm text-gray-400">✅ All articles meet quality standards</div>
-                )}
-
-                {thinArticles.length > 0 && (
-                  <div className="divide-y divide-gray-50">
-                    {thinArticles.map(art => {
-                      const st = thinStatus[art.slug] || 'idle'
-                      const checked = thinSelected.has(art.slug)
-                      return (
-                        <div key={art.slug} onClick={() => {
-                          if (st==='done') return
-                          setThinSelected(p => { const n=new Set(p); checked?n.delete(art.slug):n.add(art.slug); return n })
-                        }} className={`px-5 py-3.5 flex items-center gap-3 cursor-pointer transition-colors ${checked?'bg-red-50':st==='done'?'bg-green-50':'hover:bg-gray-50'}`}>
-                          <div className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
-                            st==='done' ? 'bg-green-500 border-green-500' :
-                            checked ? 'bg-[#d4220a] border-[#d4220a]' : 'border-gray-300'
-                          }`}>
-                            {(checked||st==='done') && <span className="text-white text-[10px] font-bold">{st==='done'?'✓':'✓'}</span>}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-gray-800 leading-tight truncate">{art.title}</p>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${art.wordCount<500?'bg-red-100 text-red-700':art.wordCount<800?'bg-amber-100 text-amber-700':'bg-gray-100 text-gray-500'}`}>
-                                {art.wordCount} words
-                              </span>
-                              {art.hasFix && <span className="text-[10px] bg-purple-100 text-purple-700 font-bold px-1.5 py-0.5 rounded">has fix</span>}
-                              <span className="text-[10px] font-mono text-gray-400 truncate">{art.slug}</span>
-                            </div>
-                          </div>
-                          <span className={`text-[10px] font-bold shrink-0 ${
-                            st==='running'?'text-blue-500':st==='done'?'text-green-600':st==='error'?'text-red-500':'text-gray-300'
-                          }`}>
-                            {st==='running'?'⏳':st==='done'?'✅ Done':st==='error'?'❌ Error':''}
-                          </span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
             </div>
           )}
 
