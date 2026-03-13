@@ -16,7 +16,8 @@ export const dynamic = 'force-dynamic'
 
 const kv       = new Redis({ url: process.env.KV_REST_API_URL!, token: process.env.KV_REST_API_TOKEN! })
 const SITE_URL = process.env.SITE_URL || 'https://thetechbharat.com'
-const TWENTY_H = 20 * 60 * 60 * 1000
+const TWENTY_H  = 20 * 60 * 60 * 1000
+const TWENTY_FOUR_H = 24 * 60 * 60 * 1000
 
 // ── UptimeRobot health check ──────────────────────────────────────────────
 export async function HEAD() {
@@ -312,6 +313,42 @@ export async function GET(req: NextRequest) {
 
   await kv.set('seo:last_full_refresh', now.toString())
   log.push('=== FULL REFRESH DONE ===')
+
+  // ── Daily evergreen article auto-publish (once per 24h) ──────────────
+  // Picks best unpublished evergreen topic based on today's Google Trends India
+  const lastEvergreenRaw = await kv.get('evergreen:last_auto_publish')
+  const lastEvergreen    = lastEvergreenRaw ? Number(lastEvergreenRaw) : 0
+  const needsEvergreen   = force || (now - lastEvergreen > TWENTY_FOUR_H)
+
+  if (needsEvergreen) {
+    log.push('--- Evergreen auto-publish starting ---')
+    try {
+      const siteUrl = process.env.SITE_URL || 'https://thetechbharat.com'
+      const secret  = process.env.CRON_SECRET || ''
+      const egRes   = await fetch(
+        `${siteUrl}/api/admin/generate-evergreen?auto=1&secret=${encodeURIComponent(secret)}`,
+        { method: 'POST' }
+      )
+      const egData  = await egRes.json()
+      if (egData.generated?.length > 0) {
+        log.push(`Evergreen published: ${egData.generated[0]}`)
+        await kv.set('evergreen:last_auto_publish', now.toString())
+      } else if ((egData.message || '').includes('All evergreen')) {
+        log.push('All evergreen articles already published')
+        await kv.set('evergreen:last_auto_publish', now.toString())
+      } else if (egData.errors?.length > 0) {
+        log.push(`Evergreen error: ${egData.errors[0]}`)
+      } else {
+        log.push(`Evergreen skipped: ${egData.skipped?.[0] || 'none pending'}`)
+      }
+    } catch (err) {
+      log.push(`Evergreen failed: ${(err as Error).message}`)
+    }
+  } else {
+    const nextEg = Math.round((TWENTY_FOUR_H - (now - lastEvergreen)) / 3_600_000)
+    log.push(`Evergreen: next auto-publish in ${nextEg}h`)
+  }
+
   await kv.set('seo:cron_log', JSON.stringify({ log, ts: now }))
 
   return NextResponse.json({ ok: true, fullRefresh: true, log })
