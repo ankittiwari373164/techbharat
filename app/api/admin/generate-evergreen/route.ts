@@ -40,7 +40,10 @@ async function fetchTrendingTopics(): Promise<string[]> {
     )
     if (!res.ok) return []
     const xml    = await res.text()
-    const titles = [...xml.matchAll(/<title><!\[CDATA\[([^\]]+)\]\]>/g)].map(m => m[1])
+    const titles: string[] = []
+    const re = /<title><!\[CDATA\[([^\]]+)\]\]>/g
+    let m: RegExpExecArray | null
+    while ((m = re.exec(xml)) !== null) titles.push(m[1])
     return titles.slice(0, 20)
   } catch { return [] }
 }
