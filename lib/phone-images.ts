@@ -5,6 +5,12 @@ import path from 'path'
 const PHONE_IMAGES_DIR = path.join(process.cwd(), 'public', 'phone-images')
 const EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp']
 
+const UNSPLASH_ACCESS_KEY = process.env.UNSPLASH_ACCESS_KEY || ''
+const SITE_URL = process.env.SITE_URL || 'https://thetechbharat.com'
+
+// Redis key where all used Unsplash image IDs are stored (a JSON array)
+const USED_IDS_KEY = 'tb:used_unsplash_ids'
+
 const BRAND_FOLDERS: Record<string, string> = {
   'apple':        'iphone',
   'iphone':       'iphone',
@@ -76,14 +82,10 @@ export function getAllLocalImages(): string[] {
 }
 
 export function getPhoneImage(phoneName: string, index = 0): string {
-  // 1. Brand-specific folder
   const brandImages = getLocalPhoneImages(phoneName)
   if (brandImages.length > 0) return brandImages[index % brandImages.length]
-
-  // 2. No brand folder — use any image from any folder
   const allImages = getAllLocalImages()
   if (allImages.length > 0) return allImages[index % allImages.length]
-
   return ''
 }
 
@@ -94,6 +96,85 @@ export function getArticleImages(phoneName: string, count = 5): string[] {
     if (img) images.push(img)
   }
   return images
+}
+
+// ─────────────────────────────────────────────────────────────────
+//  UNSPLASH UNIQUE IMAGE FETCHER
+//  - Fetches a random Unsplash image for the given query
+//  - Checks the image's unique Unsplash ID against:
+//      1. Redis (tb:used_unsplash_ids) — IDs used across ALL past articles
+//      2. sessionUsedIds Set — IDs used in the current batch (same request)
+//  - If the ID already exists → skips it and tries again (up to maxAttempts)
+//  - If the ID is new → stores it in Redis + sessionUsedIds, returns proxy URL
+//  - Falls back to local images if Unsplash is unavailable or all retries fail
+// ─────────────────────────────────────────────────────────────────
+export async function getUniqueUnsplashImage(
+  query: string,
+  sessionUsedIds: Set<string>,
+  maxAttempts = 5
+): Promise<string> {
+  if (!UNSPLASH_ACCESS_KEY) return getPhoneImage(query)
+
+  // Load all previously used IDs from Redis once
+  let redisUsedIds: Set<string> = new Set()
+  try {
+    const { Redis } = await import('@upstash/redis')
+    const redis = Redis.fromEnv()
+    const stored = await redis.get<string[]>(USED_IDS_KEY)
+    if (Array.isArray(stored)) redisUsedIds = new Set(stored)
+  } catch {
+    // Redis unavailable — continue without persistence
+  }
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      const q = encodeURIComponent(query)
+      const res = await fetch(
+        `https://api.unsplash.com/photos/random?query=${q}&orientation=landscape`,
+        {
+          headers: { Authorization: `Client-ID ${UNSPLASH_ACCESS_KEY}` },
+          next: { revalidate: 0 },
+        }
+      )
+      if (!res.ok) break
+
+      const data = await res.json()
+      const id: string = data.id        // Unsplash unique image ID e.g. "abc123XYZ"
+      const rawUrl: string = data.urls?.regular || ''
+
+      if (!id || !rawUrl) continue
+
+      // Skip if this ID was used before (Redis) or in this batch (session)
+      if (redisUsedIds.has(id) || sessionUsedIds.has(id)) {
+        console.log(`[TB:images] Skipping duplicate Unsplash ID: ${id} (attempt ${attempt + 1})`)
+        continue
+      }
+
+      // New unique ID — mark it used in both places
+      sessionUsedIds.add(id)
+      redisUsedIds.add(id)
+
+      // Persist updated set back to Redis (keep last 2000 IDs max to avoid bloat)
+      try {
+        const { Redis } = await import('@upstash/redis')
+        const redis = Redis.fromEnv()
+        const idsArray = Array.from(redisUsedIds).slice(-2000)
+        await redis.set(USED_IDS_KEY, idsArray)
+      } catch {
+        // Non-fatal — image is still returned, just not persisted
+      }
+
+      // Return through our proxy so Unsplash auth header is added server-side
+      return `${SITE_URL}/api/img?u=${encodeURIComponent(rawUrl)}`
+
+    } catch (err) {
+      console.warn(`[TB:images] Unsplash attempt ${attempt + 1} failed:`, (err as Error).message)
+    }
+  }
+
+  // All attempts exhausted or Unsplash failed — use local image as fallback
+  console.log(`[TB:images] Falling back to local image for query: ${query}`)
+  return getPhoneImage(query)
 }
 
 export function listPhonesWithImages(): { name: string; slug: string; count: number }[] {
