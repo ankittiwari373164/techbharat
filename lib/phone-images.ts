@@ -4,7 +4,6 @@ import path from 'path'
 
 const PHONE_IMAGES_DIR = path.join(process.cwd(), 'public', 'phone-images')
 const UNSPLASH_ACCESS_KEY = process.env.UNSPLASH_ACCESS_KEY || ''
-const SITE_URL = process.env.SITE_URL || 'https://thetechbharat.com'
 const EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp']
 
 const BRAND_FOLDERS: Record<string, string> = {
@@ -25,6 +24,37 @@ const BRAND_FOLDERS: Record<string, string> = {
   'xiaomi':       'Xiaomi',
   'redmi':        'Xiaomi',
 }
+
+// Curated unique photo IDs per brand — guaranteed different images
+const BRAND_PHOTO_IDS: Record<string, string[]> = {
+  iphone:   ['1591337676887-a217a6970a8a','1510557880182-3d4d3cba35a5','1567581935013-3ae9b3af0b3f','1621330396098-05db95930b71','1585060544812-6b45742d762f'],
+  apple:    ['1591337676887-a217a6970a8a','1510557880182-3d4d3cba35a5','1567581935013-3ae9b3af0b3f','1621330396098-05db95930b71','1585060544812-6b45742d762f'],
+  samsung:  ['1610945415295-d9bbf067e59c','1546054454-aa26e2b734c7','1551650975-d399e0e37d00','1598965675045-45c5e72c7d05','1583573636255-455c5aba3e63'],
+  oneplus:  ['1565849904461-04a58ad377e0','1574944985070-8f3ebc6b79d2','1511707171634-5f897ff02aa9','1601784551446-20c9e07cdbdb','1592899677977-9c10002761d5'],
+  xiaomi:   ['1574944985070-8f3ebc6b79d2','1511707171634-5f897ff02aa9','1565849904461-04a58ad377e0','1592899677977-9c10002761d5','1598327105666-5b89351aff97'],
+  redmi:    ['1574944985070-8f3ebc6b79d2','1511707171634-5f897ff02aa9','1565849904461-04a58ad377e0','1592899677977-9c10002761d5','1598327105666-5b89351aff97'],
+  poco:     ['1598327105666-5b89351aff97','1601784551446-20c9e07cdbdb','1574944985070-8f3ebc6b79d2','1511707171634-5f897ff02aa9','1592899677977-9c10002761d5'],
+  realme:   ['1511707171634-5f897ff02aa9','1574944985070-8f3ebc6b79d2','1565849904461-04a58ad377e0','1598327105666-5b89351aff97','1601784551446-20c9e07cdbdb'],
+  oppo:     ['1601784551446-20c9e07cdbdb','1511707171634-5f897ff02aa9','1574944985070-8f3ebc6b79d2','1565849904461-04a58ad377e0','1592899677977-9c10002761d5'],
+  vivo:     ['1592899677977-9c10002761d5','1574944985070-8f3ebc6b79d2','1511707171634-5f897ff02aa9','1601784551446-20c9e07cdbdb','1565849904461-04a58ad377e0'],
+  motorola: ['1601784551446-20c9e07cdbdb','1574944985070-8f3ebc6b79d2','1511707171634-5f897ff02aa9','1592899677977-9c10002761d5','1598327105666-5b89351aff97'],
+  nothing:  ['1598327105666-5b89351aff97','1601784551446-20c9e07cdbdb','1592899677977-9c10002761d5','1574944985070-8f3ebc6b79d2','1511707171634-5f897ff02aa9'],
+  iqoo:     ['1565849904461-04a58ad377e0','1574944985070-8f3ebc6b79d2','1511707171634-5f897ff02aa9','1601784551446-20c9e07cdbdb','1592899677977-9c10002761d5'],
+  google:   ['1598965675045-45c5e72c7d05','1583573636255-455c5aba3e63','1551650975-d399e0e37d00','1574944985070-8f3ebc6b79d2','1511707171634-5f897ff02aa9'],
+  pixel:    ['1598965675045-45c5e72c7d05','1583573636255-455c5aba3e63','1551650975-d399e0e37d00','1574944985070-8f3ebc6b79d2','1511707171634-5f897ff02aa9'],
+  infinix:  ['1574944985070-8f3ebc6b79d2','1511707171634-5f897ff02aa9','1565849904461-04a58ad377e0','1592899677977-9c10002761d5','1598327105666-5b89351aff97'],
+}
+
+const GENERIC_PHOTO_IDS = [
+  '1511707171634-5f897ff02aa9',
+  '1574944985070-8f3ebc6b79d2',
+  '1565849904461-04a58ad377e0',
+  '1592899677977-9c10002761d5',
+  '1598327105666-5b89351aff97',
+  '1601784551446-20c9e07cdbdb',
+  '1546054454-aa26e2b734c7',
+  '1610945415295-d9bbf067e59c',
+]
 
 export function normalizePhoneName(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '-').trim()
@@ -69,43 +99,48 @@ export function getLocalPhoneImages(phoneName: string): string[] {
   } catch { return [] }
 }
 
-export async function getPhoneImage(phoneName: string, index = 0): Promise<string> {
-  // 1. Local images — always preferred
-  const localImages = getLocalPhoneImages(phoneName)
-  if (localImages.length > 0) return localImages[index % localImages.length]
+function getUnsplashUrl(photoId: string): string {
+  return `https://images.unsplash.com/photo-${photoId}?w=1200&q=80&fm=jpg&fit=crop`
+}
 
-  // 2. Unsplash API — use thumb URL which is a direct CDN link, no auth needed to display
+export async function getPhoneImage(phoneName: string, index = 0): Promise<string> {
+  // 1. LOCAL IMAGES FIRST
+  const localImages = getLocalPhoneImages(phoneName)
+  if (localImages.length > 0) {
+    return localImages[index % localImages.length]
+  }
+
+  // 2. Unsplash API — fetch fresh varied results
   if (UNSPLASH_ACCESS_KEY) {
     try {
+      const page = Math.floor(index / 10) + 1
+      const perPage = 10
       const query = encodeURIComponent(`${phoneName} smartphone`)
       const res = await fetch(
-        `https://api.unsplash.com/search/photos?query=${query}&per_page=15&orientation=landscape`,
+        `https://api.unsplash.com/search/photos?query=${query}&per_page=${perPage}&page=${page}&orientation=landscape`,
         { headers: { Authorization: `Client-ID ${UNSPLASH_ACCESS_KEY}` } }
       )
       if (res.ok) {
         const { results = [] } = await res.json()
         if (results.length > 0) {
           const pick = results[index % results.length]
-          // Use the full URL from Unsplash — proxy through our img route with auth
-          const rawUrl = pick.urls.regular
-          return `${SITE_URL}/api/img?url=${encodeURIComponent(rawUrl)}`
+          // Direct CDN URL — no proxy needed
+          return pick.urls.full || pick.urls.regular
         }
       }
     } catch { /* fall through */ }
   }
 
-  // 3. Reliable fallback — curated smartphone photo IDs from Unsplash
-  const fallbacks = [
-    'photo-1511707171634-5f897ff02aa9', // phone on hand
-    'photo-1574944985070-8f3ebc6b79d2', // smartphone
-    'photo-1565849904461-04a58ad377e0', // android phone
-    'photo-1592899677977-9c10002761d5', // mobile
-    'photo-1598327105666-5b89351aff97', // tech phone
-    'photo-1601784551446-20c9e07cdbdb', // smartphone flat
-    'photo-1546054454-aa26e2b734c7', // phone screen
-  ]
-  const pid = fallbacks[index % fallbacks.length]
-  return `${SITE_URL}/api/img?url=${encodeURIComponent(`https://images.unsplash.com/${pid}?w=1200&q=80&fm=jpg`)}`
+  // 3. Curated brand-specific photo IDs — each index gives a different image
+  const n = phoneName.toLowerCase()
+  for (const [key, ids] of Object.entries(BRAND_PHOTO_IDS)) {
+    if (n.includes(key)) {
+      return getUnsplashUrl(ids[index % ids.length])
+    }
+  }
+
+  // 4. Generic fallback pool
+  return getUnsplashUrl(GENERIC_PHOTO_IDS[index % GENERIC_PHOTO_IDS.length])
 }
 
 export async function getArticleImages(phoneName: string, count = 5): Promise<string[]> {
