@@ -10,14 +10,19 @@ const nextConfig = {
   },
   async redirects() {
     return [
-      // Fix: redirect old Blogger feed URLs showing in GSC as
-      // "Duplicate without user-selected canonical" — leftover from Hostinger parked page.
+      // Fix: /index.html → / (301) — fixes GSC "Discovered - currently not indexed" error
+      {
+        source: '/index.html',
+        destination: '/',
+        permanent: true,
+      },
+      // Fix: redirect old Blogger feed URLs showing in GSC
       {
         source: '/feeds/:path*',
         destination: '/',
         permanent: true,
       },
-      // Fix: redirect www to non-www to prevent duplicate content issues in GSC
+      // Fix: redirect www to non-www to prevent duplicate content
       {
         source: '/:path*',
         has: [{ type: 'host', value: 'www.thetechbharat.com' }],

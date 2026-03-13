@@ -1,6 +1,5 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import SeoAnalyticsTab from '@/components/admin/SeoAnalyticsTab'
 
 interface Article { id:string; slug:string; title:string; type:string; brand:string; publishDate:string; readTime:number; isFeatured:boolean; summary:string; tags:string[] }
 interface Stats { total:number; mobileNews:number; reviews:number; compare:number; brands:Record<string,number> }
@@ -9,7 +8,7 @@ interface ScheduleStatus { todaySlots:ScheduleSlot[]; publishedToday:number; nex
 interface StorySlide { id:string; headline:string; body:string; imageUrl:string; ctaText?:string; ctaLink?:string }
 interface WebStory { id:string; slug:string; title:string; brand:string; category:string; coverImage:string; slides:StorySlide[]; publishDate:string; isPublished:boolean; tags:string[] }
 
-type Tab = 'dashboard'|'schedule'|'articles'|'stories'|'fetch'|'images'|'seo'|'settings'
+type Tab = 'dashboard'|'schedule'|'articles'|'stories'|'fetch'|'images'|'seo'|'content-lab'|'settings'
 
 const typeColor:Record<string,string> = { 'mobile-news':'bg-blue-100 text-blue-800', 'review':'bg-red-100 text-red-800', 'compare':'bg-green-100 text-green-800' }
 const statusColor:Record<string,string> = { ok:'bg-green-100 text-green-700', missing:'bg-red-100 text-red-700', unknown:'bg-gray-100 text-gray-500' }
@@ -48,7 +47,40 @@ export default function AdminPage() {
   const [storyMsg,setStoryMsg]         = useState('')
   // phone images
   const [phoneImages,setPhoneImages]   = useState<{name:string;slug:string;count:number}[]>([])
-  // seo — handled by SeoAnalyticsTab component
+  // seo
+  const [seoGsc,setSeoGsc]             = useState<{queries:unknown[];pages:unknown[];period:string}|null>(null)
+  // ensure safe array access
+  const gscQueries = (seoGsc?.queries || []) as Array<{keys:string[];clicks:number;impressions:number;position:number}>
+  const gscPages   = (seoGsc?.pages   || []) as Array<{keys:string[];clicks:number;impressions:number;ctr:number}>
+  const [seoTrends,setSeoTrends]       = useState<{title:string;traffic:string;link:string}[]>([])
+  const [seoLoading,setSeoLoading]     = useState(false)
+  const [seoMsg,setSeoMsg]             = useState('')
+  const [seoMetaSlug,setSeoMetaSlug]   = useState('')
+  const [seoMetaResult,setSeoMetaResult] = useState<Record<string,string>|null>(null)
+  const [seoMissingMeta,setSeoMissingMeta] = useState<{slug:string;title:string}[]>([])
+  const [indexLog,setIndexLog]         = useState<{url:string;status:string}[]>([])
+  // content lab — evergreen
+  const evergreenList = [
+    {id:'best-phones-20k',              title:'Best Phones Under ₹20,000 in India (2026)',            badge:'compare'},
+    {id:'best-phones-30k',              title:'Best Phones Under ₹30,000 in India (2026)',            badge:'compare'},
+    {id:'battery-saving-guide-android', title:'Android Battery Saving Guide 2026',                   badge:'guide'},
+    {id:'5g-india-guide',               title:'5G in India 2026 — Complete Guide',                   badge:'guide'},
+    {id:'best-camera-phones-india',     title:'Best Camera Phones in India 2026',                    badge:'compare'},
+    {id:'how-to-choose-smartphone-india',title:'How to Choose a Smartphone in India 2026',           badge:'guide'},
+    {id:'xiaomi-vs-samsung-india',      title:'Xiaomi vs Samsung in India 2026',                     badge:'compare'},
+    {id:'best-gaming-phones-india',     title:'Best Gaming Phones Under ₹30,000 India 2026',         badge:'compare'},
+    {id:'oneplus-vs-nothing-comparison',title:'OnePlus vs Nothing Phone in India 2026',              badge:'compare'},
+    {id:'refurbished-phones-india-guide',title:'Buying Refurbished Phones in India 2026',            badge:'guide'},
+  ]
+  const [evergreenStatus,setEvergreenStatus] = useState<Record<string,'idle'|'running'|'done'|'error'|'exists'>>({})
+  const [evergreenMsg,setEvergreenMsg]   = useState<Record<string,string>>({})
+  // content lab — thin articles
+  const [thinArticles,setThinArticles]   = useState<{slug:string;title:string;wordCount:number;hasFix:boolean}[]>([])
+  const [thinSelected,setThinSelected]   = useState<Set<string>>(new Set())
+  const [thinLoading,setThinLoading]     = useState(false)
+  const [thinMsg,setThinMsg]             = useState('')
+  const [thinStatus,setThinStatus]       = useState<Record<string,'idle'|'running'|'done'|'error'>>({})
+  const [thinLoaded,setThinLoaded]       = useState(false)
 
   const loadAll = useCallback(async () => {
     setLoading(true)
@@ -156,6 +188,7 @@ export default function AdminPage() {
     {id:'stories'   as Tab,icon:'📖',label:'Web Stories'},
     {id:'images'    as Tab,icon:'🖼️',label:'Phone Images'},
     {id:'seo'       as Tab,icon:'🔍',label:'SEO Tools'},
+    {id:'content-lab' as Tab,icon:'✍️',label:'Content Lab'},
     {id:'settings'  as Tab,icon:'🔧',label:'Settings'},
   ]
 
@@ -553,9 +586,466 @@ export default function AdminPage() {
 
           {/* ── SEO TOOLS ── */}
           {tab==='seo' && (
-            <SeoAnalyticsTab />
+            <div className="space-y-5">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div>
+                  <h1 className="text-lg font-bold text-gray-900">🔍 SEO Automation Hub</h1>
+                  <p className="text-xs text-gray-400 mt-0.5">Auto-refreshes every 20 hours using Google Trends India</p>
+                </div>
+                <button onClick={async()=>{
+                  setSeoLoading(true); setSeoMsg('Running full SEO refresh...')
+                  const r=await fetch(`/api/seo-cron?secret=${encodeURIComponent(process.env.NEXT_PUBLIC_CRON_SECRET||'')}&force=1`)
+                  const d=await r.json()
+                  setSeoMsg(d.log?.[d.log.length-1]||'Done'); setSeoLoading(false)
+                }} disabled={seoLoading} className="bg-[#d4220a] text-white text-xs font-bold px-4 py-2 rounded-lg disabled:opacity-50">
+                  ⚡ Force Full Refresh Now
+                </button>
+              </div>
+
+              {seoMsg && <div className="bg-blue-50 border border-blue-200 text-blue-800 text-sm px-4 py-2.5 rounded-lg">{seoMsg}</div>}
+
+              {/* ── QUICK ACTIONS ── */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {[
+                  {label:'📊 Load GSC Traffic',action:async()=>{
+                    setSeoLoading(true); setSeoMsg('')
+                    const r=await fetch('/api/seo?action=gsc&days=28'); const d=await r.json()
+                    setSeoLoading(false)
+                    if(d.error) { setSeoMsg(`GSC Error: ${d.error}`); return }
+                    setSeoGsc({ queries: d.queries||[], pages: d.pages||[], period: d.period||'' })
+                    setSeoMsg(`Loaded ${(d.queries||[]).length} queries, ${(d.pages||[]).length} pages`)
+                  }},
+                  {label:'📈 India Trends',action:async()=>{
+                    setSeoLoading(true); setSeoMsg('')
+                    const r=await fetch('/api/seo?action=trends'); const d=await r.json()
+                    setSeoTrends(d.trends||[]); setSeoLoading(false)
+                    setSeoMsg(`Loaded ${(d.trends||[]).length} trending topics`)
+                  }},
+                  {label:'🏷️ Find Missing Meta',action:async()=>{
+                    setSeoLoading(true); setSeoMsg('')
+                    const r=await fetch('/api/seo?action=meta_batch'); const d=await r.json()
+                    setSeoMissingMeta(d.missing||[]); setSeoLoading(false)
+                    setSeoMsg(`${(d.missing||[]).length} of ${d.total} articles missing SEO meta`)
+                  }},
+                  {label:'🤖 Auto-Fix All Meta',action:async()=>{
+                    if(!confirm('Generate AI SEO meta for all articles missing it? (max 30)')) return
+                    setSeoLoading(true); setSeoMsg('Generating...')
+                    const r=await fetch('/api/seo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'generate_all_meta',force:true})})
+                    const d=await r.json()
+                    setSeoMsg(`✅ Generated meta for ${d.generated} articles (${d.skipped||0} skipped, ${d.total||0} total)`); setSeoLoading(false)
+                  }},
+                ].map(btn=>(
+                  <button key={btn.label} onClick={btn.action} disabled={seoLoading}
+                    className="bg-[#1a3a5c] text-white text-xs font-bold px-3 py-3 rounded-lg hover:bg-[#0f2a48] disabled:opacity-50 text-center leading-tight">
+                    {btn.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* ── AUTOMATION STATUS ── */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-white rounded-xl border border-gray-200 p-4">
+                  <h3 className="text-xs font-bold text-gray-500 uppercase mb-2">🔄 Auto-Refresh Cycle</h3>
+                  <p className="text-2xl font-black text-[#d4220a]">20h</p>
+                  <p className="text-xs text-gray-500 mt-1">All pages + articles updated every 20 hours with fresh Google Trends keywords</p>
+                </div>
+                <div className="bg-white rounded-xl border border-gray-200 p-4">
+                  <h3 className="text-xs font-bold text-gray-500 uppercase mb-2">🤖 What Auto-Updates</h3>
+                  <ul className="text-xs text-gray-600 space-y-1">
+                    <li>✅ Home, Mobile News, Reviews, Compare pages</li>
+                    <li>✅ All article SEO titles + descriptions</li>
+                    <li>✅ Focus keywords from trending topics</li>
+                    <li>✅ Google indexing for new articles</li>
+                  </ul>
+                </div>
+                <div className="bg-white rounded-xl border border-gray-200 p-4">
+                  <h3 className="text-xs font-bold text-gray-500 uppercase mb-2">📋 UptimeRobot Setup</h3>
+                  <p className="text-xs text-gray-600 mb-2">Add this monitor (free):</p>
+                  <code className="text-[10px] bg-gray-100 px-2 py-1 rounded block break-all text-gray-700">
+                    thetechbharat.com/api/seo-cron?secret=YOUR_CRON_SECRET
+                  </code>
+                  <p className="text-[10px] text-gray-400 mt-1">Interval: 60 min</p>
+                </div>
+              </div>
+
+              {/* ── GSC TRAFFIC ── */}
+              {seoGsc && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="bg-white rounded-xl border border-gray-200 p-5">
+                    <div className="flex items-center justify-between mb-3">
+                      <h2 className="text-sm font-bold text-gray-800">🔍 Top Search Queries</h2>
+                      <span className="text-[10px] text-gray-400">{seoGsc.period}</span>
+                    </div>
+                    {gscQueries.length===0
+                      ? <p className="text-xs text-gray-400 italic p-3 bg-blue-50 rounded-lg">✅ GSC connected — no search clicks yet. Data appears after Google indexes your articles and users click them (usually 7-14 days for new sites).</p>
+                      : <>
+                          <div className="grid grid-cols-12 text-[10px] font-bold text-gray-400 uppercase px-2 pb-2">
+                            <span className="col-span-6">Query</span><span className="col-span-2 text-center">Clicks</span><span className="col-span-2 text-center">Impr.</span><span className="col-span-2 text-center">Pos.</span>
+                          </div>
+                          {gscQueries.map((row,i)=>(
+                            <div key={i} className="grid grid-cols-12 text-xs px-2 py-1.5 rounded hover:bg-gray-50 border-b border-gray-50">
+                              <span className="col-span-6 text-gray-700 truncate">{row.keys[0]}</span>
+                              <span className="col-span-2 text-center text-green-600 font-bold">{row.clicks}</span>
+                              <span className="col-span-2 text-center text-gray-400">{row.impressions}</span>
+                              <span className="col-span-2 text-center text-blue-500">#{row.position?.toFixed(1)}</span>
+                            </div>
+                          ))}
+                        </>
+                    }
+                  </div>
+                  <div className="bg-white rounded-xl border border-gray-200 p-5">
+                    <div className="flex items-center justify-between mb-3">
+                      <h2 className="text-sm font-bold text-gray-800">📄 Top Pages</h2>
+                      <span className="text-[10px] text-gray-400">{seoGsc.period}</span>
+                    </div>
+                    {gscPages.length===0
+                      ? <p className="text-xs text-gray-400 italic p-3 bg-blue-50 rounded-lg">✅ GSC connected — page impressions will appear once Google starts showing your pages in search results.</p>
+                      : <>
+                          <div className="grid grid-cols-12 text-[10px] font-bold text-gray-400 uppercase px-2 pb-2">
+                            <span className="col-span-7">Page</span><span className="col-span-2 text-center">Clicks</span><span className="col-span-3 text-center">CTR</span>
+                          </div>
+                          {gscPages.map((row,i)=>(
+                            <div key={i} className="grid grid-cols-12 text-xs px-2 py-1.5 rounded hover:bg-gray-50 border-b border-gray-50">
+                              <span className="col-span-7 text-gray-700 truncate">{row.keys[0].replace('https://thetechbharat.com','') || '/'}</span>
+                              <span className="col-span-2 text-center text-green-600 font-bold">{row.clicks}</span>
+                              <span className="col-span-3 text-center text-blue-500">{(row.ctr*100).toFixed(1)}%</span>
+                            </div>
+                          ))}
+                        </>
+                    }
+                  </div>
+                </div>
+              )}
+
+              {/* ── GOOGLE TRENDS ── */}
+              {seoTrends.length>0 && (
+                <div className="bg-white rounded-xl border border-gray-200 p-5">
+                  <h2 className="text-sm font-bold text-gray-800 mb-1">📈 Trending in India Right Now</h2>
+                  <p className="text-xs text-gray-400 mb-3">These keywords are auto-injected into your page metadata every 20 hours</p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    {seoTrends.map((t,i)=>(
+                      <a key={i} href={`https://news.google.com/search?q=${encodeURIComponent(t.title)}+smartphone`} target="_blank" rel="noopener"
+                        className="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg hover:bg-blue-50 group">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-[10px] text-gray-400 font-bold shrink-0">{i+1}</span>
+                          <span className="text-xs text-gray-800 font-medium truncate group-hover:text-blue-700">{t.title}</span>
+                        </div>
+                        {t.traffic && <span className="text-[10px] text-green-600 font-bold ml-1 shrink-0">{t.traffic}</span>}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ── GOOGLE INDEXING ── */}
+              <div className="bg-white rounded-xl border border-gray-200 p-5">
+                <h2 className="text-sm font-bold text-gray-800 mb-1">⚡ Google Indexing API</h2>
+                <p className="text-xs text-gray-500 mb-3">New articles are auto-submitted to Google every hour. Use manual submit if you want to force-index all articles now.</p>
+                <div className="flex gap-2 flex-wrap">
+                  <button onClick={async()=>{
+                    if(!confirm('Submit ALL articles to Google? (200/day limit)')) return
+                    setSeoLoading(true); setSeoMsg('Submitting to Google...')
+                    const r=await fetch('/api/seo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'index_all'})})
+                    const d=await r.json()
+                    setIndexLog(d.results||[])
+                    setSeoMsg(`✅ Submitted ${d.submitted} URLs to Google`); setSeoLoading(false)
+                  }} disabled={seoLoading} className="bg-[#d4220a] text-white text-xs font-bold px-4 py-2 rounded-lg hover:opacity-80 disabled:opacity-50">
+                    📤 Submit All Articles to Google
+                  </button>
+                  <button onClick={async()=>{
+                    setSeoLoading(true)
+                    const r=await fetch('/api/seo?action=index_status'); const d=await r.json()
+                    if(d.lastBatch?.results) setIndexLog(d.lastBatch.results)
+                    setSeoLoading(false); setSeoMsg('Loaded last batch results')
+                  }} disabled={seoLoading} className="border border-gray-200 text-gray-700 text-xs font-bold px-4 py-2 rounded-lg hover:bg-gray-50">
+                    📋 View Last Batch
+                  </button>
+                </div>
+                {indexLog.length>0 && (
+                  <div className="mt-3 max-h-36 overflow-y-auto space-y-1 p-2 bg-gray-50 rounded-lg">
+                    {indexLog.slice(0,15).map((r,i)=>(
+                      <div key={i} className="flex items-center gap-2 text-xs">
+                        <span>{r.status==='submitted'?'✅':'⚠️'}</span>
+                        <span className="text-gray-500 truncate flex-1">{r.url.replace('https://thetechbharat.com','')}</span>
+                        <span className={`font-mono text-[10px] ${r.status==='submitted'?'text-green-600':'text-red-400'}`}>{r.status}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* ── AI META GENERATOR ── */}
+              <div className="bg-white rounded-xl border border-gray-200 p-5">
+                <h2 className="text-sm font-bold text-gray-800 mb-1">🏷️ Manual AI Meta Generator</h2>
+                <p className="text-xs text-gray-500 mb-3">Generate for a specific article by slug. Saves automatically to Redis.</p>
+                <div className="flex gap-2 mb-3">
+                  <input type="text" placeholder="article slug (e.g. gopro-lit-hero-india-review)" value={seoMetaSlug}
+                    onChange={e=>setSeoMetaSlug(e.target.value)}
+                    className="flex-1 text-sm border border-gray-200 px-3 py-2 rounded-lg outline-none" />
+                  <button onClick={async()=>{
+                    if(!seoMetaSlug.trim()) return
+                    setSeoLoading(true); setSeoMetaResult(null)
+                    const r=await fetch('/api/seo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'generate_meta',slug:seoMetaSlug,title:seoMetaSlug})})
+                    const d=await r.json(); setSeoMetaResult(d); setSeoLoading(false)
+                    if(!d.error) setSeoMsg(`✅ Meta generated and saved for: ${seoMetaSlug}`)
+                  }} disabled={seoLoading} className="bg-[#1a3a5c] text-white text-xs font-bold px-5 py-2 rounded-lg disabled:opacity-50">
+                    Generate
+                  </button>
+                </div>
+                {seoMetaResult && !seoMetaResult.error && (
+                  <div className="space-y-3 p-4 bg-blue-50 rounded-lg">
+                    <div>
+                      <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wide">SEO Title</span>
+                      <p className="text-sm text-gray-800 font-semibold mt-0.5">{seoMetaResult.seoTitle}</p>
+                      <span className="text-[10px] text-gray-400">{String(seoMetaResult.seoTitle||'').length}/60 chars</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wide">Meta Description</span>
+                      <p className="text-sm text-gray-700 mt-0.5">{seoMetaResult.metaDescription}</p>
+                      <span className="text-[10px] text-gray-400">{String(seoMetaResult.metaDescription||'').length}/160 chars</span>
+                    </div>
+                    <div className="flex gap-4">
+                      <div><span className="text-[10px] font-bold text-blue-600 uppercase">Focus Keyword</span><p className="text-xs font-mono text-gray-700 mt-0.5">{seoMetaResult.focusKeyword}</p></div>
+                      {seoMetaResult.secondaryKeywords && <div><span className="text-[10px] font-bold text-blue-600 uppercase">Secondary</span><p className="text-xs text-gray-600 mt-0.5">{(seoMetaResult.secondaryKeywords as unknown as string[]).join(', ')}</p></div>}
+                    </div>
+                  </div>
+                )}
+                {seoMetaResult?.error && <p className="text-xs text-red-500 mt-2">Error: {seoMetaResult.error}</p>}
+              </div>
+
+              {/* ── MISSING META LIST ── */}
+              {seoMissingMeta.length>0 && (
+                <div className="bg-white rounded-xl border border-gray-200 p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-sm font-bold text-gray-800">⚠️ Articles Missing SEO Meta ({seoMissingMeta.length})</h2>
+                    <button onClick={async()=>{
+                      setSeoLoading(true); setSeoMsg('Generating all missing meta...')
+                      const r=await fetch('/api/seo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'generate_all_meta'})})
+                      const d=await r.json()
+                      setSeoMsg(`✅ Generated ${d.generated} metas`); setSeoMissingMeta([]); setSeoLoading(false)
+                    }} disabled={seoLoading} className="text-xs bg-[#1a3a5c] text-white font-bold px-4 py-1.5 rounded-lg disabled:opacity-50">
+                      Fix All
+                    </button>
+                  </div>
+                  <div className="space-y-2 max-h-56 overflow-y-auto">
+                    {seoMissingMeta.map(art=>(
+                      <div key={art.slug} className="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-semibold text-gray-800 truncate">{art.title}</p>
+                          <p className="text-[10px] text-gray-400 font-mono">{art.slug}</p>
+                        </div>
+                        <button onClick={async()=>{
+                          setSeoLoading(true)
+                          await fetch('/api/seo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'generate_meta',slug:art.slug,title:art.title})})
+                          setSeoMissingMeta(prev=>prev.filter(a=>a.slug!==art.slug))
+                          setSeoLoading(false)
+                        }} disabled={seoLoading} className="ml-3 text-[10px] bg-[#d4220a] text-white font-bold px-3 py-1.5 rounded-lg disabled:opacity-40 shrink-0">
+                          Generate
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ── SETUP GUIDE ── */}
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-5">
+                <h2 className="text-sm font-bold text-amber-800 mb-3">📋 One-Time Setup: Google Service Account</h2>
+                <div className="grid md:grid-cols-2 gap-4 text-xs text-amber-700">
+                  <div>
+                    <p className="font-bold mb-1">For GSC Traffic Data + Indexing API:</p>
+                    <ol className="space-y-1 list-decimal list-inside">
+                      <li>Go to <strong>console.cloud.google.com</strong></li>
+                      <li>Enable <strong>Search Console API</strong> + <strong>Indexing API</strong></li>
+                      <li>IAM → Service Accounts → Create → Download JSON</li>
+                      <li>Add Vercel env: <code className="bg-amber-100 px-1 rounded">GOOGLE_SERVICE_KEY</code> = entire JSON minified</li>
+                      <li>GSC → Settings → Users → add service account email as <strong>Owner</strong></li>
+                    </ol>
+                  </div>
+                  <div>
+                    <p className="font-bold mb-1">For UptimeRobot Free Cron:</p>
+                    <ol className="space-y-1 list-decimal list-inside">
+                      <li>Sign up at <strong>uptimerobot.com</strong> (free)</li>
+                      <li>New Monitor → HTTP(s) → paste URL:</li>
+                    </ol>
+                    <code className="block mt-2 bg-amber-100 px-2 py-1.5 rounded text-[10px] break-all">
+                      https://thetechbharat.com/api/seo-cron?secret=qwertyuiopasdfghjklzxcvbnm
+                    </code>
+                    <p className="mt-1 text-[10px]">Interval: 60 min — runs full refresh every 20h automatically</p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
           )}
 
+          {/* ── CONTENT LAB ── */}
+          {tab==='content-lab' && (
+            <div className="space-y-6">
+              <div>
+                <h1 className="text-lg font-bold text-gray-900">✍️ Content Lab</h1>
+                <p className="text-xs text-gray-400 mt-0.5">Publish evergreen articles one by one · Select and rewrite thin articles</p>
+              </div>
+
+              {/* ── EVERGREEN PUBLISHER ── */}
+              <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+                <div className="px-5 py-4 border-b border-gray-100">
+                  <h2 className="text-sm font-bold text-gray-800">🌿 Evergreen Articles</h2>
+                  <p className="text-xs text-gray-400 mt-0.5">High-traffic SEO articles. Publish one at a time — each takes ~30 seconds to generate.</p>
+                </div>
+                <div className="divide-y divide-gray-50">
+                  {evergreenList.map(item => {
+                    const st = evergreenStatus[item.id] || 'idle'
+                    const msg = evergreenMsg[item.id] || ''
+                    return (
+                      <div key={item.id} className="px-5 py-3.5 flex items-center gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-800 leading-tight">{item.title}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${item.badge==='compare'?'bg-green-100 text-green-700':'bg-blue-100 text-blue-700'}`}>{item.badge}</span>
+                            {msg && <span className={`text-[10px] ${st==='error'?'text-red-500':st==='done'||st==='exists'?'text-green-600':'text-gray-400'}`}>{msg}</span>}
+                          </div>
+                        </div>
+                        <button
+                          disabled={st==='running'||st==='done'||st==='exists'}
+                          onClick={async () => {
+                            setEvergreenStatus(p=>({...p,[item.id]:'running'}))
+                            setEvergreenMsg(p=>({...p,[item.id]:'Generating...'}))
+                            try {
+                              const r = await fetch(`/api/admin/generate-evergreen?topic=${item.id}`,{method:'POST'})
+                              const d = await r.json()
+                              if (d.skipped?.includes(item.id)) {
+                                setEvergreenStatus(p=>({...p,[item.id]:'exists'}))
+                                setEvergreenMsg(p=>({...p,[item.id]:'Already published'}))
+                              } else if (d.errors?.length) {
+                                setEvergreenStatus(p=>({...p,[item.id]:'error'}))
+                                setEvergreenMsg(p=>({...p,[item.id]:d.errors[0]}))
+                              } else {
+                                setEvergreenStatus(p=>({...p,[item.id]:'done'}))
+                                setEvergreenMsg(p=>({...p,[item.id]:'✅ Published!'}))
+                                loadAll()
+                              }
+                            } catch(e) {
+                              setEvergreenStatus(p=>({...p,[item.id]:'error'}))
+                              setEvergreenMsg(p=>({...p,[item.id]:'Network error'}))
+                            }
+                          }}
+                          className={`shrink-0 text-xs font-bold px-4 py-2 rounded-lg transition-all ${
+                            st==='done'||st==='exists' ? 'bg-green-100 text-green-700 cursor-default' :
+                            st==='running' ? 'bg-gray-100 text-gray-400 cursor-not-allowed' :
+                            st==='error' ? 'bg-red-600 text-white hover:bg-red-700' :
+                            'bg-[#d4220a] text-white hover:bg-[#b81d09]'
+                          }`}>
+                          {st==='running' ? '⏳ Generating...' : st==='done' ? '✅ Done' : st==='exists' ? '✓ Exists' : st==='error' ? '↺ Retry' : '▶ Publish'}
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* ── THIN ARTICLE REWRITER ── */}
+              <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+                <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-sm font-bold text-gray-800">🔧 Thin Article Rewriter</h2>
+                    <p className="text-xs text-gray-400 mt-0.5">Select articles to rewrite with deeper, more valuable content.</p>
+                  </div>
+                  {!thinLoaded ? (
+                    <button onClick={async () => {
+                      setThinLoading(true); setThinMsg('Scanning articles...')
+                      const r = await fetch('/api/admin/rewrite-thin')
+                      const d = await r.json()
+                      setThinArticles(d.thin_articles || [])
+                      setThinLoaded(true); setThinLoading(false)
+                      setThinMsg(d.thin_articles?.length ? `Found ${d.thin_articles.length} thin articles` : 'No thin articles found ✅')
+                    }} disabled={thinLoading} className="bg-[#1a3a5c] text-white text-xs font-bold px-4 py-2 rounded-lg disabled:opacity-50">
+                      🔍 Scan Articles
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      {thinSelected.size > 0 && (
+                        <button onClick={async () => {
+                          if (!confirm(`Rewrite ${thinSelected.size} selected article(s)? Each takes ~30 seconds.`)) return
+                          setThinLoading(true)
+                          const slugs = Array.from(thinSelected)
+                          for (const slug of slugs) {
+                            setThinStatus(p=>({...p,[slug]:'running'}))
+                            setThinMsg(`Rewriting: ${slug}...`)
+                            try {
+                              const r = await fetch(`/api/admin/rewrite-thin?slug=${slug}`,{method:'POST'})
+                              const d = await r.json()
+                              if (d.success) {
+                                setThinStatus(p=>({...p,[slug]:'done'}))
+                                setThinSelected(p=>{ const n=new Set(p); n.delete(slug); return n })
+                              } else {
+                                setThinStatus(p=>({...p,[slug]:'error'}))
+                              }
+                            } catch {
+                              setThinStatus(p=>({...p,[slug]:'error'}))
+                            }
+                          }
+                          setThinLoading(false); setThinMsg(`Done rewriting ${slugs.length} articles`)
+                          loadAll()
+                        }} disabled={thinLoading} className="bg-[#d4220a] text-white text-xs font-bold px-4 py-2 rounded-lg disabled:opacity-50">
+                          ✍️ Rewrite Selected ({thinSelected.size})
+                        </button>
+                      )}
+                      <button onClick={()=>{
+                        if (thinSelected.size===thinArticles.length) setThinSelected(new Set())
+                        else setThinSelected(new Set(thinArticles.map(a=>a.slug)))
+                      }} className="border border-gray-200 text-gray-600 text-xs font-bold px-3 py-2 rounded-lg hover:bg-gray-50">
+                        {thinSelected.size===thinArticles.length ? 'Deselect All' : 'Select All'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {thinMsg && <div className={`mx-5 mt-3 px-3 py-2 rounded-lg text-xs ${thinMsg.includes('Done')||thinMsg.includes('✅')?'bg-green-50 text-green-700':'bg-blue-50 text-blue-700'}`}>{thinMsg}</div>}
+
+                {thinLoaded && thinArticles.length === 0 && (
+                  <div className="px-5 py-8 text-center text-sm text-gray-400">✅ All articles meet quality standards</div>
+                )}
+
+                {thinArticles.length > 0 && (
+                  <div className="divide-y divide-gray-50">
+                    {thinArticles.map(art => {
+                      const st = thinStatus[art.slug] || 'idle'
+                      const checked = thinSelected.has(art.slug)
+                      return (
+                        <div key={art.slug} onClick={() => {
+                          if (st==='done') return
+                          setThinSelected(p => { const n=new Set(p); checked?n.delete(art.slug):n.add(art.slug); return n })
+                        }} className={`px-5 py-3.5 flex items-center gap-3 cursor-pointer transition-colors ${checked?'bg-red-50':st==='done'?'bg-green-50':'hover:bg-gray-50'}`}>
+                          <div className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
+                            st==='done' ? 'bg-green-500 border-green-500' :
+                            checked ? 'bg-[#d4220a] border-[#d4220a]' : 'border-gray-300'
+                          }`}>
+                            {(checked||st==='done') && <span className="text-white text-[10px] font-bold">{st==='done'?'✓':'✓'}</span>}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-gray-800 leading-tight truncate">{art.title}</p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${art.wordCount<500?'bg-red-100 text-red-700':art.wordCount<800?'bg-amber-100 text-amber-700':'bg-gray-100 text-gray-500'}`}>
+                                {art.wordCount} words
+                              </span>
+                              {art.hasFix && <span className="text-[10px] bg-purple-100 text-purple-700 font-bold px-1.5 py-0.5 rounded">has fix</span>}
+                              <span className="text-[10px] font-mono text-gray-400 truncate">{art.slug}</span>
+                            </div>
+                          </div>
+                          <span className={`text-[10px] font-bold shrink-0 ${
+                            st==='running'?'text-blue-500':st==='done'?'text-green-600':st==='error'?'text-red-500':'text-gray-300'
+                          }`}>
+                            {st==='running'?'⏳':st==='done'?'✅ Done':st==='error'?'❌ Error':''}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* ── SETTINGS ── */}
           {tab==='settings' && (
