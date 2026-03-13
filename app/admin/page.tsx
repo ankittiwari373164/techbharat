@@ -401,6 +401,9 @@ export default function AdminPage() {
                 )}
               </div>
 
+            </div>
+          )}
+
           {/* ── ARTICLES ── */}
           {tab==='articles' && (
             <div className="space-y-3">
