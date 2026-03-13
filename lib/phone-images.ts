@@ -70,11 +70,11 @@ export function getLocalPhoneImages(phoneName: string): string[] {
 }
 
 export async function getPhoneImage(phoneName: string, index = 0): Promise<string> {
-  // 1. Local images first
+  // 1. Local images — always preferred
   const localImages = getLocalPhoneImages(phoneName)
   if (localImages.length > 0) return localImages[index % localImages.length]
 
-  // 2. Unsplash API — clean URL, no duplicate params
+  // 2. Unsplash API — use thumb URL which is a direct CDN link, no auth needed to display
   if (UNSPLASH_ACCESS_KEY) {
     try {
       const query = encodeURIComponent(`${phoneName} smartphone`)
@@ -86,7 +86,7 @@ export async function getPhoneImage(phoneName: string, index = 0): Promise<strin
         const { results = [] } = await res.json()
         if (results.length > 0) {
           const pick = results[index % results.length]
-          // Use the raw URL as-is — do NOT append extra params
+          // Use the full URL from Unsplash — proxy through our img route with auth
           const rawUrl = pick.urls.regular
           return `${SITE_URL}/api/img?url=${encodeURIComponent(rawUrl)}`
         }
@@ -94,32 +94,18 @@ export async function getPhoneImage(phoneName: string, index = 0): Promise<strin
     } catch { /* fall through */ }
   }
 
-  // 3. Unsplash random — clean URL
-  const queries = ['smartphone', 'android', 'mobile', 'gadget', 'technology']
-  const q = queries[index % queries.length]
-  const fallbackUrl = `https://api.unsplash.com/photos/random?query=${q}&orientation=landscape`
-  if (UNSPLASH_ACCESS_KEY) {
-    try {
-      const res = await fetch(fallbackUrl, {
-        headers: { Authorization: `Client-ID ${UNSPLASH_ACCESS_KEY}` }
-      })
-      if (res.ok) {
-        const data = await res.json()
-        return `${SITE_URL}/api/img?url=${encodeURIComponent(data.urls.regular)}`
-      }
-    } catch { /* fall through */ }
-  }
-
-  // 4. Last resort — a single clean Unsplash photo URL (no duplicates)
-  const photoIds = [
+  // 3. Reliable fallback — curated smartphone photo IDs from Unsplash
+  const fallbacks = [
+    'photo-1511707171634-5f897ff02aa9', // phone on hand
     'photo-1574944985070-8f3ebc6b79d2', // smartphone
-    'photo-1511707171634-5f897ff02aa9', // phone
-    'photo-1565849904461-04a58ad377e0', // android
+    'photo-1565849904461-04a58ad377e0', // android phone
     'photo-1592899677977-9c10002761d5', // mobile
-    'photo-1598327105666-5b89351aff97', // tech
+    'photo-1598327105666-5b89351aff97', // tech phone
+    'photo-1601784551446-20c9e07cdbdb', // smartphone flat
+    'photo-1546054454-aa26e2b734c7', // phone screen
   ]
-  const pid = photoIds[index % photoIds.length]
-  return `${SITE_URL}/api/img?url=${encodeURIComponent(`https://images.unsplash.com/${pid}?w=1200&q=80`)}`
+  const pid = fallbacks[index % fallbacks.length]
+  return `${SITE_URL}/api/img?url=${encodeURIComponent(`https://images.unsplash.com/${pid}?w=1200&q=80&fm=jpg`)}`
 }
 
 export async function getArticleImages(phoneName: string, count = 5): Promise<string[]> {
