@@ -1,0 +1,97 @@
+// app/api/image/[id]/route.ts
+// Clean image proxy — serves Unsplash images through your own domain
+// URL shown to user: https://thetechbharat.com/api/image/abc123XYZ
+// Unsplash URL is NEVER exposed to the browser
+
+import { NextRequest, NextResponse } from 'next/server'
+
+const UNSPLASH_ACCESS_KEY = process.env.UNSPLASH_ACCESS_KEY || ''
+
+// Redis key prefix for storing Unsplash URL by ID
+// Key: tb:img:{unsplashId}  →  Value: "https://images.unsplash.com/photo-abc?..."
+const IMG_KEY_PREFIX = 'tb:img:'
+
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
+export async function GET(
+  _request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const { id } = params
+
+  if (!id) {
+    return new NextResponse('Missing image ID', { status: 400 })
+  }
+
+  let imageUrl = ''
+
+  // 1. Look up the Unsplash URL stored in Redis for this ID
+  try {
+    const { Redis } = await import('@upstash/redis')
+    const redis = Redis.fromEnv()
+    const stored = await redis.get<string>(`${IMG_KEY_PREFIX}${id}`)
+    if (stored) imageUrl = stored
+  } catch {
+    // Redis unavailable
+  }
+
+  // 2. If not in Redis, fetch fresh from Unsplash API by ID
+  if (!imageUrl && UNSPLASH_ACCESS_KEY) {
+    try {
+      const res = await fetch(`https://api.unsplash.com/photos/${id}`, {
+        headers: { Authorization: `Client-ID ${UNSPLASH_ACCESS_KEY}` },
+      })
+      if (res.ok) {
+        const data = await res.json()
+        imageUrl = data.urls?.regular || ''
+        // Save back to Redis for next time
+        if (imageUrl) {
+          try {
+            const { Redis } = await import('@upstash/redis')
+            const redis = Redis.fromEnv()
+            await redis.set(`${IMG_KEY_PREFIX}${id}`, imageUrl, { ex: 60 * 60 * 24 * 30 }) // 30 days
+          } catch { /* non-fatal */ }
+        }
+      }
+    } catch { /* fall through */ }
+  }
+
+  if (!imageUrl) {
+    return new NextResponse('Image not found', { status: 404 })
+  }
+
+  // 3. Fetch the actual image server-side (Unsplash URL never reaches the browser)
+  try {
+    const imgRes = await fetch(imageUrl, {
+      headers: {
+        'Accept': 'image/*',
+        // Add Authorization for images.unsplash.com domain
+        ...(imageUrl.includes('unsplash.com') && UNSPLASH_ACCESS_KEY
+          ? { 'Authorization': `Client-ID ${UNSPLASH_ACCESS_KEY}` }
+          : {}),
+      },
+    })
+
+    if (!imgRes.ok) {
+      return new NextResponse('Failed to fetch image', { status: 502 })
+    }
+
+    const contentType = imgRes.headers.get('content-type') || 'image/jpeg'
+    const buffer = await imgRes.arrayBuffer()
+
+    return new NextResponse(buffer, {
+      status: 200,
+      headers: {
+        'Content-Type': contentType,
+        // Cache aggressively — image content never changes for a given ID
+        'Cache-Control': 'public, max-age=2592000, s-maxage=2592000, immutable',
+        'CDN-Cache-Control': 'public, max-age=2592000',
+        // Security: never leak referrer to Unsplash
+        'Referrer-Policy': 'no-referrer',
+      },
+    })
+  } catch {
+    return new NextResponse('Image fetch failed', { status: 502 })
+  }
+}
