@@ -4,13 +4,23 @@ import { getPhoneImage } from '@/lib/phone-images'
 
 export const dynamic = 'force-dynamic'
 
-// Known good image URL patterns — if an image matches ANY of these, keep it
-function isGoodImage(url: string): boolean {
-  if (!url) return false
-  // Local phone images — always good
-  if (url.startsWith('/phone-images/')) return true
-  // Properly proxied Unsplash via our own server — good
-  if (url.includes('/api/img?url=')) return true
+function hasDuplicateParams(url: string): boolean {
+  try {
+    // Detect duplicate w= or q= params in the encoded inner URL
+    const inner = decodeURIComponent(url.split('?url=')[1] || '')
+    return (inner.match(/[?&]w=/g) || []).length > 1 ||
+           (inner.match(/[?&]q=/g) || []).length > 1
+  } catch { return false }
+}
+
+function isBadImage(url: string): boolean {
+  if (!url) return true
+  if (url.includes('picsum')) return true
+  if (url.includes('source.unsplash.com')) return true
+  if (url.includes('via.placeholder')) return true
+  if (url.includes('/api/img?u=')) return true
+  // Key fix: catch the duplicate params bug
+  if (url.includes('/api/img?url=') && hasDuplicateParams(url)) return true
   return false
 }
 
@@ -27,16 +37,14 @@ export async function POST(request: NextRequest) {
     const art = { ...articles[i] } as any
     let changed = false
 
-    // Replace featuredImage unless it's already a known-good URL
-    if (!isGoodImage(art.featuredImage)) {
+    if (isBadImage(art.featuredImage)) {
       art.featuredImage = await getPhoneImage(art.brand || 'Mobile', i % 5)
       changed = true
     }
 
-    // Replace all images in array unless already good
     if (Array.isArray(art.images)) {
       for (let j = 0; j < art.images.length; j++) {
-        if (!isGoodImage(art.images[j])) {
+        if (isBadImage(art.images[j])) {
           art.images[j] = await getPhoneImage(art.brand || 'Mobile', j)
           changed = true
         }
