@@ -1,10 +1,3 @@
-# Sample Phone Folders
-
-Add your phone images here.
-
-Example structure:
-- samsung-galaxy-s25-ultra/1.jpg, 2.jpg, 3.jpg
-- apple-iphone-17-pro/1.jpg, 2.jpg
-- xiaomi-15-ultra/1.jpg, 2.jpg, 3.jpg, 4.jpg
-
-See README.md for full instructions.
+version https://git-lfs.github.com/spec/v1
+oid sha256:02638fdd23291bd8215af4e4c21322eb4d7ff6986c831043c8b6fee804f5ffbd
+size 237
