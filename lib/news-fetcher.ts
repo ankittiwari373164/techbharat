@@ -18,7 +18,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 import { Article, generateSlug } from './store'
-import { getArticleImages } from './phone-images'
+import { getArticleImages, getUniqueUnsplashImage } from './phone-images'
 
 const NEWSAPI_KEY       = process.env.NEWSAPI_KEY       || ''
 const GNEWS_API_KEY     = process.env.GNEWS_API_KEY     || ''
@@ -127,9 +127,6 @@ function pickTopStories(raw: RawArticle[], limit = 8): RawArticle[] {
 
 // ════════════════════════════════════════════════════════════════
 //  ANTI-AI SYSTEM PROMPT
-//  Built using every technique from the AI-detection avoidance
-//  research: persona, sentence variety, banned phrases, India
-//  grounding, imperfection mandate, structural chaos.
 // ════════════════════════════════════════════════════════════════
 const HUMAN_SYSTEM_PROMPT = `You are Arjun Mehta. The current year is 2026. You have been covering the Indian smartphone market for 11 years, first at a print magazine in Mumbai, now at TechBharat in Delhi. You are direct, occasionally sarcastic, genuinely excited by good hardware, and frustrated by marketing fluff.
 
@@ -232,24 +229,9 @@ function buildUserPrompt(raw: RawArticle, brand: string, type: string): string {
 
   const today = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
 
-  return `Write a 1500-word article for The Tech Bharat about this topic.
+  return `Write a 1500-word article for TechBharat about this topic.
 
 TODAY'S DATE: ${today} — All dates, timelines, and references must be consistent with this date. Never mention years before ${new Date().getFullYear()}.
-
-CONTENT RATIO RULE — THIS IS THE MOST IMPORTANT INSTRUCTION:
-60% of this article must be ANALYSIS, OPINION, and INSIGHT — not reporting.
-40% can be factual news/specs reporting.
-This means: for every spec or fact you mention, follow it with your opinion on what it means,
-who it helps, whether it's actually good for Indian buyers, and how it compares to rivals.
-A journalist's job is not to repeat a press release. It's to tell readers what it MEANS.
-
-VIJAY'S VOICE — MANDATORY ELEMENTS (every article must have all 5):
-1. "Vijay's Take:" H2 section — 3–4 sentences of personal, opinionated verdict with no hedging
-2. "What Indian Buyers Should Know:" section — 3 bullet points specific to India (not generic)
-3. One sentence of genuine skepticism about the brand's claims or product
-4. One direct competitor comparison: "At ₹X, this competes with [rival] which [specific point]"
-5. One real-usage scenario starting with "If you're a [type of Indian user] who [use case]..."
-
 INTERNAL LINKS MANDATE: Every article must include exactly 2 internal links to other sections of thetechbharat.com using this format:
 <a href="/mobile-news?brand=BRAND">More BRAND news on The Tech Bharat</a>
 <a href="/compare">Compare phones on The Tech Bharat</a>
@@ -268,33 +250,32 @@ ARTICLE TYPE: ${type}
 
 ━━━ CONTENT STRUCTURE ━━━
 ${isNews ? `
-Opening: Lead with your OPINION or most surprising observation — not with "X has announced Y". Hook the reader with your take first.
-Section 1 (facts 40%): What was revealed/announced — specific details, specs, pricing
-Section 2 (analysis 60%): Your analysis — what these specs actually mean for real Indian users, what's good, what's a red flag
-Section 3: India angle — ₹ pricing reality check, Flipkart/Amazon availability, who will actually buy this vs who it's marketed to
-Section 4: Market context — how this fits (or disrupts) the Indian market right now
-<h2>Vijay's Take</h2>: Your personal, opinionated verdict — 3–4 sentences, no hedging, take a side
-<h2>What Indian Buyers Should Know</h2>: 3 bullet points specific to India buyers
-IMPORTANT FOR NEWS/LEAKS: If article is based on leaks or analyst reports, add:
-<p><strong>Source Note:</strong> This article is based on [analyst reports / leaked specifications / industry sources]. These details are unconfirmed until official launch.</p>` : ''}
+Opening: Jump straight into what happened or what was announced — no scene-setting preamble.
+Section 1: What exactly was revealed/announced (specific details)
+Section 2: Technical breakdown — what the specs/features actually mean for real users
+Section 3: India angle — price in ₹, Flipkart/Amazon availability, who will buy this
+Section 4: How it fits into the current Indian market (competitors, value proposition)
+Section 5 (H2): Your honest analysis — what's good, what's concerning, what's missing
+Closing: Direct verdict — should Indian buyers care about this?
+IMPORTANT FOR NEWS/LEAKS: If article is based on leaks or analyst reports, add a clearly labelled section:
+<p><strong>Source Note:</strong> This article is based on [analyst reports / leaked specifications / industry sources]. These details are unconfirmed until official launch. Treat pricing and specs as estimates.</p>` : ''}
 ${isReview ? `
-Opening: Your strongest one-sentence opinion first — the thing that surprised you most
-Section 1: Design & build — how it actually feels in the hand (India heat/humidity context), your honest take
-Section 2: Display — daily use experience, not just specs — what you personally liked or hated
-Section 3: Camera — real-world comparison to rivals at similar price, not megapixel count
-Section 4: Performance & battery — your honest weaknesses, no sugarcoating anything
-Section 5: India pricing & competition — who wins at this price point and why
-<h2>Vijay's Take</h2>: 3–4 sentences. Clear verdict + who should buy + who definitely should not.
-Specs table (HTML): key specs
-Pros & Cons (HTML table): brutally honest — not generic marketing points` : ''}
+Opening: Your immediate impression — what surprised you or stood out first
+Section 1: Design & build — how it actually feels (India heat/humidity context)
+Section 2: Display — daily use experience, not just specs
+Section 3: Camera — real-world results, not megapixel count
+Section 4: Performance & battery — honest assessment including weaknesses
+Section 5 (H2): India pricing & competition — who else is in this price bracket
+Specs table (HTML): key specs in a clean table
+Pros & Cons table (HTML): honest, not marketing fluff
+Closing verdict: Exactly who should and shouldn't buy this` : ''}
 ${isCompare ? `
-Opening: Tell the reader exactly what kind of person is choosing between these two — make them feel seen
-Section 1: Quick specs comparison (HTML <table>, 6+ rows: price, display, chip, battery, camera, 5G)
-Section 2: Where they genuinely differ — camera processing, software update timeline, heat under load
-Section 3: India-specific factors — service centre density in Tier 2/3 cities, Flipkart vs Amazon pricing, EMI
-Section 4: Who each phone is actually for — specific buyer type, not vague "it depends"
-<h2>Vijay's Take</h2>: Pick ONE winner. Say which you'd buy with your own money and why.
-<h2>What Indian Buyers Should Know</h2>: 3 bullet points India-specific` : ''}
+Opening: Set up the real buying dilemma — who is actually choosing between these two and why it's not obvious
+Section 1: Quick specs comparison (HTML <table> with at least 6 rows: price, display, chip, battery, camera, 5G)
+Section 2: Real-world differences that specs don't show (camera quality, software, heat management)
+Section 3: India-specific factors — service centres, warranty, Flipkart/Amazon pricing, EMI options
+Section 4: Value verdict — which is worth buying at what price point
+Closing: ONE clear winner recommendation — who should buy which phone. Never say "depends on your needs" without a concrete answer"` : ''}
 
 ━━━ SENTENCE VARIETY CHECKLIST ━━━
 Before writing, plan to include:
@@ -312,7 +293,7 @@ Return ONLY valid JSON. No markdown fences. No text outside the JSON object.
 Escape all internal quotes with backslash.
 
 {
-  "title": "CRITICAL TITLE RULES:\n1. NO clickbait. Titles must be factual and specific.\n2. NO speculative pricing claims stated as fact (use \'expected\', \'rumoured\', \'analyst estimates\')\n3. NO competitor-attack framing like \'Why Google/Apple Can\'t Compete\' — report facts, not attacks\n4. NO pure spec dumps like \'X Review\' or \'Y Launch\' — make it specific and useful\n5. OK to use questions: \'Is X Worth ₹50K?\' · \'X vs Y: Which Should You Buy?\'\n6. For leaks/speculation, title must signal it: \'Galaxy S26: What Leaks Suggest So Far\' not \'Galaxy S26 to Launch with X Feature\'\n7. 55–70 chars\nGOOD examples: \'Motorola Edge 70 Fusion: 7,000mAh Battery at Expected ₹20K\' | \'iPhone 17e First Look: Spec Breakdown and India Price Estimate\'\nBAD examples: \'MacBook Neo at $599: Why Google\'s Android PCs Can\'t Compete\' (attack tone) | \'Motorola Edge 70 India: ₹20K pricing\' (unconfirmed price stated as fact)",
+  "title": "CRITICAL TITLE RULES:\n1. NO clickbait. Titles must be factual and specific.\n2. NO speculative pricing claims stated as fact (use \\'expected\\', \\'rumoured\\', \\'analyst estimates\\')\n3. NO competitor-attack framing like \\'Why Google/Apple Can\\'t Compete\\' — report facts, not attacks\n4. NO pure spec dumps like \\'X Review\\' or \\'Y Launch\\' — make it specific and useful\n5. OK to use questions: \\'Is X Worth ₹50K?\\' · \\'X vs Y: Which Should You Buy?\\'\n6. For leaks/speculation, title must signal it: \\'Galaxy S26: What Leaks Suggest So Far\\' not \\'Galaxy S26 to Launch with X Feature\\'\n7. 55–70 chars\nGOOD examples: \\'Motorola Edge 70 Fusion: 7,000mAh Battery at Expected ₹20K\\' | \\'iPhone 17e First Look: Spec Breakdown and India Price Estimate\\'\nBAD examples: \\'MacBook Neo at $599: Why Google\\'s Android PCs Can\\'t Compete\\' (attack tone) | \\'Motorola Edge 70 India: ₹20K pricing\\' (unconfirmed price stated as fact)",
   "brand": "${brand}",
   "type": "${type}",
   "summary": "3 sentences. Sentence 1: most surprising/interesting fact. Sentence 2: India price or context. Sentence 3: what makes this worth reading. Conversational — like you're telling a friend. NO banned phrases.",
@@ -325,7 +306,7 @@ Escape all internal quotes with backslash.
   ],
   "fullContent": "Full 1500-word HTML article. Tags: <p>, <h2>, <h3>, <table>, <tr>, <th>, <td>, <strong>, <ul>, <li> only. Follow structure above. Apply ALL sentence variety rules. Use banned phrase list strictly. British English. NO source names anywhere.",
   "tags": ["brand name", "model name", "brand model India price", "brand model review India", "best phone under Xk", "brand model 5G India"],
-  "relatedTopics": ["suggest 3 related article topics from the same brand or price segment that would make good internal links — e.g. \'Samsung Galaxy S25 Review\', \'Best Samsung phones under ₹60K\'"]
+  "relatedTopics": ["suggest 3 related article topics from the same brand or price segment that would make good internal links — e.g. 'Samsung Galaxy S25 Review', 'Best Samsung phones under ₹60K'"]
   "quickBullets": ["Spec or fact, max 7 words", "Price point, max 7 words", "One-line verdict, max 7 words"]
 }`
 }
@@ -456,12 +437,27 @@ export async function buildArticles(rawItems: RawNewsItem[]): Promise<Article[]>
   const articles: Article[] = []
   const now = new Date()
 
+  // Build a session-level used-image set so articles in the same batch don't share images
+  const sessionUsedIds = new Set<string>()
+
   for (let i = 0; i < rawItems.length; i++) {
-    const item   = rawItems[i]
-    const slug   = generateSlug(item.title)
-    const images = await getArticleImages(item.brand + ' smartphone', 5)
-    const wc     = (item.fullContent || '').replace(/<[^>]*>/g, '').split(/\s+/).length
-    const rt     = Math.max(5, Math.ceil(wc / 220))
+    const item = rawItems[i]
+    const slug = generateSlug(item.title)
+    const wc   = (item.fullContent || '').replace(/<[^>]*>/g, '').split(/\s+/).length
+    const rt   = Math.max(5, Math.ceil(wc / 220))
+
+    // Fetch 5 unique images for this article — each checked against Redis + session set
+    const images: string[] = []
+    for (let j = 0; j < 5; j++) {
+      const img = await getUniqueUnsplashImage(item.brand + ' smartphone', sessionUsedIds)
+      if (img) images.push(img)
+    }
+
+    // Fallback to local images if Unsplash returned nothing
+    if (images.length === 0) {
+      const localImgs = await getArticleImages(item.brand + ' smartphone', 5)
+      images.push(...localImgs)
+    }
 
     articles.push({
       id:            `${now.getTime()}-${i}`,
@@ -473,7 +469,7 @@ export async function buildArticles(rawItems: RawNewsItem[]): Promise<Article[]>
       publishDate:   now.toISOString(),
       author:        'Vijay Yadav',
       readTime:      rt,
-      featuredImage: images[0],
+      featuredImage: images[0] || '',
       images,
       summary:       item.summary      || '',
       bullets:       item.bullets      || [],
@@ -499,14 +495,12 @@ export async function buildArticles(rawItems: RawNewsItem[]): Promise<Article[]>
 }
 
 // ── FETCH SINGLE ARTICLE (used by scheduler + admin manual fetch) ─
-// Fetches raw news, filters by type, skips duplicates, rewrites one
 export async function fetchSingleArticle(
   type: 'mobile-news' | 'review' | 'compare',
   existingArticles: { title: string; brand: string; publishDate: string }[]
 ): Promise<RawNewsItem | null> {
   const { isDuplicate } = await import('./scheduler')
 
-  // Fetch raw news
   let rawArticles: RawArticle[] = []
   if (NEWSAPI_KEY) {
     try { rawArticles = await fetchFromNewsAPI() } catch { /* silent */ }
@@ -518,30 +512,24 @@ export async function fetchSingleArticle(
   }
   if (rawArticles.length === 0) throw new Error('No news sources available')
 
-  // Build candidate pool — filter by type intent
   const candidates = rawArticles.filter(a => {
     if (!a.title || a.title === '[Removed]') return false
     if (!isMobileTech(a.title, a.description)) return false
 
-    // Type matching
     const t = a.title.toLowerCase()
     if (type === 'review') {
       return t.includes('review') || t.includes('verdict') || t.includes('hands-on') || t.includes('rating') || t.includes('tested')
     }
     if (type === 'compare') {
-      // Accept any comparison signal OR any news about 2 different phones we can compare
       return t.includes(' vs ') || t.includes('compare') || t.includes('comparison') || t.includes('versus') || t.includes('better') || t.includes('alternative') || t.includes('worth')
     }
-    // mobile-news: anything that isn't a review or compare
     return !t.includes('review') && !t.includes(' vs ') && !t.includes('comparison')
   })
 
-  // Deduplicate against existing articles
   const brand = (title: string) => detectBrand(title)
   const fresh = candidates.filter(a => !isDuplicate(a.title, brand(a.title), existingArticles))
 
   if (fresh.length === 0) {
-    // For compare: synthesize a vs article from 2 recent mobile articles
     if (type === 'compare') {
       const pool = rawArticles
         .filter(a => a.title && a.title !== '[Removed]' && isMobileTech(a.title, a.description))
@@ -550,14 +538,10 @@ export async function fetchSingleArticle(
       if (pool.length >= 2) {
         const phoneA = pool[0]
         const phoneB = pool.find(a => detectBrand(a.title) !== detectBrand(phoneA.title)) || pool[1]
-        const brandA = detectBrand(phoneA.title)
-        const brandB = detectBrand(phoneB.title)
-        // Create a synthetic comparison raw article
         const synthetic: RawArticle = {
           title: `${phoneA.title.split(':')[0]} vs ${phoneB.title.split(':')[0]} — Which Should You Buy in India?`,
           description: `Comparing ${phoneA.title} against ${phoneB.title} for Indian buyers. ${phoneA.description} vs ${phoneB.description}`,
-          content: `Phone A: ${phoneA.title}. ${phoneA.description} ${phoneA.content?.slice(0,300) || ''}
-Phone B: ${phoneB.title}. ${phoneB.description} ${phoneB.content?.slice(0,300) || ''}`,
+          content: `Phone A: ${phoneA.title}. ${phoneA.description} ${phoneA.content?.slice(0,300) || ''}\nPhone B: ${phoneB.title}. ${phoneB.description} ${phoneB.content?.slice(0,300) || ''}`,
           publishedAt: new Date().toISOString(),
           url: '',
         }
@@ -567,7 +551,6 @@ Phone B: ${phoneB.title}. ${phoneB.description} ${phoneB.content?.slice(0,300) |
       }
     }
 
-    // Fall back to any fresh mobile-tech article
     const fallback = rawArticles
       .filter(a => a.title && a.title !== '[Removed]' && isMobileTech(a.title, a.description))
       .filter(a => !isDuplicate(a.title, brand(a.title), existingArticles))
@@ -578,15 +561,9 @@ Phone B: ${phoneB.title}. ${phoneB.description} ${phoneB.content?.slice(0,300) |
     return rewriteArticle({ ...fallback[0] }, 0)
   }
 
-  // Sort by recency — pick freshest
   fresh.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
-
-  // Force the type we want
   const target = fresh[0]
   const rewritten = await rewriteArticle(target, 0)
-
-  // Override type to match schedule intent
   rewritten.type = type
-
   return rewritten
 }
