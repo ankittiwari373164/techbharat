@@ -1,128 +1,135 @@
 // lib/phone-images.ts
-// Image resolution: local folder → Unsplash API → Unsplash source URL
-// NO Picsum. Ever.
+// Resolves phone images from the local phone-images directory
+// Structure: public/phone-images/{brand-model}/1.jpg, 2.jpg, 3.jpg ...
+// Falls back to Unsplash API if no local images found
 
-import fs   from 'fs'
+import fs from 'fs'
 import path from 'path'
 
 const PHONE_IMAGES_DIR = path.join(process.cwd(), 'public', 'phone-images')
-const UNSPLASH_KEY     = process.env.UNSPLASH_ACCESS_KEY || ''
-const SITE_URL         = process.env.SITE_URL || 'https://thetechbharat.com'
-const EXTENSIONS       = ['.jpg', '.jpeg', '.png', '.webp']
+const UNSPLASH_ACCESS_KEY = process.env.UNSPLASH_ACCESS_KEY || ''
 
-// Brand keyword → exact folder name inside public/phone-images/
-const BRAND_FOLDER_MAP: Record<string, string> = {
-  'apple':         'iphone',
-  'iphone':        'iphone',
-  'google pixel':  'google_pixel',
-  'google':        'google_pixel',
-  'pixel':         'google_pixel',
-  'iqoo':          'IQOO',
-  'motorola':      'motorola',
-  'moto':          'motorola',
-  'nothing':       'nothing_',
-  'nothing phone': 'nothing_',
-  'oneplus':       'Oneplus',
-  'one plus':      'Oneplus',
-  'oppo':          'oppo',
-  'poco':          'poco',
-  'realme':        'Realme',
-  'xiaomi':        'Xiaomi',
-  'redmi':         'Xiaomi',
-  // Samsung, Vivo etc. → no local folder → Unsplash
-}
+// Supported image extensions
+const EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp']
 
-export function resolveBrandFolder(input: string): string | null {
-  const s = input
-    .toLowerCase()
-    .replace(/\s*(smartphone|phone|mobile|device|india)s?\s*/gi, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-  if (BRAND_FOLDER_MAP[s]) return BRAND_FOLDER_MAP[s]
-  // longest key first so "google pixel" matches before "google"
-  const keys = Object.keys(BRAND_FOLDER_MAP).sort((a, b) => b.length - a.length)
-  for (const key of keys) {
-    if (s.includes(key)) return BRAND_FOLDER_MAP[key]
-  }
-  return null
-}
-
+/**
+ * Normalize a phone name to a directory-safe slug
+ * e.g. "Samsung Galaxy S25 Ultra" → "samsung-galaxy-s25-ultra"
+ */
 export function normalizePhoneName(name: string): string {
-  return name.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '-').trim()
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '')
+    .replace(/\s+/g, '-')
+    .trim()
 }
 
+/**
+ * Get all local images for a phone model.
+ * Looks in public/phone-images/{phoneName}/
+ * Images should be named: 1.jpg, 2.jpg, 3.jpg etc.
+ */
 export function getLocalPhoneImages(phoneName: string): string[] {
   try {
-    const folder = resolveBrandFolder(phoneName)
-    if (!folder) return []
-    const dir = path.join(PHONE_IMAGES_DIR, folder)
+    const slug = normalizePhoneName(phoneName)
+    const dir = path.join(PHONE_IMAGES_DIR, slug)
     if (!fs.existsSync(dir)) return []
-    return fs.readdirSync(dir)
+
+    const files = fs.readdirSync(dir)
+    const images = files
       .filter(f => EXTENSIONS.some(ext => f.toLowerCase().endsWith(ext)))
-      .sort((a, b) => (parseInt(a) || 0) - (parseInt(b) || 0))
-      .map(f => `/phone-images/${folder}/${f}`)
-  } catch { return [] }
+      .sort((a, b) => {
+        const numA = parseInt(a.split('.')[0]) || 0
+        const numB = parseInt(b.split('.')[0]) || 0
+        return numA - numB
+      })
+      .map(f => `/phone-images/${slug}/${f}`)
+
+    return images
+  } catch {
+    return []
+  }
 }
 
-function buildQuery(phoneName: string): string {
-  const n = phoneName.toLowerCase().replace(/smartphone|phone|mobile/gi, '').trim()
-  if (n.includes('samsung'))  return 'Samsung Galaxy smartphone'
-  if (n.includes('vivo'))     return 'Vivo smartphone'
-  if (n.includes('sony'))     return 'Sony Xperia smartphone'
-  if (n.includes('honor'))    return 'Honor smartphone'
-  if (n.includes('nokia'))    return 'Nokia smartphone'
-  if (n.includes('infinix'))  return 'Infinix smartphone India'
-  if (n.includes('tecno'))    return 'Tecno smartphone India'
-  if (n.includes('lava'))     return 'smartphone India'
-  return 'smartphone technology'
-}
-
-export async function getPhoneImage(phoneName: string, index = 0): Promise<string> {
-  // 1. Local folder
-  const local = getLocalPhoneImages(phoneName)
-  if (local.length > 0) return local[index % local.length]
-
-  // 2. Unsplash API (search — more relevant than random)
-  const query = buildQuery(phoneName)
-  if (UNSPLASH_KEY) {
-    try {
-      const res = await fetch(
-        `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=15&orientation=landscape`,
-        { headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` }, next: { revalidate: 3600 } }
-      )
-      if (res.ok) {
-        const { results = [] } = await res.json()
-        if (results.length > 0) {
-          const pick   = results[index % results.length]
-          const rawUrl = `${pick.urls.regular}&w=1600&q=85&fit=crop&crop=center`
-          // NOTE: proxy param is ?url= (not ?u=)
-          return `${SITE_URL}/api/img?url=${encodeURIComponent(rawUrl)}`
-        }
-      }
-    } catch { /* fall through */ }
+/**
+ * Get a specific image for a phone by index (0-based)
+ * Returns local image if available, otherwise Unsplash, never Picsum
+ */
+export async function getPhoneImage(
+  phoneName: string,
+  index = 0,
+  articleId?: string
+): Promise<string> {
+  // 1. Try local images first
+  const localImages = getLocalPhoneImages(phoneName)
+  if (localImages.length > 0) {
+    return localImages[index % localImages.length]
   }
 
-  // 3. Unsplash source — no API key needed, always tech-relevant, never Picsum
-  return `https://source.unsplash.com/1600x900/?${encodeURIComponent(query)}`
+  // 2. Try Unsplash API
+  if (UNSPLASH_ACCESS_KEY) {
+    try {
+      const query = encodeURIComponent(`${phoneName} smartphone`)
+      const res = await fetch(
+        `https://api.unsplash.com/search/photos?query=${query}&per_page=15&orientation=landscape`,
+        {
+          headers: { Authorization: `Client-ID ${UNSPLASH_ACCESS_KEY}` },
+          next: { revalidate: 3600 },
+        }
+      )
+      if (res.ok) {
+        const data = await res.json()
+        const results = data.results || []
+        if (results.length > 0) {
+          const pick = results[index % results.length]
+          const rawUrl = `${pick.urls.regular}&w=1600&q=85&fit=crop&crop=center`
+          const siteUrl = process.env.SITE_URL || 'https://thetechbharat.com'
+          // FIXED: ?url= not ?u=
+          return `${siteUrl}/api/img?url=${encodeURIComponent(rawUrl)}`
+        }
+      }
+    } catch {
+      // fall through to source.unsplash.com
+    }
+  }
+
+  // 3. Unsplash source URL — no API key needed, always tech-relevant, never Picsum
+  const techQueries = ['smartphone', 'android-phone', 'mobile-phone', 'tech-gadget', 'iphone']
+  return `https://source.unsplash.com/1600x900/?${techQueries[index % techQueries.length]}`
 }
 
-export async function getArticleImages(phoneName: string, count = 5): Promise<string[]> {
-  const out: string[] = []
-  for (let i = 0; i < count; i++) out.push(await getPhoneImage(phoneName, i))
-  return out
+/**
+ * Get multiple images for an article (featured + inline)
+ */
+export async function getArticleImages(
+  phoneName: string,
+  count = 5
+): Promise<string[]> {
+  const images: string[] = []
+  for (let i = 0; i < count; i++) {
+    images.push(await getPhoneImage(phoneName, i))
+  }
+  return images
 }
 
+/**
+ * List all phones that have local images
+ */
 export function listPhonesWithImages(): { name: string; slug: string; count: number }[] {
   try {
     if (!fs.existsSync(PHONE_IMAGES_DIR)) return []
-    return fs.readdirSync(PHONE_IMAGES_DIR, { withFileTypes: true })
+    const dirs = fs.readdirSync(PHONE_IMAGES_DIR, { withFileTypes: true })
       .filter(d => d.isDirectory())
       .map(d => {
-        const count = fs.readdirSync(path.join(PHONE_IMAGES_DIR, d.name))
+        const imagesDir = path.join(PHONE_IMAGES_DIR, d.name)
+        const count = fs.readdirSync(imagesDir)
           .filter(f => EXTENSIONS.some(ext => f.toLowerCase().endsWith(ext))).length
         return { name: d.name.replace(/-/g, ' '), slug: d.name, count }
       })
-  } catch { return [] }
+    return dirs
+  } catch {
+    return []
+  }
 }
 
 export function getAvailableLocalBrands(): { brand: string; folder: string; count: number }[] {

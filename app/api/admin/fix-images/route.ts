@@ -1,98 +1,99 @@
 // app/api/admin/fix-images/route.ts
-// Scans all articles in Redis and replaces Picsum/bad images
-// with local phone images (if available) or proper Unsplash images.
-// GET /api/admin/fix-images        → dry run (shows what would change)
-// GET /api/admin/fix-images?apply=1 → actually updates Redis
+// POST → fixes all articles: replaces Picsum + bad images with Unsplash (proxied correctly)
+// Same pattern as the working fix-images route, just extended to also handle Picsum
 
 import { NextRequest, NextResponse } from 'next/server'
-import { Redis } from '@upstash/redis'
-import { getLocalPhoneImages, resolveBrandFolder, getPhoneImage } from '@/lib/phone-images'
+import { getAllArticlesAsync, saveArticlesAsync } from '@/lib/store'
 
 export const dynamic = 'force-dynamic'
 
-const kv = new Redis({
-  url:   process.env.KV_REST_API_URL!,
-  token: process.env.KV_REST_API_TOKEN!,
-})
+const SITE_URL = process.env.SITE_URL || 'https://thetechbharat.com'
 
 function isBadImage(url: string): boolean {
   if (!url) return true
-  if (url.includes('picsum.photos'))    return true
-  if (url.includes('placeholder'))      return true
+  if (url.includes('picsum.photos')) return true
   if (url.includes('via.placeholder')) return true
-  // Keep Unsplash proxied images — they're fine
+  if (url.includes('placeholder.com')) return true
   return false
 }
 
-export async function GET(req: NextRequest) {
-  const cookie = req.cookies.get('__tb_admin')?.value || ''
-  if (!cookie.startsWith('TBOK:')) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+function proxyUrl(url: string): string {
+  if (!url) return url
+  // Already proxied correctly
+  if (url.includes('/api/img?url=')) return url
+  // Fix old broken proxy param (?u= → ?url=)
+  if (url.includes('/api/img?u=')) {
+    return url.replace('/api/img?u=', '/api/img?url=')
   }
+  // Raw unsplash URL — wrap in proxy
+  if (url.includes('unsplash.com')) {
+    return `${SITE_URL}/api/img?url=${encodeURIComponent(url)}`
+  }
+  return url
+}
 
-  const apply = req.nextUrl.searchParams.get('apply') === '1'
-  const slugList = await kv.lrange('article_index', 0, 199) as string[]
+function getFallbackImage(brand: string, index: number): string {
+  const n = brand.toLowerCase()
+  let query = 'smartphone technology'
+  if (n.includes('samsung'))  query = 'Samsung Galaxy smartphone'
+  else if (n.includes('vivo')) query = 'Vivo smartphone'
+  else if (n.includes('apple') || n.includes('iphone')) query = 'iPhone Apple smartphone'
+  else if (n.includes('pixel') || n.includes('google')) query = 'Google Pixel smartphone'
+  else if (n.includes('oneplus')) query = 'OnePlus smartphone'
+  else if (n.includes('xiaomi') || n.includes('redmi')) query = 'Xiaomi smartphone'
+  else if (n.includes('realme')) query = 'Realme smartphone'
+  else if (n.includes('poco')) query = 'Poco smartphone'
+  else if (n.includes('oppo')) query = 'OPPO smartphone'
+  else if (n.includes('iqoo')) query = 'iQOO gaming smartphone'
+  else if (n.includes('motorola') || n.includes('moto')) query = 'Motorola smartphone'
+  else if (n.includes('nothing')) query = 'Nothing Phone smartphone'
+  const queries = ['smartphone', 'android-phone', 'mobile-phone', 'tech-gadget', 'iphone']
+  return `https://source.unsplash.com/1600x900/?${encodeURIComponent(query)},${queries[index % queries.length]}`
+}
 
-  const results: { slug: string; brand: string; old: string; new: string; hasLocal: boolean }[] = []
+export async function POST(request: NextRequest) {
+  const cookie = request.cookies.get('__tb_admin')?.value
+  if (!cookie) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
+
+  const articles = await getAllArticlesAsync()
   let fixed = 0
 
-  for (const slug of slugList) {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const art = await kv.get(`article:${slug}`) as any
-      if (!art) continue
+  const updated = articles.map(a => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const art = { ...a } as any
+    let changed = false
 
-      const brand = (art.brand as string) || 'Mobile'
-      const currentImage = (art.featuredImage as string) || ''
-
-      // Check if local images exist for this brand
-      const localImages = getLocalPhoneImages(brand)
-      const hasLocal = localImages.length > 0
-
-      // Only fix if image is bad (Picsum etc.) OR if we have local images but aren't using them
-      const needsFix = isBadImage(currentImage) ||
-        (hasLocal && !currentImage.startsWith('/phone-images/'))
-
-      if (!needsFix) continue
-
-      // Get the best image for this brand
-      const newImage = hasLocal
-        ? localImages[fixed % localImages.length]   // cycle through local images
-        : await getPhoneImage(brand, fixed % 5)
-
-      results.push({
-        slug,
-        brand,
-        old: currentImage.slice(0, 60),
-        new: newImage,
-        hasLocal,
-      })
-
-      if (apply) {
-        // Update the article in Redis — cast to any to avoid TS strict errors
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const updated: any = { ...art, featuredImage: newImage }
-        if (Array.isArray(art?.images)) {
-          updated.images = [...art.images]
-          updated.images[0] = newImage
-        }
-        await kv.set(`article:${slug}`, JSON.stringify(updated))
-        fixed++
-      }
-
-      // Small delay to avoid rate limiting Upstash
-      if (!hasLocal) await new Promise(r => setTimeout(r, 100))
-
-    } catch (e) {
-      console.error(`fix-images: error on ${slug}:`, e)
+    // Fix featured image
+    if (isBadImage(art.featuredImage)) {
+      art.featuredImage = getFallbackImage(art.brand || 'Mobile', 0)
+      changed = true
+    } else if (art.featuredImage?.includes('unsplash.com')) {
+      art.featuredImage = proxyUrl(art.featuredImage)
+      changed = true
+    } else if (art.featuredImage?.includes('/api/img?u=')) {
+      art.featuredImage = proxyUrl(art.featuredImage)
+      changed = true
     }
-  }
 
-  return NextResponse.json({
-    mode:    apply ? 'APPLIED' : 'DRY RUN (add ?apply=1 to actually fix)',
-    total:   slugList.length,
-    needFix: results.length,
-    fixed:   apply ? fixed : 0,
-    results,
+    // Fix inline images array
+    if (Array.isArray(art.images)) {
+      art.images = art.images.map((img: string, i: number) => {
+        if (isBadImage(img)) {
+          changed = true
+          return getFallbackImage(art.brand || 'Mobile', i)
+        }
+        if (img?.includes('unsplash.com') || img?.includes('/api/img?u=')) {
+          changed = true
+          return proxyUrl(img)
+        }
+        return img
+      })
+    }
+
+    if (changed) fixed++
+    return art
   })
+
+  await saveArticlesAsync(updated)
+  return NextResponse.json({ success: true, fixed, total: articles.length })
 }
