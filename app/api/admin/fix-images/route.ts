@@ -1,17 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAllArticlesAsync, saveArticlesAsync } from '@/lib/store'
-import { getPhoneImage, getLocalPhoneImages } from '@/lib/phone-images'
+import { getLocalPhoneImages, getAllLocalImages } from '@/lib/phone-images'
 
 export const dynamic = 'force-dynamic'
 
 function isGoodImage(url: string): boolean {
-  if (!url) return false
-  if (url.startsWith('/phone-images/')) return true
-  if (url.includes('images.unsplash.com') && !url.includes('/api/img?')) {
-    return (url.match(/[?&]w=/g) || []).length <= 1 &&
-           (url.match(/[?&]q=/g) || []).length <= 1
+  return !!url?.startsWith('/phone-images/')
+}
+
+// Pick next unused image from a pool, tracking globally used ones
+function pickUnused(pool: string[], usedSet: Set<string>): string {
+  // First try to find one not used at all
+  for (const img of pool) {
+    if (!usedSet.has(img)) {
+      usedSet.add(img)
+      return img
+    }
   }
-  return false
+  // All used — find least-used by cycling (reset and start again)
+  usedSet.clear()
+  const img = pool[0]
+  usedSet.add(img)
+  return img
 }
 
 export async function POST(request: NextRequest) {
@@ -22,55 +32,55 @@ export async function POST(request: NextRequest) {
   const forceAll = searchParams.get('force') === 'true'
 
   const articles = await getAllArticlesAsync()
+
+  // Pre-load ALL images once
+  const allImages = getAllLocalImages()
+  if (allImages.length === 0) {
+    return NextResponse.json({ error: 'No local images found in public/phone-images/' }, { status: 500 })
+  }
+
+  // Global set to track every image URL already assigned
+  const usedImages = new Set<string>()
+
+  // Pre-populate usedImages with already-good images so we don't reassign them
+  if (!forceAll) {
+    for (const a of articles) {
+      const art = a as any
+      if (isGoodImage(art.featuredImage)) usedImages.add(art.featuredImage)
+      if (Array.isArray(art.images)) {
+        art.images.forEach((img: string) => { if (isGoodImage(img)) usedImages.add(img) })
+      }
+    }
+  }
+
   let fixed = 0
-
-  // Track per-brand counters so each article gets a DIFFERENT image
-  const brandCounters: Record<string, number> = {}
-
-  const updated = []
-
-  for (const article of articles) {
+  const updated = articles.map(article => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const art = { ...article } as any
     let changed = false
 
-    const brand = (art.brand || 'Mobile').toLowerCase()
-
-    // Initialize counter for this brand
-    if (brandCounters[brand] === undefined) brandCounters[brand] = 0
+    // Get brand-specific pool, fall back to all images
+    const brandPool = getLocalPhoneImages(art.brand || 'Mobile')
+    const pool = brandPool.length > 0 ? brandPool : allImages
 
     if (forceAll || !isGoodImage(art.featuredImage)) {
-      const localImages = getLocalPhoneImages(art.brand || 'Mobile')
-      const totalLocal = localImages.length
-
-      let imageIndex: number
-      if (totalLocal > 0) {
-        // Cycle through all local images — each article gets different one
-        imageIndex = brandCounters[brand] % totalLocal
-      } else {
-        // For Unsplash: use counter directly (getPhoneImage handles the pool)
-        imageIndex = brandCounters[brand]
-      }
-
-      art.featuredImage = await getPhoneImage(art.brand || 'Mobile', imageIndex)
-      brandCounters[brand]++
+      art.featuredImage = pickUnused(pool, usedImages)
       changed = true
     }
 
     if (Array.isArray(art.images)) {
-      for (let j = 0; j < art.images.length; j++) {
-        if (forceAll || !isGoodImage(art.images[j])) {
-          // inline images: use brand counter + offset so they differ from featured too
-          const imgIndex = (brandCounters[brand] + j) % 20
-          art.images[j] = await getPhoneImage(art.brand || 'Mobile', imgIndex)
+      art.images = art.images.map((img: string) => {
+        if (forceAll || !isGoodImage(img)) {
           changed = true
+          return pickUnused(pool, usedImages)
         }
-      }
+        return img
+      })
     }
 
     if (changed) fixed++
-    updated.push(art)
-  }
+    return art
+  })
 
   await saveArticlesAsync(updated)
   return NextResponse.json({ success: true, fixed, total: articles.length })
