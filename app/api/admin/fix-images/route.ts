@@ -4,29 +4,12 @@ import { getPhoneImage } from '@/lib/phone-images'
 
 export const dynamic = 'force-dynamic'
 
-function hasDuplicateParams(url: string): boolean {
-  try {
-    // Detect duplicate w= or q= params in the encoded inner URL
-    const inner = decodeURIComponent(url.split('?url=')[1] || '')
-    return (inner.match(/[?&]w=/g) || []).length > 1 ||
-           (inner.match(/[?&]q=/g) || []).length > 1
-  } catch { return false }
-}
-
-function isBadImage(url: string): boolean {
-  if (!url) return true
-  if (url.includes('picsum')) return true
-  if (url.includes('source.unsplash.com')) return true
-  if (url.includes('via.placeholder')) return true
-  if (url.includes('/api/img?u=')) return true
-  // Key fix: catch the duplicate params bug
-  if (url.includes('/api/img?url=') && hasDuplicateParams(url)) return true
-  return false
-}
-
 export async function POST(request: NextRequest) {
   const cookie = request.cookies.get('__tb_admin')?.value
   if (!cookie) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
+
+  const { searchParams } = new URL(request.url)
+  const forceAll = searchParams.get('force') === 'true'
 
   const articles = await getAllArticlesAsync()
   let fixed = 0
@@ -37,14 +20,27 @@ export async function POST(request: NextRequest) {
     const art = { ...articles[i] } as any
     let changed = false
 
-    if (isBadImage(art.featuredImage)) {
+    const isLocalImage = (url: string) => url?.startsWith('/phone-images/')
+    const isCleanProxy = (url: string) => {
+      if (!url?.includes('/api/img?url=')) return false
+      // Check no duplicate params in the inner URL
+      try {
+        const inner = decodeURIComponent(url.split('?url=')[1] || '')
+        return (inner.match(/[?&]w=/g) || []).length <= 1 &&
+               (inner.match(/[?&]q=/g) || []).length <= 1
+      } catch { return false }
+    }
+    const isGood = (url: string) => isLocalImage(url) || isCleanProxy(url)
+
+    // Force mode: replace ALL. Normal mode: replace bad only
+    if (forceAll || !isGood(art.featuredImage)) {
       art.featuredImage = await getPhoneImage(art.brand || 'Mobile', i % 5)
       changed = true
     }
 
     if (Array.isArray(art.images)) {
       for (let j = 0; j < art.images.length; j++) {
-        if (isBadImage(art.images[j])) {
+        if (forceAll || !isGood(art.images[j])) {
           art.images[j] = await getPhoneImage(art.brand || 'Mobile', j)
           changed = true
         }
