@@ -1,7 +1,4 @@
 // app/api/admin/fix-images/route.ts
-// POST → fixes all articles: replaces Picsum + bad images with Unsplash (proxied correctly)
-// Same pattern as the working fix-images route, just extended to also handle Picsum
-
 import { NextRequest, NextResponse } from 'next/server'
 import { getAllArticlesAsync, saveArticlesAsync } from '@/lib/store'
 
@@ -19,36 +16,40 @@ function isBadImage(url: string): boolean {
 
 function proxyUrl(url: string): string {
   if (!url) return url
-  // Already proxied correctly
   if (url.includes('/api/img?url=')) return url
-  // Fix old broken proxy param (?u= → ?url=)
-  if (url.includes('/api/img?u=')) {
-    return url.replace('/api/img?u=', '/api/img?url=')
-  }
-  // Raw unsplash URL — wrap in proxy
-  if (url.includes('unsplash.com')) {
-    return `${SITE_URL}/api/img?url=${encodeURIComponent(url)}`
-  }
+  // Fix old broken proxy param ?u= → ?url=
+  if (url.includes('/api/img?u=')) return url.replace('/api/img?u=', '/api/img?url=')
+  if (url.includes('unsplash.com')) return `${SITE_URL}/api/img?url=${encodeURIComponent(url)}`
   return url
+}
+
+// Simple keywords only — source.unsplash.com doesn't accept spaces/sentences
+const BRAND_UNSPLASH: Record<string, string> = {
+  samsung:   'samsung,smartphone',
+  vivo:      'vivo,smartphone',
+  apple:     'iphone,apple',
+  iphone:    'iphone,apple',
+  pixel:     'google,pixel,smartphone',
+  google:    'google,pixel,smartphone',
+  oneplus:   'oneplus,smartphone',
+  xiaomi:    'xiaomi,smartphone',
+  redmi:     'xiaomi,smartphone',
+  realme:    'realme,smartphone',
+  poco:      'poco,smartphone',
+  oppo:      'oppo,smartphone',
+  iqoo:      'iqoo,smartphone',
+  motorola:  'motorola,smartphone',
+  moto:      'motorola,smartphone',
+  nothing:   'nothing,phone,smartphone',
 }
 
 function getFallbackImage(brand: string, index: number): string {
   const n = brand.toLowerCase()
-  let query = 'smartphone technology'
-  if (n.includes('samsung'))  query = 'Samsung Galaxy smartphone'
-  else if (n.includes('vivo')) query = 'Vivo smartphone'
-  else if (n.includes('apple') || n.includes('iphone')) query = 'iPhone Apple smartphone'
-  else if (n.includes('pixel') || n.includes('google')) query = 'Google Pixel smartphone'
-  else if (n.includes('oneplus')) query = 'OnePlus smartphone'
-  else if (n.includes('xiaomi') || n.includes('redmi')) query = 'Xiaomi smartphone'
-  else if (n.includes('realme')) query = 'Realme smartphone'
-  else if (n.includes('poco')) query = 'Poco smartphone'
-  else if (n.includes('oppo')) query = 'OPPO smartphone'
-  else if (n.includes('iqoo')) query = 'iQOO gaming smartphone'
-  else if (n.includes('motorola') || n.includes('moto')) query = 'Motorola smartphone'
-  else if (n.includes('nothing')) query = 'Nothing Phone smartphone'
-  const queries = ['smartphone', 'android-phone', 'mobile-phone', 'tech-gadget', 'iphone']
-  return `https://source.unsplash.com/1600x900/?${encodeURIComponent(query)},${queries[index % queries.length]}`
+  const fallbacks = ['smartphone', 'android', 'mobile', 'gadget', 'technology']
+  for (const [key, kw] of Object.entries(BRAND_UNSPLASH)) {
+    if (n.includes(key)) return `https://source.unsplash.com/1600x900/?${kw}`
+  }
+  return `https://source.unsplash.com/1600x900/?${fallbacks[index % fallbacks.length]},smartphone`
 }
 
 export async function POST(request: NextRequest) {
@@ -67,10 +68,7 @@ export async function POST(request: NextRequest) {
     if (isBadImage(art.featuredImage)) {
       art.featuredImage = getFallbackImage(art.brand || 'Mobile', 0)
       changed = true
-    } else if (art.featuredImage?.includes('unsplash.com')) {
-      art.featuredImage = proxyUrl(art.featuredImage)
-      changed = true
-    } else if (art.featuredImage?.includes('/api/img?u=')) {
+    } else if (art.featuredImage?.includes('unsplash.com') || art.featuredImage?.includes('/api/img?u=')) {
       art.featuredImage = proxyUrl(art.featuredImage)
       changed = true
     }
@@ -78,14 +76,8 @@ export async function POST(request: NextRequest) {
     // Fix inline images array
     if (Array.isArray(art.images)) {
       art.images = art.images.map((img: string, i: number) => {
-        if (isBadImage(img)) {
-          changed = true
-          return getFallbackImage(art.brand || 'Mobile', i)
-        }
-        if (img?.includes('unsplash.com') || img?.includes('/api/img?u=')) {
-          changed = true
-          return proxyUrl(img)
-        }
+        if (isBadImage(img)) { changed = true; return getFallbackImage(art.brand || 'Mobile', i) }
+        if (img?.includes('unsplash.com') || img?.includes('/api/img?u=')) { changed = true; return proxyUrl(img) }
         return img
       })
     }
