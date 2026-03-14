@@ -1,74 +1,88 @@
 'use client'
-import { useEffect, useState } from 'react'
+
+import { useEffect, useState, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import type { Article } from '@/lib/store'
-import ArticleCard from '@/components/ArticleCard'
+import Head from 'next/head'
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://thetechbharat.com'
 
-// ── AUTO INTERNAL LINKER ──────────────────────────────────────────
-// Maps keywords → category URLs on thetechbharat.com
-const INTERNAL_LINK_MAP: [RegExp, string, string][] = [
-  // ── BRAND NAMES → brand filtered news pages ──
-  [/\bSamsung\b/g, '/mobile-news?brand=Samsung', 'Latest Samsung news'],
-  [/\b(Apple|iPhone)\b/g, '/mobile-news?brand=Apple', 'Latest Apple iPhone news'],
-  [/\bXiaomi\b/g, '/mobile-news?brand=Xiaomi', 'Latest Xiaomi news'],
-  [/\bOnePlus\b/g, '/mobile-news?brand=OnePlus', 'Latest OnePlus news'],
-  [/\bNothing\b/g, '/mobile-news?brand=Nothing', 'Latest Nothing Phone news'],
-  [/\bMotorola\b/g, '/mobile-news?brand=Motorola', 'Latest Motorola news'],
-  [/\bRealme\b/g, '/mobile-news?brand=Realme', 'Latest Realme news'],
-  [/\bVivo\b/g, '/mobile-news?brand=Vivo', 'Latest Vivo news'],
-  [/\bOPPO\b/g, '/mobile-news?brand=OPPO', 'Latest OPPO news'],
-  [/\biQOO\b/g, '/mobile-news?brand=iQOO', 'Latest iQOO news'],
-  [/\bPoco\b/g, '/mobile-news?brand=Poco', 'Latest Poco news'],
-  [/\bRedmi\b/g, '/mobile-news?brand=Xiaomi', 'Latest Xiaomi Redmi news'],
-  [/\bGoogle Pixel\b/g, '/mobile-news', 'Latest mobile news'],
-  [/\bHonor\b/g, '/mobile-news', 'Latest mobile news'],
-  [/\bInfinix\b/g, '/mobile-news', 'Latest mobile news'],
-  [/\bTecno\b/g, '/mobile-news', 'Latest mobile news'],
-  [/\bLava\b/g, '/mobile-news', 'Latest mobile news'],
-  // ── PRODUCT CATEGORIES ──
-  [/\b(action camera|action cam)s?\b/gi, '/mobile-news', 'Latest tech news'],
-  [/\b(smartphone|mobile phone|android phone)s?\b/gi, '/mobile-news', 'Latest mobile phone news'],
-  [/\b(phone review|hands-on|first look|specs breakdown)s?\b/gi, '/reviews', 'Phone reviews India'],
-  [/\b(compare|head-to-head|versus|vs\.)\b/gi, '/compare', 'Compare phones India'],
-  [/\b(best phone|best smartphone|top phone|worth buying)s?\b/gi, '/compare', 'Best phones India'],
-  [/\b5G (phone|smartphone|band|support|network)s?\b/gi, '/mobile-news', 'Latest 5G phones India'],
-  [/\b(budget phone|budget smartphone|affordable phone|mid-range phone)s?\b/gi, '/mobile-news', 'Budget phones India'],
-  [/\b(flagship phone|premium smartphone|flagship smartphone)s?\b/gi, '/mobile-news', 'Flagship phones India'],
-  [/\b(foldable phone|foldable smartphone)s?\b/gi, '/mobile-news', 'Foldable phones India'],
-  [/\b(tablet|smartwatch|TWS earbuds|wireless earbuds|earphones)s?\b/gi, '/mobile-news', 'Latest tech news'],
-  [/\b(Flipkart|Amazon India)\b/g, '/mobile-news', 'Best phone deals India'],
-  [/\b(Jio|Airtel|Vi Vodafone)\b/g, '/mobile-news', 'Latest 5G news India'],
-  [/\b(web stor(?:y|ies))\b/gi, '/web-stories', 'Web Stories'],
+interface Article {
+  slug: string
+  title: string
+  summary: string
+  content: string
+  brand: string
+  type: string
+  author: string
+  publishDate: string
+  featuredImage?: string
+  tags?: string[]
+  views?: number
+  seoTitle?: string
+  metaDescription?: string
+  sourceUrl?: string
+}
+
+interface Review {
+  name: string
+  rating: number
+  comment: string
+  date: string
+}
+
+// Auto internal link keywords
+const LINK_RULES: { pattern: RegExp; href: string }[] = [
+  { pattern: /\b(Samsung)\b/gi,   href: '/mobile-news?brand=Samsung' },
+  { pattern: /\b(Apple|iPhone)\b/gi, href: '/mobile-news?brand=Apple' },
+  { pattern: /\b(Xiaomi|Redmi|MIUI)\b/gi, href: '/mobile-news?brand=Xiaomi' },
+  { pattern: /\b(OnePlus)\b/gi,   href: '/mobile-news?brand=OnePlus' },
+  { pattern: /\b(Realme)\b/gi,    href: '/mobile-news?brand=Realme' },
+  { pattern: /\b(OPPO)\b/gi,      href: '/mobile-news?brand=OPPO' },
+  { pattern: /\b(Vivo)\b/gi,      href: '/mobile-news?brand=Vivo' },
+  { pattern: /\b(iQOO)\b/gi,      href: '/mobile-news?brand=iQOO' },
+  { pattern: /\b(Poco)\b/gi,      href: '/mobile-news?brand=Poco' },
+  { pattern: /\b(Motorola)\b/gi,  href: '/mobile-news?brand=Motorola' },
+  { pattern: /\b(Nothing Phone)\b/gi, href: '/mobile-news?brand=Nothing' },
+  { pattern: /\b(Google Pixel)\b/gi,  href: '/mobile-news?brand=Google' },
+  { pattern: /\b(compare[sd]?|versus|vs\.)\b/gi, href: '/compare' },
+  { pattern: /\b(hands-on|first look|unboxing)\b/gi, href: '/reviews' },
+  { pattern: /\b(smartphone review|phone review)\b/gi, href: '/reviews' },
+  { pattern: /\b(5G phone|5G band|5G network)\b/gi, href: '/mobile-news' },
+  { pattern: /\b(budget phone|flagship phone|mid-range)\b/gi, href: '/mobile-news' },
 ]
 
-function addInternalLinks(html: string, _currentSlug: string): string {
-  const parts = html.split(/(<[^>]+>)/g)
-  const linked = new Set<string>() // each URL linked max once per article
-  let insideAnchor = false
+function addInternalLinks(html: string): string {
+  const usedHrefs = new Set<string>()
+  let result = html
 
-  return parts.map((part) => {
-    // Track if we are inside an existing <a>...</a> — never nest links
-    if (part.startsWith('<a ') || part.startsWith('<a>')) { insideAnchor = true; return part }
-    if (part.startsWith('</a>')) { insideAnchor = false; return part }
-    if (part.startsWith('<')) return part // other HTML tags — skip
-    if (insideAnchor) return part // inside existing link — don't touch
+  for (const rule of LINK_RULES) {
+    if (usedHrefs.has(rule.href)) continue
+    const tempMarker = `__LINK_${Math.random().toString(36).slice(2)}__`
+    let replaced = false
+    result = result.replace(rule.pattern, (match, offset, str) => {
+      // Don't replace inside existing tags
+      const before = str.slice(0, offset)
+      const openTags = (before.match(/<[^/][^>]*>/g) || []).length
+      const closeTags = (before.match(/<\/[^>]+>/g) || []).length
+      if (openTags > closeTags) return match
+      if (replaced) return match
+      replaced = true
+      usedHrefs.add(rule.href)
+      return `<a href="${rule.href}" class="article-internal-link">${match}</a>`
+    })
+  }
+  return result
+}
 
-    let text = part
-    for (const [regex, url, title] of INTERNAL_LINK_MAP) {
-      if (linked.has(url)) continue // this URL already linked once, skip
-      // Reset lastIndex for global regexes
-      regex.lastIndex = 0
-      const newText = text.replace(regex, (match) => {
-        if (linked.has(url)) return match
-        linked.add(url)
-        return `<a href="${url}" title="${title}" class="internal-link">${match}</a>`
-      })
-      if (newText !== text) text = newText
-    }
-    return text
-  }).join('')
+function StarRating({ rating }: { rating: number }) {
+  return (
+    <span>
+      {[1,2,3,4,5].map(i => (
+        <span key={i} style={{ color: i <= rating ? '#f59e0b' : '#d1d5db' }}>★</span>
+      ))}
+    </span>
+  )
 }
 
 export default function ArticlePage() {
@@ -76,413 +90,294 @@ export default function ArticlePage() {
   const slug = params?.slug as string
   const [article, setArticle] = useState<Article | null>(null)
   const [similar, setSimilar] = useState<Article[]>([])
+  const [reviews] = useState<Review[]>([
+    { name: 'Rahul S.', rating: 4, comment: 'Great analysis, exactly what I needed before buying.', date: '2 days ago' },
+    { name: 'Priya K.', rating: 5, comment: 'Very detailed and honest review. Trusted source!', date: '1 week ago' },
+  ])
   const [expanded, setExpanded] = useState(false)
-  const [reviewName, setReviewName] = useState('')
-  const [reviewText, setReviewText] = useState('')
-  const [reviewRating, setReviewRating] = useState(5)
-  const [reviewLocation, setReviewLocation] = useState('')
-  const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [notFound, setNotFound] = useState(false)
+  const viewCounted = useRef(false)
 
   useEffect(() => {
     if (!slug) return
     fetch(`/api/article/${slug}`)
-      .then(r => r.json())
+      .then(r => r.ok ? r.json() : null)
       .then(data => {
+        if (!data || data.error) { setNotFound(true); setLoading(false); return }
         setArticle(data.article)
         setSimilar(data.similar || [])
         setLoading(false)
       })
-      .catch(() => setLoading(false))
+      .catch(() => { setNotFound(true); setLoading(false) })
   }, [slug])
 
-  if (loading) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 py-20 text-center">
-        <div className="inline-block w-10 h-10 border-4 border-[#d4220a] border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="font-sans text-muted">Loading article...</p>
-      </div>
-    )
-  }
-
-  if (!article) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 py-20 text-center">
-        <h1 className="font-playfair text-3xl font-bold mb-4">Article Not Found</h1>
-        <Link href="/" className="font-sans text-[#d4220a] hover:underline">← Back to Home</Link>
-      </div>
-    )
-  }
-
-  const pubDate = new Date(article.publishDate).toLocaleDateString('en-IN', {
-    day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit',
-  })
-
-  const TYPE_COLORS: Record<string, string> = {
-    'mobile-news': 'bg-[#1a3a5c]',
-    'review': 'bg-[#d4220a]',
-    'compare': 'bg-[#2a6b3c]',
-  }
-
-  const handleReviewSubmit = async () => {
-    if (!reviewName || !reviewText) return
-    const res = await fetch(`/api/review/${slug}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: reviewName, text: reviewText, rating: reviewRating, location: reviewLocation }),
-    })
-    if (res.ok) {
-      setSubmitted(true)
-      const updated = await res.json()
-      if (updated.article) setArticle(updated.article)
+  // Count view once
+  useEffect(() => {
+    if (article && !viewCounted.current) {
+      viewCounted.current = true
+      fetch(`/api/article/${slug}`, { method: 'POST' }).catch(() => {})
     }
-  }
+  }, [article, slug])
+
+  if (loading) return (
+    <div style={{ maxWidth: 800, margin: '60px auto', padding: '0 20px', textAlign: 'center' }}>
+      <div style={{ color: '#6b7280' }}>Loading article...</div>
+    </div>
+  )
+
+  if (notFound || !article) return (
+    <div style={{ maxWidth: 800, margin: '60px auto', padding: '0 20px', textAlign: 'center' }}>
+      <h1 style={{ fontSize: 24, marginBottom: 16 }}>Article Not Found</h1>
+      <Link href="/" style={{ color: '#dc2626', textDecoration: 'none' }}>← Back to Home</Link>
+    </div>
+  )
+
+  const canonicalUrl = `${SITE_URL}/article/${slug}`
+  const linkedContent = addInternalLinks(article.content || '')
+  const preview = article.content?.replace(/<[^>]+>/g, '').slice(0, 400) + '...'
+
+  const typeLabel = article.type === 'review' ? 'Hands-On' : article.type === 'compare' ? 'Comparison' : 'Mobile News'
+  const typeColor = article.type === 'review' ? '#7c3aed' : article.type === 'compare' ? '#0891b2' : '#dc2626'
 
   return (
-    <div className="bg-paper min-h-screen">
-      {/* Schema markup */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'NewsArticle',
-            headline: article.title,
-            image: [article.featuredImage],
-            datePublished: article.publishDate,
-            dateModified: article.updatedDate || article.publishDate,
-            author: { 
-              '@type': 'Person', 
-              name: article.author || 'The Tech Bharat',
-              url: 'https://thetechbharat.com/author',
-              jobTitle: 'Technology Journalist',
-              worksFor: { '@type': 'Organization', name: 'The Tech Bharat' }
-            },
-            publisher: { '@type': 'Organization', name: 'The Tech Bharat', logo: { '@type': 'ImageObject', url: 'https://thetechbharat.com/logo.png' } },
-            description: article.seoDescription,
-          }),
-        }}
-      />
+    <>
+      {/* Per-article canonical — this is the critical fix */}
+      <Head>
+        <link rel="canonical" href={canonicalUrl} />
+        <title>{article.seoTitle || article.title} | The Tech Bharat</title>
+        <meta name="description" content={article.metaDescription || article.summary} />
+        <meta property="og:title" content={article.title} />
+        <meta property="og:description" content={article.summary} />
+        <meta property="og:url" content={canonicalUrl} />
+        <meta property="og:type" content="article" />
+        {article.featuredImage && <meta property="og:image" content={article.featuredImage} />}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="robots" content="index, follow, max-image-preview:large" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'NewsArticle',
+              headline: article.title,
+              description: article.summary,
+              image: article.featuredImage ? [article.featuredImage] : [],
+              datePublished: article.publishDate,
+              dateModified: article.publishDate,
+              author: { '@type': 'Person', name: article.author || 'Vijay Yadav', url: `${SITE_URL}/author` },
+              publisher: {
+                '@type': 'Organization',
+                name: 'The Tech Bharat',
+                logo: { '@type': 'ImageObject', url: `${SITE_URL}/logo.png` },
+              },
+              mainEntityOfPage: { '@type': 'WebPage', '@id': canonicalUrl },
+            }),
+          }}
+        />
+      </Head>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Article */}
-          <article className="lg:col-span-2">
-            {/* Breadcrumb */}
-            <nav className="font-sans text-xs text-muted mb-4 flex items-center gap-2">
-              <Link href="/" className="hover:text-[#d4220a]">Home</Link>
-              <span>/</span>
-              <Link href={`/${article.type}`} className="hover:text-[#d4220a] capitalize">{article.type === 'review' ? 'Hands-On' : article.category}</Link>
-              <span>/</span>
-              <span className="text-ink line-clamp-1">{article.title}</span>
-            </nav>
+      <div style={{ maxWidth: 860, margin: '0 auto', padding: '24px 20px' }}>
 
-            {/* Category + Brand */}
-            <div className="flex items-center gap-2 mb-3">
-              <span className={`${TYPE_COLORS[article.type]} text-white font-sans text-[10px] font-bold px-2.5 py-1 uppercase tracking-widest`}>
-                {article.category}
-              </span>
-              <span className="font-sans text-xs font-bold text-[#d4220a] uppercase">{article.brand}</span>
-            </div>
+        {/* Breadcrumb */}
+        <nav style={{ fontSize: 13, color: '#6b7280', marginBottom: 16 }}>
+          <Link href="/" style={{ color: '#6b7280', textDecoration: 'none' }}>Home</Link>
+          {' › '}
+          <Link href="/mobile-news" style={{ color: '#6b7280', textDecoration: 'none' }}>Mobile News</Link>
+          {' › '}
+          <span style={{ color: '#374151' }}>{article.brand}</span>
+        </nav>
 
-            {/* Title */}
-            <h1 className="font-playfair text-2xl md:text-4xl font-black text-ink leading-tight mb-4">
-              {article.title}
-            </h1>
-
-            {/* Meta */}
-            <div className="flex flex-wrap items-center gap-3 border-b border-border pb-4 mb-5">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-[#1a3a5c] flex items-center justify-center text-white text-xs font-bold font-sans">
-                  {(article.author || 'TB').split(' ').map((n: string) => n[0]).join('').slice(0,2).toUpperCase()}
-                </div>
-                <div>
-                  <p className="font-sans text-xs font-semibold text-ink">{article.author || 'The Tech Bharat'}</p>
-                  <p className="font-sans text-[10px] text-muted">The Tech Bharat</p>
-                </div>
-              </div>
-              <span className="font-sans text-[10px] text-muted">·</span>
-              <span className="font-sans text-xs text-muted">{pubDate}</span>
-              <span className="font-sans text-[10px] text-muted">·</span>
-              <span className="font-sans text-xs text-muted">{article.readTime} min read</span>
-              {/* Share */}
-              <div className="ml-auto flex items-center gap-2">
-                <a
-                  href={`https://wa.me/?text=${encodeURIComponent(article.title + ' ' + (process.env.NEXT_PUBLIC_SITE_URL || 'https://techbharat.com') + '/article/' + article.slug)}`}
-                  target="_blank" rel="noopener noreferrer"
-                  className="font-sans text-xs bg-[#25D366] text-white px-2.5 py-1 hover:opacity-80"
-                >Share</a>
-                <a
-                  href={`https://t.me/share/url?url=${encodeURIComponent((process.env.NEXT_PUBLIC_SITE_URL || 'https://techbharat.com') + '/article/' + article.slug)}&text=${encodeURIComponent(article.title)}`}
-                  target="_blank" rel="noopener noreferrer"
-                  className="font-sans text-xs bg-[#2AABEE] text-white px-2.5 py-1 hover:opacity-80"
-                >Telegram</a>
-              </div>
-            </div>
-
-            {/* Featured Image */}
-            <div className="relative mb-5 overflow-hidden" style={{ paddingBottom: '56.25%' }}>
-              <img
-                src={article.featuredImage || 'https://picsum.photos/seed/tb/1200/675'}
-                alt={article.title}
-                style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}}
-                onError={(e)=>{(e.target as HTMLImageElement).src='https://picsum.photos/seed/tb/1200/675'}}
-              />
-            </div>
-
-            {/* Quick Summary Box */}
-            <div className="bg-[#1a3a5c]/5 border-l-4 border-[#1a3a5c] p-4 mb-5">
-              <div className="flex items-center gap-3 mb-2">
-                <span className="font-sans text-xs font-bold text-[#1a3a5c] uppercase tracking-wider">Quick Summary</span>
-                <span className="font-sans text-xs text-muted font-semibold">{article.quickSummary.brand}</span>
-                <span className="font-sans text-xs text-muted ml-auto">{article.quickSummary.date}</span>
-              </div>
-              <ul className="space-y-1.5">
-                {article.quickSummary.bullets.map((b, i) => (
-                  <li key={i} className="font-sans text-sm text-ink flex items-start gap-2">
-                    <span className="text-[#d4220a] mt-0.5 flex-shrink-0 font-bold">✓</span>
-                    {b}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Introduction */}
-            <p className="font-body text-lg text-[#2a2a2a] leading-relaxed mb-5">{article.summary}</p>
-
-            {/* Key Bullet Points */}
-            <div className="bg-white border border-border p-5 mb-5">
-              <h3 className="font-sans text-sm font-bold text-ink uppercase tracking-wider mb-3">Key Highlights</h3>
-              <ul className="space-y-2">
-                {article.bullets.map((b, i) => (
-                  <li key={i} className="font-sans text-sm text-ink flex items-start gap-2.5">
-                    <span className="w-5 h-5 bg-[#d4220a] text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5 rounded-full">
-                      {i + 1}
-                    </span>
-                    {b}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* READ MORE expand */}
-            {!expanded ? (
-              <div className="border-t-2 border-dashed border-[#d4220a]/30 pt-4 mt-2">
-                <button
-                  onClick={() => setExpanded(true)}
-                  className="w-full bg-[#d4220a] hover:bg-[#b81d09] text-white font-sans font-bold py-3 text-sm transition-colors flex items-center justify-center gap-2"
-                >
-                  <span>Read Full Article</span>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-              </div>
-            ) : (
-              <div className="animate-fade-in-up">
-                {/* Inline image */}
-                {article.images[1] && (
-                  <div className="relative my-6 overflow-hidden" style={{ paddingBottom: '50%' }}>
-                    <img src={article.images[1]} alt={`${article.title} detail`} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}} onError={(e)=>{(e.target as HTMLImageElement).src="https://picsum.photos/seed/tb2/800/600"}} />
-                  </div>
-                )}
-
-                {/* Full Content */}
-                <div
-                  className="article-content"
-                  dangerouslySetInnerHTML={{ __html: addInternalLinks(article.content, article.slug) }}
-                />
-
-                {/* More images interspersed */}
-                {article.images[2] && (
-                  <div className="relative my-6 overflow-hidden" style={{ paddingBottom: '50%' }}>
-                    <img src={article.images[2]} alt={`${article.title} image 3`} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}} onError={(e)=>{(e.target as HTMLImageElement).src="https://picsum.photos/seed/tb3/800/600"}} />
-                  </div>
-                )}
-
-                {/* Tags */}
-                <div className="flex flex-wrap gap-2 mt-6 pt-4 border-t border-border">
-                  {article.tags.map(tag => (
-                    <span key={tag} className="font-sans text-xs bg-gray-100 text-muted px-3 py-1 border border-border">
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Internal Navigation Links - Fix 5 */}
-            <div className="mt-8 p-4 bg-[#f8f4ef] border-l-4 border-[#d4220a]">
-              <p className="font-sans text-xs font-bold text-[#d4220a] uppercase tracking-wider mb-3">Explore More on The Tech Bharat</p>
-              <div className="flex flex-wrap gap-2">
-                <a href="/mobile-news" className="font-sans text-xs text-ink border border-border bg-white px-3 py-1.5 hover:border-[#d4220a] hover:text-[#d4220a] transition-colors">📱 Mobile News</a>
-                <a href="/reviews" className="font-sans text-xs text-ink border border-border bg-white px-3 py-1.5 hover:border-[#d4220a] hover:text-[#d4220a] transition-colors">⭐ Phone Reviews</a>
-                <a href="/compare" className="font-sans text-xs text-ink border border-border bg-white px-3 py-1.5 hover:border-[#d4220a] hover:text-[#d4220a] transition-colors">⚖️ Compare Phones</a>
-                {article.brand && <a href={`/mobile-news?brand=${article.brand}`} className="font-sans text-xs text-ink border border-border bg-white px-3 py-1.5 hover:border-[#d4220a] hover:text-[#d4220a] transition-colors">🔍 More {article.brand} News</a>}
-              </div>
-            </div>
-
-            {/* Similar Articles Section */}
-            {similar.length > 0 && (
-              <section className="mt-10 pt-6 border-t-2 border-border">
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="w-6 h-0.5 bg-[#d4220a]" />
-                  <h2 className="font-playfair text-xl font-bold">You May Also Like</h2>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {similar.map(a => (
-                    <ArticleCard key={a.id} article={a} variant="card" />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* Reviews Section */}
-            <section className="mt-10 pt-6 border-t-2 border-border">
-              <div className="flex items-center gap-3 mb-5">
-                <div className="w-6 h-0.5 bg-[#1a3a5c]" />
-                <h2 className="font-playfair text-xl font-bold">Reader Reviews</h2>
-                <span className="font-sans text-xs text-muted ml-2">({article.reviews.length} reviews)</span>
-              </div>
-
-              {/* Existing Reviews */}
-              {article.reviews.length > 0 ? (
-                <div className="space-y-4 mb-8">
-                  {article.reviews.map((review, i) => (
-                    <div key={i} className="bg-white border border-border p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-full bg-[#1a3a5c] text-white font-bold font-sans text-sm flex items-center justify-center flex-shrink-0">
-                          {review.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-1">
-                            <span className="font-sans text-sm font-bold text-ink">{review.name}</span>
-                            {review.location && (
-                              <span className="font-sans text-xs text-muted">{review.location}</span>
-                            )}
-                            <span className="ml-auto font-sans text-xs text-muted">{review.date}</span>
-                          </div>
-                          <div className="flex gap-0.5 mb-2">
-                            {Array.from({ length: 5 }).map((_, si) => (
-                              <svg key={si} className={`w-3.5 h-3.5 ${si < review.rating ? 'text-amber-400' : 'text-gray-200'}`} fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                              </svg>
-                            ))}
-                          </div>
-                          <p className="font-body text-sm text-[#2a2a2a] leading-relaxed">{review.text}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="font-sans text-sm text-muted mb-6 italic">Be the first to share your experience with this device.</p>
-              )}
-
-              {/* Submit Review Form */}
-              {!submitted ? (
-                <div className="bg-white border border-border p-5">
-                  <h3 className="font-sans text-sm font-bold text-ink mb-4">Share Your Experience</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                    <input
-                      type="text"
-                      placeholder="Your Name *"
-                      value={reviewName}
-                      onChange={e => setReviewName(e.target.value)}
-                      className="font-sans text-sm border border-border px-3 py-2.5 outline-none focus:border-[#1a3a5c] w-full"
-                    />
-                    <input
-                      type="text"
-                      placeholder="City (optional)"
-                      value={reviewLocation}
-                      onChange={e => setReviewLocation(e.target.value)}
-                      className="font-sans text-sm border border-border px-3 py-2.5 outline-none focus:border-[#1a3a5c] w-full"
-                    />
-                  </div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="font-sans text-xs text-muted">Rating:</span>
-                    {[1, 2, 3, 4, 5].map(star => (
-                      <button key={star} onClick={() => setReviewRating(star)}>
-                        <svg className={`w-5 h-5 ${star <= reviewRating ? 'text-amber-400' : 'text-gray-200'}`} fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                      </button>
-                    ))}
-                  </div>
-                  <textarea
-                    placeholder="Share your thoughts about this phone / news... *"
-                    value={reviewText}
-                    onChange={e => setReviewText(e.target.value)}
-                    rows={3}
-                    className="font-sans text-sm border border-border px-3 py-2.5 outline-none focus:border-[#1a3a5c] w-full resize-none mb-3"
-                  />
-                  <button
-                    onClick={handleReviewSubmit}
-                    className="bg-[#1a3a5c] hover:bg-[#0f2d4a] text-white font-sans font-semibold px-6 py-2.5 text-sm transition-colors"
-                  >
-                    Submit Review
-                  </button>
-                </div>
-              ) : (
-                <div className="bg-green-50 border border-green-200 p-4 text-center">
-                  <p className="font-sans text-sm text-green-700 font-medium">✓ Thank you! Your review has been submitted.</p>
-                </div>
-              )}
-            </section>
-          </article>
-
-          {/* Sidebar */}
-          <aside className="lg:col-span-1 space-y-6">
-            {/* About Author */}
-            <div className="bg-white border border-border p-5">
-              <h3 className="font-sans text-xs font-bold uppercase tracking-widest text-muted mb-3">About the Author</h3>
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-12 h-12 rounded-full bg-[#d4220a] text-white font-bold font-playfair text-lg flex items-center justify-center">
-                  VY
-                </div>
-                <div>
-                  <p className="font-sans text-sm font-bold text-ink">Vijay Yadav</p>
-                  <p className="font-sans text-xs text-muted">Senior Mobile Editor · 11 yrs</p>
-                </div>
-              </div>
-              <p className="font-sans text-xs text-muted leading-relaxed">
-                Vijay has reviewed 300+ devices and covered the Indian smartphone market for 11 years. Founder of The Tech Bharat, based in New Delhi.
-              </p>
-              <Link href="/author" className="font-sans text-xs font-semibold text-[#d4220a] mt-2 inline-block hover:underline">
-                View Author Profile →
-              </Link>
-            </div>
-
-            {/* Similar Articles Sidebar */}
-            {similar.slice(0, 4).length > 0 && (
-              <div className="bg-white border border-border p-5">
-                <h3 className="font-sans text-xs font-bold uppercase tracking-widest text-muted mb-4">You May Also Like</h3>
-                <div className="space-y-4">
-                  {similar.slice(0, 4).map(a => (
-                    <ArticleCard key={a.id} article={a} variant="side" />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Channels CTA */}
-            <div className="bg-[#1a3a5c] p-5 text-white">
-              <p className="font-playfair text-lg font-bold mb-2">Never Miss a Launch</p>
-              <p className="font-sans text-xs opacity-80 mb-3">Get instant phone news on your phone.</p>
-              <div className="space-y-2">
-                <a href="https://t.me/the_tech_bharat" target="_blank" rel="noopener noreferrer"
-                  className="block bg-[#2AABEE] text-white font-sans text-xs font-semibold text-center py-2 hover:opacity-90">
-                  Join Telegram →
-                </a>
-                <a href="https://whatsapp.com/channel/0029VbCXZfAJJhzh46IrfI2W" target="_blank" rel="noopener noreferrer"
-                  className="block bg-[#25D366] text-white font-sans text-xs font-semibold text-center py-2 hover:opacity-90">
-                  Join WhatsApp →
-                </a>
-              </div>
-            </div>
-          </aside>
+        {/* Type badge */}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+          <span style={{ background: typeColor, color: '#fff', padding: '3px 10px', borderRadius: 4, fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            {typeLabel}
+          </span>
+          {article.brand && (
+            <Link href={`/mobile-news?brand=${article.brand}`} style={{ background: '#f3f4f6', color: '#374151', padding: '3px 10px', borderRadius: 4, fontSize: 12, fontWeight: 500, textDecoration: 'none' }}>
+              {article.brand}
+            </Link>
+          )}
         </div>
+
+        {/* Title */}
+        <h1 style={{ fontSize: 'clamp(22px, 4vw, 32px)', fontWeight: 800, lineHeight: 1.25, color: '#111827', marginBottom: 12 }}>
+          {article.title}
+        </h1>
+
+        {/* Meta */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px 24px', fontSize: 13, color: '#6b7280', marginBottom: 20, alignItems: 'center' }}>
+          <span>
+            By{' '}
+            <Link href="/author" style={{ color: '#dc2626', fontWeight: 600, textDecoration: 'none' }}>
+              {article.author || 'Vijay Yadav'}
+            </Link>
+            {' '}· 11 yrs experience
+          </span>
+          <span>
+            {article.publishDate
+              ? new Date(article.publishDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })
+              : ''}
+          </span>
+          <span>5 min read</span>
+          {article.views ? <span>👁 {article.views} views</span> : null}
+        </div>
+
+        {/* Featured image */}
+        {article.featuredImage && (
+          <div style={{ marginBottom: 24, borderRadius: 12, overflow: 'hidden' }}>
+            <img
+              src={article.featuredImage}
+              alt={article.title}
+              style={{ width: '100%', height: 'auto', maxHeight: 480, objectFit: 'cover', display: 'block' }}
+              onError={(e) => {
+                const t = e.target as HTMLImageElement
+                t.src = 'https://source.unsplash.com/1200x675/?smartphone,technology'
+              }}
+            />
+          </div>
+        )}
+
+        {/* Quick Summary */}
+        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderLeft: '4px solid #dc2626', borderRadius: 8, padding: '16px 20px', marginBottom: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, flexWrap: 'wrap', gap: 8 }}>
+            <strong style={{ color: '#dc2626', fontSize: 14, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Quick Summary</strong>
+            <span style={{ fontSize: 12, color: '#6b7280' }}>
+              {article.brand} · {article.publishDate ? new Date(article.publishDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}
+            </span>
+          </div>
+          <p style={{ fontSize: 15, color: '#374151', margin: 0, lineHeight: 1.6 }}>{article.summary}</p>
+        </div>
+
+        {/* Intro + Read More */}
+        <div style={{ fontSize: 16, lineHeight: 1.8, color: '#1f2937' }}>
+          {!expanded ? (
+            <>
+              <p style={{ marginBottom: 16 }}>{preview}</p>
+              <button
+                onClick={() => setExpanded(true)}
+                style={{ background: '#dc2626', color: '#fff', border: 'none', padding: '10px 24px', borderRadius: 6, fontSize: 15, fontWeight: 600, cursor: 'pointer', marginBottom: 24 }}
+              >
+                Read Full Article ▼
+              </button>
+            </>
+          ) : (
+            <div
+              className="article-body"
+              dangerouslySetInnerHTML={{ __html: linkedContent }}
+              style={{ marginBottom: 24 }}
+            />
+          )}
+        </div>
+
+        {/* Tags */}
+        {article.tags && article.tags.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 32 }}>
+            {article.tags.map(tag => (
+              <span key={tag} style={{ background: '#f3f4f6', color: '#374151', padding: '4px 12px', borderRadius: 20, fontSize: 13 }}>#{tag}</span>
+            ))}
+          </div>
+        )}
+
+        {/* Explore More links */}
+        <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 8, padding: '16px 20px', marginBottom: 32 }}>
+          <strong style={{ fontSize: 14, color: '#c2410c' }}>Explore More</strong>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 10 }}>
+            {article.brand && (
+              <Link href={`/mobile-news?brand=${article.brand}`} style={{ color: '#dc2626', fontSize: 14, textDecoration: 'none', fontWeight: 500 }}>
+                → More {article.brand} News
+              </Link>
+            )}
+            <Link href="/compare" style={{ color: '#dc2626', fontSize: 14, textDecoration: 'none', fontWeight: 500 }}>
+              → Phone Comparisons
+            </Link>
+            <Link href="/reviews" style={{ color: '#dc2626', fontSize: 14, textDecoration: 'none', fontWeight: 500 }}>
+              → Latest Reviews
+            </Link>
+            <Link href="/mobile-news" style={{ color: '#dc2626', fontSize: 14, textDecoration: 'none', fontWeight: 500 }}>
+              → All Mobile News
+            </Link>
+          </div>
+        </div>
+
+        {/* Author Box */}
+        <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 12, padding: '20px 24px', marginBottom: 32, display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+          <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 22, flexShrink: 0 }}>V</div>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 16, color: '#111827' }}>Vijay Yadav</div>
+            <div style={{ fontSize: 12, color: '#dc2626', marginBottom: 6 }}>Senior Mobile Technology Editor · 11 Years Experience</div>
+            <p style={{ fontSize: 14, color: '#6b7280', margin: 0, lineHeight: 1.6 }}>
+              Vijay has reviewed 400+ smartphones and covers mobile tech for Indian consumers. Based in New Delhi, he specialises in camera comparisons, battery tests, and budget phone analysis.
+            </p>
+            <Link href="/author" style={{ fontSize: 13, color: '#dc2626', textDecoration: 'none', fontWeight: 500 }}>View all articles →</Link>
+          </div>
+        </div>
+
+        {/* User Reviews */}
+        <div style={{ marginBottom: 32 }}>
+          <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 16, color: '#111827' }}>Reader Reviews</h3>
+          {reviews.map((r, i) => (
+            <div key={i} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, padding: '16px 20px', marginBottom: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 13 }}>
+                    {r.name[0]}
+                  </div>
+                  <strong style={{ fontSize: 14 }}>{r.name}</strong>
+                </div>
+                <StarRating rating={r.rating} />
+              </div>
+              <p style={{ fontSize: 14, color: '#4b5563', margin: 0 }}>{r.comment}</p>
+              <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 4 }}>{r.date}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Similar Articles */}
+        {similar.length > 0 && (
+          <div>
+            <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 16, color: '#111827', borderBottom: '2px solid #dc2626', paddingBottom: 8 }}>
+              Similar Articles
+            </h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
+              {similar.map(a => (
+                <Link key={a.slug} href={`/${a.slug}`} style={{ textDecoration: 'none' }}>
+                  <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, overflow: 'hidden', background: '#fff', transition: 'box-shadow 0.2s' }}>
+                    {a.featuredImage && (
+                      <img
+                        src={a.featuredImage}
+                        alt={a.title}
+                        style={{ width: '100%', height: 140, objectFit: 'cover' }}
+                        onError={(e) => { (e.target as HTMLImageElement).src = 'https://source.unsplash.com/400x225/?smartphone' }}
+                      />
+                    )}
+                    <div style={{ padding: 12 }}>
+                      <span style={{ fontSize: 11, color: '#dc2626', fontWeight: 600, textTransform: 'uppercase' }}>{a.brand}</span>
+                      <h4 style={{ fontSize: 14, fontWeight: 600, color: '#111827', margin: '4px 0 0', lineHeight: 1.4 }}>{a.title}</h4>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
-    </div>
+
+      <style>{`
+        .article-body { font-size: 16px; line-height: 1.85; color: #1f2937; }
+        .article-body h2 { font-size: 22px; font-weight: 700; margin: 28px 0 12px; color: #111827; }
+        .article-body h3 { font-size: 18px; font-weight: 600; margin: 22px 0 10px; color: #1f2937; }
+        .article-body p { margin-bottom: 16px; }
+        .article-body ul, .article-body ol { margin: 0 0 16px 24px; }
+        .article-body li { margin-bottom: 6px; }
+        .article-body strong { font-weight: 600; color: #111827; }
+        .article-body table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px; }
+        .article-body th { background: #dc2626; color: #fff; padding: 10px 14px; text-align: left; }
+        .article-body td { border: 1px solid #e5e7eb; padding: 8px 14px; }
+        .article-body tr:nth-child(even) td { background: #f9fafb; }
+        .article-internal-link { color: #dc2626; font-weight: 500; text-decoration: underline; }
+        .article-internal-link:hover { color: #b91c1c; }
+      `}</style>
+    </>
   )
 }

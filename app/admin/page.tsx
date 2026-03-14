@@ -343,7 +343,7 @@ export default function AdminPage() {
                 )}
                 {fetchStatus==='done' && fetchResult && (
                   <div className="space-y-3">
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4"><p className="font-bold text-green-800 text-sm mb-1">✅ Published!</p><p className="text-xs text-green-700 mb-2">{fetchResult.title}</p><a href={`/article/${fetchResult.slug}`} target="_blank" className="text-xs text-[#d4220a] hover:underline font-medium">View article →</a></div>
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4"><p className="font-bold text-green-800 text-sm mb-1">✅ Published!</p><p className="text-xs text-green-700 mb-2">{fetchResult.title}</p><a href={`/${fetchResult.slug}`} target="_blank" className="text-xs text-[#d4220a] hover:underline font-medium">View article →</a></div>
                     <button onClick={()=>{setFetchStatus('idle');setFetchLog([]);setFetchResult(null)}} className="bg-[#d4220a] text-white text-sm font-bold px-4 py-2 rounded-lg">Publish Another</button>
                   </div>
                 )}
@@ -427,13 +427,13 @@ export default function AdminPage() {
                   <tbody>
                     {filtered.map(a=>(
                       <tr key={a.id} className="border-b border-gray-50 hover:bg-gray-50">
-                        <td className="px-4 py-2.5"><a href={`/article/${a.slug}`} target="_blank" className="font-medium text-gray-800 hover:text-[#d4220a] line-clamp-1 text-sm">{a.title}</a></td>
+                        <td className="px-4 py-2.5"><a href={`/${a.slug}`} target="_blank" className="font-medium text-gray-800 hover:text-[#d4220a] line-clamp-1 text-sm">{a.title}</a></td>
                         <td className="px-3 py-2.5 text-xs text-gray-500">{a.brand}</td>
                         <td className="px-3 py-2.5"><span className={`text-[10px] font-bold px-2 py-0.5 rounded ${typeColor[a.type]||'bg-gray-100 text-gray-600'}`}>{a.type}</span></td>
                         <td className="px-3 py-2.5 text-xs text-gray-400">{pubDate(a.publishDate)}</td>
                         <td className="px-3 py-2.5 text-center"><span className="text-xs font-semibold text-gray-700">{(articleViews[a.slug]||0).toLocaleString()}</span></td>
                         <td className="px-3 py-2.5 text-center"><button onClick={()=>handleToggleFeat(a.id)} className={`text-base ${a.isFeatured?'opacity-100':'opacity-20 hover:opacity-50'}`}>⭐</button></td>
-                        <td className="px-4 py-2.5 text-right"><div className="flex items-center justify-end gap-2"><button onClick={()=>setEditArticle(a)} className="text-xs text-blue-600 hover:text-blue-800 font-medium">Edit</button><a href={`/article/${a.slug}`} target="_blank" className="text-xs text-gray-400 hover:text-gray-600">View</a><button onClick={()=>setDeleteId(a.id)} className="text-xs text-red-500 hover:text-red-700 font-medium">Del</button></div></td>
+                        <td className="px-4 py-2.5 text-right"><div className="flex items-center justify-end gap-2"><button onClick={()=>setEditArticle(a)} className="text-xs text-blue-600 hover:text-blue-800 font-medium">Edit</button><a href={`/${a.slug}`} target="_blank" className="text-xs text-gray-400 hover:text-gray-600">View</a><button onClick={()=>setDeleteId(a.id)} className="text-xs text-red-500 hover:text-red-700 font-medium">Del</button></div></td>
                       </tr>
                     ))}
                     {filtered.length===0 && <tr><td colSpan={7} className="px-4 py-10 text-center text-gray-400 text-sm">No articles.</td></tr>}
