@@ -29,6 +29,12 @@ const nextConfig = {
         destination: 'https://thetechbharat.com/:path*',
         permanent: true,
       },
+      // SEO: remove /article/ prefix from all article URLs
+      {
+        source: '/article/:slug',
+        destination: '/:slug',
+        permanent: true,
+      },
     ]
   },
   async headers() {

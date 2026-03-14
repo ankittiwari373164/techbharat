@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
+import SeoAnalyticsTab from '@/components/admin/SeoAnalyticsTab'
 
 interface Article { id:string; slug:string; title:string; type:string; brand:string; publishDate:string; readTime:number; isFeatured:boolean; summary:string; tags:string[] }
 interface Stats { total:number; mobileNews:number; reviews:number; compare:number; brands:Record<string,number> }
@@ -8,7 +9,7 @@ interface ScheduleStatus { todaySlots:ScheduleSlot[]; publishedToday:number; nex
 interface StorySlide { id:string; headline:string; body:string; imageUrl:string; ctaText?:string; ctaLink?:string }
 interface WebStory { id:string; slug:string; title:string; brand:string; category:string; coverImage:string; slides:StorySlide[]; publishDate:string; isPublished:boolean; tags:string[] }
 
-type Tab = 'dashboard'|'schedule'|'articles'|'stories'|'fetch'|'images'|'seo'|'settings'
+type Tab = 'dashboard'|'schedule'|'articles'|'stories'|'fetch'|'images'|'seo'|'analytics'|'settings'
 
 const typeColor:Record<string,string> = { 'mobile-news':'bg-blue-100 text-blue-800', 'review':'bg-red-100 text-red-800', 'compare':'bg-green-100 text-green-800' }
 const statusColor:Record<string,string> = { ok:'bg-green-100 text-green-700', missing:'bg-red-100 text-red-700', unknown:'bg-gray-100 text-gray-500' }
@@ -168,6 +169,7 @@ export default function AdminPage() {
     {id:'stories'   as Tab,icon:'📖',label:'Web Stories'},
     {id:'images'    as Tab,icon:'🖼️',label:'Phone Images'},
     {id:'seo'       as Tab,icon:'🔍',label:'SEO Tools'},
+    {id:'analytics' as Tab,icon:'📈',label:'Analytics'},
     {id:'settings'  as Tab,icon:'🔧',label:'Settings'},
   ]
 
@@ -905,6 +907,11 @@ export default function AdminPage() {
               </div>
 
             </div>
+          )}
+
+          {/* ── ANALYTICS ── */}
+          {tab==='analytics' && (
+            <SeoAnalyticsTab />
           )}
 
           {/* ── SETTINGS ── */}

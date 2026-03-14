@@ -47,7 +47,9 @@ function classifyReferrer(ref: string): string {
 export async function POST(req: NextRequest) {
   try {
     const body      = await req.json().catch(() => ({}))
-    const path      = (body.path     || req.headers.get('x-pathname') || '/').slice(0, 100)
+    const rawPath   = (body.path     || req.headers.get('x-pathname') || '/').slice(0, 100)
+    // Normalise: /article/some-slug → /some-slug (clean URLs)
+    const path      = rawPath.startsWith('/article/') ? rawPath.replace('/article/', '/') : rawPath
     const referrer  = (body.referrer || req.headers.get('referer')    || '')
     const userAgent = req.headers.get('user-agent') || ''
     const ip        = req.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown'
@@ -122,12 +124,12 @@ export async function GET(req: NextRequest) {
       const slug  = slugList[i]
       const views = viewResults[i] as number | null
       if (views && views > 0) {
-        articleViewMap[`/article/${slug}`] = views
+        articleViewMap[`/${slug}`] = views
         existingTotalViews += views
         try {
-          const existing = await kv.zscore('analytics:top_pages', `/article/${slug}`)
+          const existing = await kv.zscore('analytics:top_pages', `/${slug}`)
           if (!existing) {
-            await kv.zadd('analytics:top_pages', { score: views, member: `/article/${slug}` })
+            await kv.zadd('analytics:top_pages', { score: views, member: `/${slug}` })
           }
         } catch { /* skip */ }
       }
