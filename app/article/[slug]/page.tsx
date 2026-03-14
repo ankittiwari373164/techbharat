@@ -87,7 +87,21 @@ function StarRating({ rating }: { rating: number }) {
 
 export default function ArticlePage() {
   const params = useParams()
-  const slug = params?.slug as string
+  // Middleware rewrites /slug → /article/slug internally
+  // useParams() reads from the REWRITTEN path so slug is correct
+  // Fallback: parse from window.location if params is empty
+  const rawSlug = params?.slug as string | undefined
+  const [slug, setSlug] = useState<string>(rawSlug || '')
+
+  useEffect(() => {
+    if (!rawSlug && typeof window !== 'undefined') {
+      // Extract slug from clean URL e.g. /iphone-17e-reality-check
+      const parts = window.location.pathname.split('/').filter(Boolean)
+      if (parts.length === 1) setSlug(parts[0])
+    } else if (rawSlug) {
+      setSlug(rawSlug)
+    }
+  }, [rawSlug])
   const [article, setArticle] = useState<Article | null>(null)
   const [similar, setSimilar] = useState<Article[]>([])
   const [reviews] = useState<Review[]>([
@@ -133,7 +147,7 @@ export default function ArticlePage() {
     </div>
   )
 
-  const canonicalUrl = `${SITE_URL}/article/${slug}`
+  const canonicalUrl = `${SITE_URL}/${slug}`
   const linkedContent = addInternalLinks(article.content || '')
   const preview = article.content?.replace(/<[^>]+>/g, '').slice(0, 400) + '...'
 
