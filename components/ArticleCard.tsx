@@ -1,10 +1,9 @@
 'use client'
 import Link from 'next/link'
 
-import { useState } from 'react'
 import type { Article } from '@/lib/store'
 
-interface Props {
+interface ArticleCardProps {
   article: Article
   variant?: 'hero' | 'featured' | 'card' | 'list' | 'side'
 }
@@ -15,8 +14,7 @@ const TYPE_LABELS: Record<string, { label: string; color: string }> = {
   'compare': { label: 'Compare', color: 'bg-[#2a6b3c]' },
 }
 
-export default function ArticleCard({ article, variant = 'card' }: Props) {
-  const [expanded, setExpanded] = useState(false)
+export default function ArticleCard({ article, variant = 'card' }: ArticleCardProps) {
   const typeInfo = TYPE_LABELS[article.type] || TYPE_LABELS['mobile-news']
   const pubDate = new Date(article.publishDate).toLocaleDateString('en-IN', {
     day: 'numeric', month: 'short', year: 'numeric',
@@ -25,7 +23,7 @@ export default function ArticleCard({ article, variant = 'card' }: Props) {
   if (variant === 'hero') {
     return (
       <div className="relative group cursor-pointer">
-        <Link href={`/article/${article.slug}`} className="block">
+        <Link href={`/${article.slug}`} className="block">
           <div className="relative overflow-hidden" style={{ paddingBottom: '56.25%' }}>
             <img src={article.featuredImage || "https://picsum.photos/seed/tb/1200/675"} style={{position:"absolute",inset:0,width:"100%",height:"100%"}} onError={(e)=>{(e.target as HTMLImageElement).src="https://picsum.photos/seed/tb/1200/675"}}
               alt={article.title}
@@ -56,7 +54,7 @@ export default function ArticleCard({ article, variant = 'card' }: Props) {
 
   if (variant === 'side') {
     return (
-      <Link href={`/article/${article.slug}`} className="flex gap-3 group">
+      <Link href={`/${article.slug}`} className="flex gap-3 group">
         <div className="flex-shrink-0 w-24 h-16 relative overflow-hidden">
           <img src={article.featuredImage || "https://picsum.photos/seed/tb/1200/675"} style={{position:"absolute",inset:0,width:"100%",height:"100%"}} onError={(e)=>{(e.target as HTMLImageElement).src="https://picsum.photos/seed/tb/1200/675"}}
             alt={article.title}
@@ -82,7 +80,7 @@ export default function ArticleCard({ article, variant = 'card' }: Props) {
         {/* Quick Summary - collapsible */}
         <div className="flex gap-4">
           <div className="flex-shrink-0 w-36 h-24 relative overflow-hidden">
-            <Link href={`/article/${article.slug}`}>
+            <Link href={`/${article.slug}`}>
               <img src={article.featuredImage || "https://picsum.photos/seed/tb/1200/675"} style={{position:"absolute",inset:0,width:"100%",height:"100%"}} onError={(e)=>{(e.target as HTMLImageElement).src="https://picsum.photos/seed/tb/1200/675"}}
                 alt={article.title}
                 className="object-cover hover:scale-105 transition-transform duration-300"
@@ -97,7 +95,7 @@ export default function ArticleCard({ article, variant = 'card' }: Props) {
               <span className="font-sans text-[10px] font-semibold text-[#d4220a]">{article.brand}</span>
               <span className="font-sans text-[10px] text-muted ml-auto">{pubDate}</span>
             </div>
-            <Link href={`/article/${article.slug}`}>
+            <Link href={`/${article.slug}`}>
               <h3 className="font-playfair text-base md:text-lg font-bold text-ink leading-snug hover:text-[#d4220a] transition-colors line-clamp-2">
                 {article.title}
               </h3>
@@ -130,7 +128,7 @@ export default function ArticleCard({ article, variant = 'card' }: Props) {
 
         {/* Read More link */}
         <Link
-          href={`/article/${article.slug}`}
+          href={`/${article.slug}`}
           className="inline-block mt-2 font-sans text-xs font-semibold text-[#d4220a] hover:underline"
         >
           Read More →
@@ -142,7 +140,7 @@ export default function ArticleCard({ article, variant = 'card' }: Props) {
   // Default: card
   return (
     <div className="bg-white border border-border hover:border-[#d4220a] transition-colors group animate-fade-in-up">
-      <Link href={`/article/${article.slug}`} className="block relative overflow-hidden" style={{ paddingBottom: '60%' }}>
+      <Link href={`/${article.slug}`} className="block relative overflow-hidden" style={{ paddingBottom: '60%' }}>
         <img src={article.featuredImage || "https://picsum.photos/seed/tb/1200/675"} style={{position:"absolute",inset:0,width:"100%",height:"100%"}} onError={(e)=>{(e.target as HTMLImageElement).src="https://picsum.photos/seed/tb/1200/675"}}
           alt={article.title}
           className="object-cover group-hover:scale-105 transition-transform duration-500"
@@ -156,7 +154,7 @@ export default function ArticleCard({ article, variant = 'card' }: Props) {
           <span className="font-sans text-[10px] font-bold text-[#d4220a] uppercase tracking-wide">{article.brand}</span>
           <span className="font-sans text-[10px] text-muted ml-auto">{pubDate}</span>
         </div>
-        <Link href={`/article/${article.slug}`}>
+        <Link href={`/${article.slug}`}>
           <h3 className="font-playfair text-base font-bold text-ink leading-snug group-hover:text-[#d4220a] transition-colors line-clamp-2">
             {article.title}
           </h3>
@@ -176,7 +174,7 @@ export default function ArticleCard({ article, variant = 'card' }: Props) {
         <div className="mt-3 flex items-center justify-between">
           <span className="font-sans text-[10px] text-muted">By {article.author || 'The Tech Bharat'} · {article.readTime} min read</span>
           <Link
-            href={`/article/${article.slug}`}
+            href={`/${article.slug}`}
             className="font-sans text-xs font-semibold text-[#d4220a] hover:underline"
           >
             Read More →
