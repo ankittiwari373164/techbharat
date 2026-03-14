@@ -53,17 +53,21 @@ const LINK_RULES: { pattern: RegExp; href: string }[] = [
 ]
 
 function addInternalLinks(html: string): string {
+  if (!html || typeof html !== 'string') return ''
   const usedHrefs = new Set<string>()
   let result = html
 
   for (const rule of LINK_RULES) {
     if (usedHrefs.has(rule.href)) continue
-    const tempMarker = `__LINK_${Math.random().toString(36).slice(2)}__`
     let replaced = false
-    result = result.replace(rule.pattern, (match, offset, str) => {
-      // Don't replace inside existing tags
-      const before = str.slice(0, offset)
-      const openTags = (before.match(/<[^/][^>]*>/g) || []).length
+    result = result.replace(rule.pattern, (...args) => {
+      // args: match, [...captureGroups], offset, string
+      const match  = args[0] as string
+      const str    = args[args.length - 1] as string
+      const offset = args[args.length - 2] as number
+      // Don't replace inside existing HTML tags
+      const before   = typeof str === 'string' ? str.slice(0, offset) : ''
+      const openTags  = (before.match(/<[^/][^>]*>/g) || []).length
       const closeTags = (before.match(/<\/[^>]+>/g) || []).length
       if (openTags > closeTags) return match
       if (replaced) return match
@@ -148,8 +152,8 @@ export default function ArticlePage() {
   )
 
   const canonicalUrl = `${SITE_URL}/${slug}`
-  const linkedContent = addInternalLinks(article.content || '')
-  const preview = article.content?.replace(/<[^>]+>/g, '').slice(0, 400) + '...'
+  const linkedContent = addInternalLinks(typeof article.content === 'string' ? article.content : '')
+  const preview = (typeof article.content === 'string' ? article.content : '').replace(/<[^>]+>/g, '').slice(0, 400) + '...'
 
   const typeLabel = article.type === 'review' ? 'Hands-On' : article.type === 'compare' ? 'Comparison' : 'Mobile News'
   const typeColor = article.type === 'review' ? '#7c3aed' : article.type === 'compare' ? '#0891b2' : '#dc2626'
@@ -285,7 +289,7 @@ export default function ArticlePage() {
         </div>
 
         {/* Tags */}
-        {article.tags && article.tags.length > 0 && (
+        {article.tags && Array.isArray(article.tags) && article.tags.length > 0 && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 32 }}>
             {article.tags.map(tag => (
               <span key={tag} style={{ background: '#f3f4f6', color: '#374151', padding: '4px 12px', borderRadius: 20, fontSize: 13 }}>#{tag}</span>
