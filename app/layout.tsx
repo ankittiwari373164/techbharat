@@ -43,9 +43,7 @@ export async function generateMetadata(): Promise<Metadata> {
       follow: true,
       googleBot: { index: true, follow: true, 'max-image-preview': 'large' },
     },
-    // NOTE: No global canonical here — each page sets its own via alternates.canonical
-    // Setting a canonical at root layout level was causing ALL pages (including articles)
-    // to report canonical = homepage, which blocked Google from indexing them.
+    alternates: { canonical: 'https://thetechbharat.com' },
   }
 }
 
@@ -60,7 +58,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
+      {/* Google Analytics GA4 */}
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-S7VTT9Z82Q" />
+        <script
+          dangerouslySetInnerHTML={{ __html: `
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-S7VTT9Z82Q');
+          `}}
+        />
+                <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
           href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,400&family=DM+Sans:wght@400;500;600;700&display=swap"
