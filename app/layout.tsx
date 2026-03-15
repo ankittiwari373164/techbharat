@@ -117,6 +117,73 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             }}
           />
         )}
+        {!isAdmin && (
+          <script
+            dangerouslySetInnerHTML={{ __html: `
+(function(){
+  "use strict";
+
+  // 1. Disable right-click
+  document.addEventListener("contextmenu",function(e){e.preventDefault();return false;});
+
+  // 2. Disable text selection + image drag via CSS
+  var s=document.createElement("style");
+  s.innerHTML="body,img,p,h1,h2,h3,h4,h5,h6,span,div,a,li{-webkit-user-select:none!important;-moz-user-select:none!important;user-select:none!important;}img{-webkit-user-drag:none!important;pointer-events:none!important;}";
+  document.head.appendChild(s);
+
+  // 3. Block copy / cut
+  document.addEventListener("copy",function(e){e.preventDefault();return false;});
+  document.addEventListener("cut",function(e){e.preventDefault();return false;});
+
+  // 4. Block image drag
+  document.addEventListener("dragstart",function(e){if(e.target.tagName==="IMG"){e.preventDefault();return false;}});
+
+  // 5. Block keyboard shortcuts (F12, Ctrl+U/S/C/A/P/I/J, Ctrl+Shift+I/J/C)
+  document.addEventListener("keydown",function(e){
+    if(e.key==="F12"||e.keyCode===123){e.preventDefault();return false;}
+    if(e.ctrlKey||e.metaKey){
+      if(["u","U","s","S","c","C","a","A","p","P","i","I","j","J"].includes(e.key)){e.preventDefault();return false;}
+      if(e.shiftKey&&["i","I","j","J","c","C"].includes(e.key)){e.preventDefault();return false;}
+    }
+  });
+
+  // 6. DevTools size-change detection
+  var _open=false,_thr=160;
+  function _chk(){
+    var w=window.outerWidth-window.innerWidth,h=window.outerHeight-window.innerHeight;
+    if(w>_thr||h>_thr){if(!_open){_open=true;_show();}}else{_open=false;}
+  }
+  setInterval(_chk,1000);
+
+  // 7. Debugger trap
+  setInterval(function(){(function(){return false;}["constructor"]("debugger")["call"]());},4000);
+
+  // 8. Warning overlay
+  function _show(){
+    if(document.getElementById("__po")) return;
+    var o=document.createElement("div");
+    o.id="__po";
+    o.style.cssText="position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.92);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999999;font-family:sans-serif;text-align:center;padding:20px;";
+    o.innerHTML='<h2 style="margin:0 0 10px;font-size:22px;">Access Restricted</h2><p style="color:#ccc;max-width:400px;line-height:1.6;">Developer tools are not permitted on this page.<br>Please close DevTools to continue reading.</p>';
+    document.body.appendChild(o);
+    var c=setInterval(function(){
+      if(window.outerWidth-window.innerWidth<=_thr&&window.outerHeight-window.innerHeight<=_thr){
+        var el=document.getElementById("__po");if(el)el.remove();_open=false;clearInterval(c);
+      }
+    },800);
+  }
+
+  // 9. Block print
+  window.addEventListener("beforeprint",function(e){
+    e.preventDefault();
+    document.body.style.visibility="hidden";
+    setTimeout(function(){document.body.style.visibility="visible";},100);
+  });
+
+})();
+            `}}
+          />
+        )}
       </body>
     </html>
   )
