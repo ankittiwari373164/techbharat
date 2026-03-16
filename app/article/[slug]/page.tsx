@@ -53,7 +53,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ArticlePage({ params }: PageProps) {
   const { slug } = params
-  let article = null
+  let article: any = null
   let similar: unknown[] = []
 
   try {
