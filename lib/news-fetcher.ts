@@ -304,7 +304,7 @@ Escape all internal quotes with backslash.
     "A competitor comparison in one line",
     "Your opinion or prediction about this product"
   ],
-  "fullContent": "Full 1500-word HTML article. Tags: <p>, <h2>, <h3>, <table>, <tr>, <th>, <td>, <strong>, <ul>, <li> only. Follow structure above. Apply ALL sentence variety rules. Use banned phrase list strictly. British English. NO source names anywhere.",
+  "fullContent": "Full HTML article. MINIMUM 900 words, target 1200-1500 words. MANDATORY STRUCTURE: (1) Opening para with hook (2) Main content sections with H2 headings (3) India-specific section with ₹ price/Flipkart/Amazon (4) Honest verdict section (5) Source Note if based on leaks. Google indexes this content — it must be ORIGINAL and DETAILED, not a press release reword. Tags: <p>, <h2>, <h3>, <table>, <tr>, <th>, <td>, <strong>, <ul>, <li> only. Follow structure above. Apply ALL sentence variety rules. Use banned phrase list strictly. British English. NO source names anywhere.",
   "tags": ["brand name", "model name", "brand model India price", "brand model review India", "best phone under Xk", "brand model 5G India"],
   "relatedTopics": ["suggest 3 related article topics from the same brand or price segment that would make good internal links — e.g. 'Samsung Galaxy S25 Review', 'Best Samsung phones under ₹60K'"]
   "quickBullets": ["Spec or fact, max 7 words", "Price point, max 7 words", "One-line verdict, max 7 words"]
@@ -443,8 +443,12 @@ export async function buildArticles(rawItems: RawNewsItem[]): Promise<Article[]>
   for (let i = 0; i < rawItems.length; i++) {
     const item = rawItems[i]
     const slug = generateSlug(item.title)
-    const wc   = (item.fullContent || '').replace(/<[^>]*>/g, '').split(/\s+/).length
+    const rawText = (item.fullContent || '').replace(/<[^>]*>/g, '')
+    const wc   = rawText.split(/\s+/).filter(Boolean).length
     const rt   = Math.max(5, Math.ceil(wc / 220))
+    // GSC: log warning if content too short (target 800+ words)
+    // GSC quality gate: log if content is too short (target 800+ words)
+    if (wc < 600) console.warn(`[TB:quality] Short article (${wc} words): ${item.title}`)
 
     // Fetch 5 unique images for this article — each checked against Redis + session set
     const images: string[] = []
@@ -482,9 +486,12 @@ export async function buildArticles(rawItems: RawNewsItem[]): Promise<Article[]>
         date:    now.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
         bullets: item.quickBullets || [],
       },
-      seoTitle:       item.title + ' | TechBharat',
-      seoDescription: (item.summary || '').slice(0, 155),
+      seoTitle:       (item.title.length > 55 ? item.title.slice(0, 55) + '...' : item.title) + ' | The Tech Bharat',
+      seoDescription: ((item.summary || '').replace(/<[^>]*>/g, '').slice(0, 152) + (item.summary.length > 152 ? '...' : '')),
       isFeatured:     i === 0,
+      updatedDate:    now.toISOString(),
+      wordCount:      wc,
+      isEvergreen:    false,
     })
   }
 
