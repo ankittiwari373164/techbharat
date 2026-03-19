@@ -304,7 +304,7 @@ Escape all internal quotes with backslash.
     "A competitor comparison in one line",
     "Your opinion or prediction about this product"
   ],
-  "fullContent": "Full HTML article. MINIMUM 900 words, target 1200-1500 words. MANDATORY STRUCTURE: (1) Opening para with hook (2) Main content sections with H2 headings (3) India-specific section with ₹ price/Flipkart/Amazon (4) Honest verdict section (5) Source Note if based on leaks. Google indexes this content — it must be ORIGINAL and DETAILED, not a press release reword. Tags: <p>, <h2>, <h3>, <table>, <tr>, <th>, <td>, <strong>, <ul>, <li> only. Follow structure above. Apply ALL sentence variety rules. Use banned phrase list strictly. British English. NO source names anywhere.",
+  "fullContent": "Full HTML article. MINIMUM 1500 words — this is a hard requirement. MANDATORY STRUCTURE: (1) Opening para with hook (2) Main content sections with H2 headings (3) India-specific section with ₹ price/Flipkart/Amazon (4) Honest verdict section (5) Source Note if based on leaks. Google indexes this content — it must be ORIGINAL and DETAILED, not a press release reword. Tags: <p>, <h2>, <h3>, <table>, <tr>, <th>, <td>, <strong>, <ul>, <li> only. Follow structure above. Apply ALL sentence variety rules. Use banned phrase list strictly. British English. NO source names anywhere.",
   "tags": ["brand name", "model name", "brand model India price", "brand model review India", "best phone under Xk", "brand model 5G India"],
   "relatedTopics": ["suggest 3 related article topics from the same brand or price segment that would make good internal links — e.g. 'Samsung Galaxy S25 Review', 'Best Samsung phones under ₹60K'"]
   "quickBullets": ["Spec or fact, max 7 words", "Price point, max 7 words", "One-line verdict, max 7 words"]
@@ -447,8 +447,8 @@ export async function buildArticles(rawItems: RawNewsItem[]): Promise<Article[]>
     const wc   = rawText.split(/\s+/).filter(Boolean).length
     const rt   = Math.max(5, Math.ceil(wc / 220))
     // GSC: log warning if content too short (target 800+ words)
-    // GSC quality gate: log if content is too short (target 800+ words)
-    if (wc < 600) console.warn(`[TB:quality] Short article (${wc} words): ${item.title}`)
+    // GSC quality gate: log if content is too short (target 1500+ words)
+    if (wc < 1000) console.warn(`[TB:quality] Short article (${wc} words): ${item.title}`)
 
     // Fetch 5 unique images for this article — each checked against Redis + session set
     const images: string[] = []

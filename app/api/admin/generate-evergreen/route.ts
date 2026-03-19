@@ -232,13 +232,13 @@ export async function POST(request: NextRequest) {
   }
 
   if (newArticles.length > 0) {
-    const allArticles = [...existingArticles, ...newArticles] as { slug: string; relatedSlugs: string[] }[]
+    const allArticles = [...existingArticles, ...newArticles] as any[]
     allArticles.forEach((a, idx) => {
       if (!a.relatedSlugs?.length) {
-        a.relatedSlugs = allArticles.filter((_, j) => j !== idx).slice(0, 4).map(b => b.slug)
+        a.relatedSlugs = allArticles.filter((_, j) => j !== idx).slice(0, 4).map((b: any) => b.slug)
       }
     })
-    await saveArticlesAsync(allArticles)
+    await saveArticlesAsync(allArticles as any)
   }
 
   return NextResponse.json({
