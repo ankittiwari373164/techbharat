@@ -60,6 +60,13 @@ export default function AdminPage() {
   const [seoMetaResult,setSeoMetaResult] = useState<Record<string,string>|null>(null)
   const [seoMissingMeta,setSeoMissingMeta] = useState<{slug:string;title:string}[]>([])
   const [indexLog,setIndexLog]         = useState<{url:string;status:string}[]>([])
+  const [autoEgStatus,setAutoEgStatus] = useState<'idle'|'running'|'done'|'error'>('idle')
+  const [autoEgMsg,setAutoEgMsg]       = useState('')
+  const [thinList,setThinList]         = useState<{slug:string;title:string;wordCount:number;hasFix:boolean}[]>([])
+  const [thinSel,setThinSel]           = useState<Set<string>>(new Set())
+  const [thinStatus,setThinStatus]     = useState<Record<string,'idle'|'running'|'done'|'error'>>({})
+  const [thinScanMsg,setThinScanMsg]   = useState('')
+  const [thinScanning,setThinScanning] = useState(false)
 
   const loadAll = useCallback(async () => {
     setLoading(true)
@@ -353,6 +360,43 @@ export default function AdminPage() {
                   </div>
                 )}
               </div>
+
+              {/* ── EVERGREEN TRENDING FETCH ── */}
+              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+                <h2 className="text-sm font-bold text-gray-800 mb-1">🌿 Evergreen Article</h2>
+                <p className="text-xs text-gray-500 mb-4">Checks today&apos;s Google Trends India and publishes the best matching unpublished evergreen article.</p>
+                {autoEgStatus==='idle' && (
+                  <button onClick={async()=>{
+                    setAutoEgStatus('running'); setAutoEgMsg('')
+                    try {
+                      const r=await fetch('/api/admin/generate-evergreen?auto=1',{method:'POST'})
+                      const d=await r.json()
+                      if(d.message?.includes('All evergreen')){ setAutoEgStatus('done'); setAutoEgMsg('All 10 evergreen articles already published ✅') }
+                      else if(d.errors?.length){ setAutoEgStatus('error'); setAutoEgMsg(d.errors[0]) }
+                      else { setAutoEgStatus('done'); setAutoEgMsg(`Published: ${d.generated?.[0]||'article'}`); loadAll() }
+                    } catch { setAutoEgStatus('error'); setAutoEgMsg('Network error — try again') }
+                  }} className="bg-[#1a3a5c] hover:bg-[#0f2a48] text-white font-bold px-6 py-2.5 rounded-lg text-sm">
+                    🌿 Fetch &amp; Publish Trending Evergreen
+                  </button>
+                )}
+                {autoEgStatus==='running' && (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-[#1a3a5c] border-t-transparent rounded-full animate-spin"/>
+                    <span className="text-sm text-gray-600">Checking trends &amp; generating article…</span>
+                  </div>
+                )}
+                {(autoEgStatus==='done'||autoEgStatus==='error') && (
+                  <div className="space-y-3">
+                    <div className={`rounded-lg p-4 border ${autoEgStatus==='done'?'bg-green-50 border-green-200':'bg-red-50 border-red-200'}`}>
+                      <p className={`text-sm font-medium ${autoEgStatus==='done'?'text-green-800':'text-red-800'}`}>{autoEgStatus==='done'?'✅ ':''}{autoEgMsg}</p>
+                    </div>
+                    <button onClick={()=>{setAutoEgStatus('idle');setAutoEgMsg('')}} className="bg-[#1a3a5c] text-white text-sm font-bold px-4 py-2 rounded-lg">
+                      {autoEgStatus==='error'?'↺ Retry':'Publish Another'}
+                    </button>
+                  </div>
+                )}
+              </div>
+
             </div>
           )}
 
