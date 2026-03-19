@@ -1,6 +1,5 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import SeoAnalyticsTab from '@/components/admin/SeoAnalyticsTab'
 
 interface Article { id:string; slug:string; title:string; type:string; brand:string; publishDate:string; readTime:number; isFeatured:boolean; summary:string; tags:string[] }
 interface Stats { total:number; mobileNews:number; reviews:number; compare:number; brands:Record<string,number> }
@@ -9,7 +8,7 @@ interface ScheduleStatus { todaySlots:ScheduleSlot[]; publishedToday:number; nex
 interface StorySlide { id:string; headline:string; body:string; imageUrl:string; ctaText?:string; ctaLink?:string }
 interface WebStory { id:string; slug:string; title:string; brand:string; category:string; coverImage:string; slides:StorySlide[]; publishDate:string; isPublished:boolean; tags:string[] }
 
-type Tab = 'dashboard'|'schedule'|'articles'|'stories'|'fetch'|'images'|'seo'|'analytics'|'settings'
+type Tab = 'dashboard'|'schedule'|'articles'|'stories'|'fetch'|'images'|'seo'|'analytics'|'content-lab'|'settings'
 
 const typeColor:Record<string,string> = { 'mobile-news':'bg-blue-100 text-blue-800', 'review':'bg-red-100 text-red-800', 'compare':'bg-green-100 text-green-800' }
 const statusColor:Record<string,string> = { ok:'bg-green-100 text-green-700', missing:'bg-red-100 text-red-700', unknown:'bg-gray-100 text-gray-500' }
@@ -60,8 +59,6 @@ export default function AdminPage() {
   const [seoMetaResult,setSeoMetaResult] = useState<Record<string,string>|null>(null)
   const [seoMissingMeta,setSeoMissingMeta] = useState<{slug:string;title:string}[]>([])
   const [indexLog,setIndexLog]         = useState<{url:string;status:string}[]>([])
-  const [autoEgStatus,setAutoEgStatus] = useState<'idle'|'running'|'done'|'error'>('idle')
-  const [autoEgMsg,setAutoEgMsg]       = useState('')
 
   const loadAll = useCallback(async () => {
     setLoading(true)
@@ -169,8 +166,9 @@ export default function AdminPage() {
     {id:'stories'   as Tab,icon:'📖',label:'Web Stories'},
     {id:'images'    as Tab,icon:'🖼️',label:'Phone Images'},
     {id:'seo'       as Tab,icon:'🔍',label:'SEO Tools'},
-    {id:'analytics' as Tab,icon:'📈',label:'Analytics'},
-    {id:'settings'  as Tab,icon:'🔧',label:'Settings'},
+    {id:'analytics'    as Tab,icon:'📈',label:'Analytics'},
+    {id:'content-lab' as Tab,icon:'✍️',label:'Content Lab'},
+    {id:'settings'    as Tab,icon:'🔧',label:'Settings'},
   ]
 
   return (
@@ -343,7 +341,7 @@ export default function AdminPage() {
                 )}
                 {fetchStatus==='done' && fetchResult && (
                   <div className="space-y-3">
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4"><p className="font-bold text-green-800 text-sm mb-1">✅ Published!</p><p className="text-xs text-green-700 mb-2">{fetchResult.title}</p><a href={`/${fetchResult.slug}`} target="_blank" className="text-xs text-[#d4220a] hover:underline font-medium">View article →</a></div>
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4"><p className="font-bold text-green-800 text-sm mb-1">✅ Published!</p><p className="text-xs text-green-700 mb-2">{fetchResult.title}</p><a href={`/article/${fetchResult.slug}`} target="_blank" className="text-xs text-[#d4220a] hover:underline font-medium">View article →</a></div>
                     <button onClick={()=>{setFetchStatus('idle');setFetchLog([]);setFetchResult(null)}} className="bg-[#d4220a] text-white text-sm font-bold px-4 py-2 rounded-lg">Publish Another</button>
                   </div>
                 )}
@@ -354,55 +352,6 @@ export default function AdminPage() {
                   </div>
                 )}
               </div>
-
-              {/* ── EVERGREEN TRENDING FETCH ── */}
-              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-                <h2 className="text-sm font-bold text-gray-800 mb-1">🌿 Evergreen Article</h2>
-                <p className="text-xs text-gray-500 mb-4">Checks today&apos;s Google Trends India and publishes the best matching unpublished evergreen article.</p>
-                {autoEgStatus==='idle' && (
-                  <button onClick={async()=>{
-                    setAutoEgStatus('running')
-                    setAutoEgMsg('')
-                    try {
-                      const r=await fetch('/api/admin/generate-evergreen?auto=1',{method:'POST'})
-                      const d=await r.json()
-                      if(d.message?.includes('All evergreen')){
-                        setAutoEgStatus('done')
-                        setAutoEgMsg('All 10 evergreen articles already published ✅')
-                      } else if(d.errors?.length){
-                        setAutoEgStatus('error')
-                        setAutoEgMsg(d.errors[0])
-                      } else {
-                        setAutoEgStatus('done')
-                        setAutoEgMsg(`Published: ${d.generated?.[0]||'article'}`)
-                        loadAll()
-                      }
-                    } catch {
-                      setAutoEgStatus('error')
-                      setAutoEgMsg('Network error — try again')
-                    }
-                  }} className="bg-[#1a3a5c] hover:bg-[#0f2a48] text-white font-bold px-6 py-2.5 rounded-lg text-sm">
-                    🌿 Fetch &amp; Publish Trending Evergreen
-                  </button>
-                )}
-                {autoEgStatus==='running' && (
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-[#1a3a5c] border-t-transparent rounded-full animate-spin"/>
-                    <span className="text-sm text-gray-600">Checking trends &amp; generating article…</span>
-                  </div>
-                )}
-                {(autoEgStatus==='done'||autoEgStatus==='error') && (
-                  <div className="space-y-3">
-                    <div className={`rounded-lg p-4 border ${autoEgStatus==='done'?'bg-green-50 border-green-200':'bg-red-50 border-red-200'}`}>
-                      <p className={`text-sm font-medium ${autoEgStatus==='done'?'text-green-800':'text-red-800'}`}>{autoEgStatus==='done'?'✅ ':''}{autoEgMsg}</p>
-                    </div>
-                    <button onClick={()=>{setAutoEgStatus('idle');setAutoEgMsg('')}} className="bg-[#1a3a5c] text-white text-sm font-bold px-4 py-2 rounded-lg">
-                      {autoEgStatus==='error'?'↺ Retry':'Publish Another'}
-                    </button>
-                  </div>
-                )}
-              </div>
-
             </div>
           )}
 
@@ -427,13 +376,13 @@ export default function AdminPage() {
                   <tbody>
                     {filtered.map(a=>(
                       <tr key={a.id} className="border-b border-gray-50 hover:bg-gray-50">
-                        <td className="px-4 py-2.5"><a href={`/${a.slug}`} target="_blank" className="font-medium text-gray-800 hover:text-[#d4220a] line-clamp-1 text-sm">{a.title}</a></td>
+                        <td className="px-4 py-2.5"><a href={`/article/${a.slug}`} target="_blank" className="font-medium text-gray-800 hover:text-[#d4220a] line-clamp-1 text-sm">{a.title}</a></td>
                         <td className="px-3 py-2.5 text-xs text-gray-500">{a.brand}</td>
                         <td className="px-3 py-2.5"><span className={`text-[10px] font-bold px-2 py-0.5 rounded ${typeColor[a.type]||'bg-gray-100 text-gray-600'}`}>{a.type}</span></td>
                         <td className="px-3 py-2.5 text-xs text-gray-400">{pubDate(a.publishDate)}</td>
                         <td className="px-3 py-2.5 text-center"><span className="text-xs font-semibold text-gray-700">{(articleViews[a.slug]||0).toLocaleString()}</span></td>
                         <td className="px-3 py-2.5 text-center"><button onClick={()=>handleToggleFeat(a.id)} className={`text-base ${a.isFeatured?'opacity-100':'opacity-20 hover:opacity-50'}`}>⭐</button></td>
-                        <td className="px-4 py-2.5 text-right"><div className="flex items-center justify-end gap-2"><button onClick={()=>setEditArticle(a)} className="text-xs text-blue-600 hover:text-blue-800 font-medium">Edit</button><a href={`/${a.slug}`} target="_blank" className="text-xs text-gray-400 hover:text-gray-600">View</a><button onClick={()=>setDeleteId(a.id)} className="text-xs text-red-500 hover:text-red-700 font-medium">Del</button></div></td>
+                        <td className="px-4 py-2.5 text-right"><div className="flex items-center justify-end gap-2"><button onClick={()=>setEditArticle(a)} className="text-xs text-blue-600 hover:text-blue-800 font-medium">Edit</button><a href={`/article/${a.slug}`} target="_blank" className="text-xs text-gray-400 hover:text-gray-600">View</a><button onClick={()=>setDeleteId(a.id)} className="text-xs text-red-500 hover:text-red-700 font-medium">Del</button></div></td>
                       </tr>
                     ))}
                     {filtered.length===0 && <tr><td colSpan={7} className="px-4 py-10 text-center text-gray-400 text-sm">No articles.</td></tr>}
@@ -909,9 +858,86 @@ export default function AdminPage() {
             </div>
           )}
 
+
           {/* ── ANALYTICS ── */}
           {tab==='analytics' && (
             <SeoAnalyticsTab />
+          )}
+
+          {/* ── CONTENT LAB ── */}
+          {tab==='content-lab' && (
+            <div className="space-y-5">
+              <h1 className="text-lg font-bold text-gray-900">✍️ Content Lab</h1>
+              <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+                <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-sm font-bold text-gray-800">📏 Thin Article Rewriter</h2>
+                    <p className="text-xs text-gray-400 mt-0.5">Find articles under 800 words and rewrite them to 1500+ words for better SEO and AdSense.</p>
+                  </div>
+                  <button disabled={thinScanning} onClick={async()=>{
+                    setThinScanning(true); setThinScanMsg('Scanning...')
+                    try {
+                      const r=await fetch('/api/admin/rewrite-thin'); const d=await r.json()
+                      setThinList(d.thin_articles||[]); setThinSel(new Set()); setThinStatus({})
+                      setThinScanMsg(`Found ${d.count||0} thin article${d.count!==1?'s':''}`)
+                    } catch { setThinScanMsg('Scan failed — try again') }
+                    setThinScanning(false)
+                  }} className="bg-[#1a3a5c] hover:bg-[#0f2a48] disabled:opacity-50 text-white text-xs font-bold px-4 py-2 rounded-lg">
+                    {thinScanning?'Scanning…':'🔍 Scan Articles'}
+                  </button>
+                </div>
+                {thinScanMsg && <div className="px-5 py-2 text-xs text-gray-500 bg-gray-50 border-b border-gray-100">{thinScanMsg}</div>}
+                {thinList.length>0 && (
+                  <>
+                    <div className="px-5 py-2 flex items-center gap-3 border-b border-gray-100 bg-gray-50">
+                      <button onClick={()=>setThinSel(thinSel.size===thinList.length?new Set():new Set(thinList.map(a=>a.slug)))}
+                        className="text-xs text-[#d4220a] hover:underline font-medium">
+                        {thinSel.size===thinList.length?'Deselect All':'Select All'}
+                      </button>
+                      <span className="text-xs text-gray-400">{thinSel.size} selected</span>
+                      {thinSel.size>0 && (
+                        <button onClick={async()=>{
+                          const slugs=Array.from(thinSel)
+                          for(const slug of slugs){
+                            setThinStatus(p=>({...p,[slug]:'running'}))
+                            try{
+                              const r=await fetch(`/api/admin/rewrite-thin?slug=${slug}`,{method:'POST'})
+                              const d=await r.json()
+                              setThinStatus(p=>({...p,[slug]:d.rewritten?.length?'done':'error'}))
+                            } catch { setThinStatus(p=>({...p,[slug]:'error'})) }
+                          }
+                        }} className="ml-auto bg-[#d4220a] hover:bg-[#b81d09] text-white text-xs font-bold px-4 py-1.5 rounded-lg">
+                          ✍️ Rewrite Selected ({thinSel.size})
+                        </button>
+                      )}
+                    </div>
+                    <div className="divide-y divide-gray-50">
+                      {thinList.map(art=>{
+                        const st=thinStatus[art.slug]||'idle'; const sel=thinSel.has(art.slug)
+                        return (
+                          <div key={art.slug} onClick={()=>setThinSel(p=>{const n=new Set(p);sel?n.delete(art.slug):n.add(art.slug);return n})}
+                            className={`px-5 py-3 flex items-center gap-3 cursor-pointer hover:bg-gray-50 ${sel?'bg-blue-50':''}`}>
+                            <input type="checkbox" checked={sel} onChange={()=>{}} className="w-4 h-4 accent-[#d4220a]"/>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-800 truncate">{art.title}</p>
+                              <p className="text-xs text-gray-400 font-mono mt-0.5">{art.slug}</p>
+                            </div>
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded flex-shrink-0 ${art.wordCount<500?'bg-red-100 text-red-700':art.wordCount<800?'bg-amber-100 text-amber-700':'bg-gray-100 text-gray-500'}`}>{art.wordCount}w</span>
+                            {art.hasFix && <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-100 text-purple-700 flex-shrink-0">has fix</span>}
+                            <span className={`text-xs font-medium flex-shrink-0 ${st==='done'?'text-green-600':st==='running'?'text-amber-600':st==='error'?'text-red-500':'text-gray-300'}`}>{st==='running'?'⏳':st==='done'?'✅':st==='error'?'✗':''}</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </>
+                )}
+                {thinList.length===0 && !thinScanning && (
+                  <div className="px-5 py-8 text-center text-gray-400 text-sm">
+                    {thinScanMsg&&!thinScanMsg.includes('Found 0')?thinScanMsg:thinScanMsg.includes('Found 0')?'✅ All articles meet the 800-word minimum.':'Click "Scan Articles" to find thin content.'}
+                  </div>
+                )}
+              </div>
+            </div>
           )}
 
           {/* ── SETTINGS ── */}

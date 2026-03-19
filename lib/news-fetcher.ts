@@ -492,7 +492,7 @@ export async function buildArticles(rawItems: RawNewsItem[]): Promise<Article[]>
       updatedDate:    now.toISOString(),
       wordCount:      wc,
       isEvergreen:    false,
-    })
+    } as any)
   }
 
   articles.forEach((a, idx) => {
