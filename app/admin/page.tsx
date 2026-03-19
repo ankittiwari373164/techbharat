@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
+import SeoAnalyticsTab from '@/components/admin/SeoAnalyticsTab'
 
 interface Article { id:string; slug:string; title:string; type:string; brand:string; publishDate:string; readTime:number; isFeatured:boolean; summary:string; tags:string[] }
 interface Stats { total:number; mobileNews:number; reviews:number; compare:number; brands:Record<string,number> }
