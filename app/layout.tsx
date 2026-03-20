@@ -44,6 +44,11 @@ export async function generateMetadata(): Promise<Metadata> {
       googleBot: { index: true, follow: true, 'max-image-preview': 'large' },
     },
     alternates: { canonical: 'https://thetechbharat.com' },
+    icons: {
+      icon:        [{ url: '/logo.png', type: 'image/png' }],
+      apple:       [{ url: '/logo.png', sizes: '180x180', type: 'image/png' }],
+      shortcut:    [{ url: '/logo.png' }],
+    },
   }
 }
 
@@ -84,7 +89,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,400&family=DM+Sans:wght@400;500;600;700&display=swap"
           rel="stylesheet"
         />
-        <link rel="icon" href="/favicon.ico" />
+        {/* Favicon — using logo.png for all sizes */}
+        <link rel="icon" type="image/png" href="/logo.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/logo.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/logo.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/logo.png" />
+        <link rel="shortcut icon" href="/logo.png" />
+        <meta name="msapplication-TileImage" content="/logo.png" />
+        <meta name="theme-color" content="#d4220a" />
         <meta name="google-site-verification" content="YOUR_VERIFICATION_CODE" />
         {/* Fix: max-image-preview:large for Google Discover large image cards */}
         <meta name="robots" content="max-image-preview:large" />
