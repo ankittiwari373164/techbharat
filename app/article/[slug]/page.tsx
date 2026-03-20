@@ -41,6 +41,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         siteName:  'The Tech Bharat',
         type:      'article',
         publishedTime: article.publishDate,
+        modifiedTime:  (article as any).updatedDate || article.publishDate,
         authors:   [article.author || 'Vijay Yadav'],
         images:    article.featuredImage
           ? [{ url: article.featuredImage, width: 1200, height: 630, alt: title }]
@@ -121,10 +122,32 @@ export default async function ArticlePage({ params }: PageProps) {
     ],
   }
 
+  // FAQ schema — built from article bullets for rich result CTR boost
+  const safeB = Array.isArray((article as any).bullets) ? (article as any).bullets : []
+  const faqSchema = safeB.length >= 2 ? {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: safeB.slice(0, 4).map((bullet: string, i: number) => ({
+      '@type': 'Question',
+      name: i === 0
+        ? `What is the key highlight of the ${article.title}?`
+        : i === 1
+        ? `What is the India price or availability?`
+        : i === 2
+        ? `What are the limitations or concerns?`
+        : `Should Indian buyers consider this?`,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: bullet,
+      },
+    })),
+  } : null
+
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+      {faqSchema && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />}
       <ArticleClient article={article} similar={similar} slug={slug} />
     </>
   )

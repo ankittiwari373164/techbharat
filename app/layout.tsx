@@ -47,13 +47,23 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const headersList = headers()
   const pathname    = headersList.get('x-pathname') ||
                       headersList.get('next-url') ||
                       headersList.get('x-invoke-path') || ''
 
   const isAdmin = pathname.startsWith('/admin')
+
+  // Fetch latest article titles server-side for ticker — Googlebot sees real headlines
+  let tickerItems: string[] = []
+  try {
+    const { getAllArticlesAsync } = await import('@/lib/store')
+    const articles = await getAllArticlesAsync() as { title: string; brand: string }[]
+    tickerItems = articles
+      .slice(0, 8)
+      .map(a => `${a.brand}: ${a.title}`)
+  } catch { /* use empty */ }
 
   return (
     <html lang="en">
@@ -107,7 +117,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className={`${isAdmin ? 'bg-gray-50' : 'bg-paper text-ink'} min-h-screen flex flex-col`}>
         {!isAdmin && <div id="reading-progress" style={{ width: '0%' }} />}
-        {!isAdmin && <Header />}
+        {!isAdmin && <Header tickerItems={tickerItems} />}
         <main className="flex-1">{children}</main>
         {!isAdmin && <Footer />}
         {!isAdmin && (

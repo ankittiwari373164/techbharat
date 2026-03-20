@@ -14,10 +14,18 @@ const NAV_ITEMS = [
   { label: 'OnePlus', href: '/mobile-news?brand=OnePlus' },
 ]
 
-export default function Header() {
+// tickerItems passed from server layout — Googlebot sees real headlines on first byte
+interface HeaderProps {
+  tickerItems?: string[]
+}
+
+export default function Header({ tickerItems = [] }: HeaderProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [currentTime, setCurrentTime] = useState('')
-  const [tickerText, setTickerText] = useState('Loading latest news...')
+  // Initialise with SSR data immediately — no "Loading latest news..." flash
+  const [tickerText, setTickerText] = useState(
+    tickerItems.length > 0 ? tickerItems.join('  ●  ') : ''
+  )
 
   useEffect(() => {
     const update = () => {
@@ -33,7 +41,8 @@ export default function Header() {
   }, [])
 
   useEffect(() => {
-    // Fetch latest article titles for ticker
+    // Only fetch client-side if server didn't provide items
+    if (tickerItems.length > 0) return
     fetch('/api/ticker')
       .then(r => r.json())
       .then(d => {
@@ -42,7 +51,7 @@ export default function Header() {
         }
       })
       .catch(() => {})
-  }, [])
+  }, [tickerItems])
 
   return (
     <header className="sticky top-0 z-50 bg-white shadow-sm">
@@ -67,7 +76,6 @@ export default function Header() {
             </a>
             <Link href="/about" className="opacity-80 hover:opacity-100">About</Link>
             <Link href="/contact" className="opacity-80 hover:opacity-100">Contact</Link>
-            {/* <Link href="/admin" className="opacity-80 hover:opacity-100 border border-white/30 px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase">⚙ Admin</Link> */}
           </div>
         </div>
       </div>
@@ -83,27 +91,17 @@ export default function Header() {
                 The Tech<span className="text-[#d4220a]"> Bharat</span>
               </span>
               <span className="font-sans text-[10px] uppercase tracking-[3px] text-[#6b6460] mt-0.5">
-                India's Mobile Authority
+                India&apos;s Mobile Authority
               </span>
             </div>
           </Link>
 
-          {/* Live Badge + Fetch Button */}
+          {/* Live Badge */}
           <div className="flex items-center gap-3">
             <div className="hidden md:flex items-center gap-2 bg-[#d4220a] text-white px-3 py-1.5 text-xs font-sans font-bold rounded-sm tracking-wider">
               <span className="w-2 h-2 bg-white rounded-full pulse-dot" />
               LIVE
             </div>
-            {/* <button
-              onClick={() => {
-                if (typeof window !== 'undefined') {
-                  window.location.href = '/api/fetch-news'
-                }
-              }}
-              className="hidden md:block bg-[#1a3a5c] hover:bg-[#0f2d4a] text-white px-4 py-2 text-xs font-sans font-semibold rounded transition-colors"
-            >
-              Fetch Latest News
-            </button> */}
             {/* Mobile menu toggle */}
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
@@ -149,23 +147,19 @@ export default function Header() {
               {item.label}
             </Link>
           ))}
-          {/* <button
-            onClick={() => { window.location.href = '/api/fetch-news'; setMobileOpen(false) }}
-            className="w-full text-left text-[#d4220a] font-sans text-sm font-semibold px-5 py-3"
-          >
-            🔄 Fetch Latest News
-          </button> */}
         </nav>
       )}
 
-      {/* Ticker */}
+      {/* Ticker — SSR content on first load, no "Loading latest news..." */}
       <div className="bg-[#d4220a] text-white overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 py-1.5 flex items-center gap-3">
           <span className="font-sans text-xs font-bold bg-white text-[#d4220a] px-2.5 py-0.5 flex-shrink-0 uppercase tracking-wide">
             Breaking
           </span>
           <div className="overflow-hidden flex-1">
-            <span className="animate-ticker text-xs font-sans">{tickerText}</span>
+            <span className="animate-ticker text-xs font-sans">
+              {tickerText || 'Stay tuned for the latest mobile tech news from India'}
+            </span>
           </div>
         </div>
       </div>
