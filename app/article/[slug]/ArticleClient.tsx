@@ -72,7 +72,6 @@ interface ArticleClientProps {
 }
 
 export default function ArticleClient({ article, similar, slug }: ArticleClientProps) {
-  const [expanded, setExpanded] = useState(false)
   const [reviewName, setReviewName] = useState('')
   const [reviewText, setReviewText] = useState('')
   const [reviewRating, setReviewRating] = useState(5)
@@ -224,58 +223,39 @@ export default function ArticleClient({ article, similar, slug }: ArticleClientP
               </div>
             )}
 
-            {/* READ MORE expand — content hidden from users but present in SSR HTML for crawlers */}
-            {!expanded ? (
-              <div className="border-t-2 border-dashed border-[#d4220a]/30 pt-4 mt-2">
-                <button
-                  onClick={() => setExpanded(true)}
-                  className="w-full bg-[#d4220a] hover:bg-[#b81d09] text-white font-sans font-bold py-3 text-sm transition-colors flex items-center justify-center gap-2"
-                >
-                  <span>Read Full Article</span>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                {/* Hidden from users but visible to crawlers in SSR HTML */}
-                <div className="sr-only" aria-hidden="false">
-                  <div dangerouslySetInnerHTML={{ __html: addInternalLinks(liveArticle.content, slug) }} />
-                  {safeTags.map(tag => <span key={tag}>#{tag} </span>)}
+            {/* Full article content — always visible for crawlers, AdSense, and users */}
+            <div className="article-body-full">
+              {/* Inline image after intro */}
+              {safeImages[1] && (
+                <div className="relative my-6 overflow-hidden" style={{ paddingBottom: '50%' }}>
+                  <img src={safeImages[1]} alt={`${liveArticle.title} — detailed view`} width={800} height={450} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}} loading="lazy" onError={(e)=>{(e.target as HTMLImageElement).src="https://picsum.photos/seed/tb2/800/600"}} />
                 </div>
-              </div>
-            ) : (
-              <div className="animate-fade-in-up">
-                {/* Inline image */}
-                {safeImages[1] && (
-                  <div className="relative my-6 overflow-hidden" style={{ paddingBottom: '50%' }}>
-                    <img src={safeImages[1]} alt={`${liveArticle.title} — detailed view`} width={800} height={450} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}} loading="lazy" onError={(e)=>{(e.target as HTMLImageElement).src="https://picsum.photos/seed/tb2/800/600"}} />
-                  </div>
-                )}
+              )}
 
-                {/* Full Content */}
-                <div
-                  className="article-content"
-                  dangerouslySetInnerHTML={{ __html: addInternalLinks(liveArticle.content, slug) }}
-                />
+              {/* Full Content — always in HTML, Googlebot + AdSense see everything */}
+              <div
+                className="article-content"
+                dangerouslySetInnerHTML={{ __html: addInternalLinks(liveArticle.content, slug) }}
+              />
 
-                {/* More images */}
-                {safeImages[2] && (
-                  <div className="relative my-6 overflow-hidden" style={{ paddingBottom: '50%' }}>
-                    <img src={safeImages[2]} alt={`${liveArticle.title} — additional image`} width={800} height={450} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}} loading="lazy" onError={(e)=>{(e.target as HTMLImageElement).src="https://picsum.photos/seed/tb3/800/600"}} />
-                  </div>
-                )}
+              {/* Mid-article image */}
+              {safeImages[2] && (
+                <div className="relative my-6 overflow-hidden" style={{ paddingBottom: '50%' }}>
+                  <img src={safeImages[2]} alt={`${liveArticle.title} — additional image`} width={800} height={450} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}} loading="lazy" onError={(e)=>{(e.target as HTMLImageElement).src="https://picsum.photos/seed/tb3/800/600"}} />
+                </div>
+              )}
 
-                {/* Tags */}
-                {safeTags.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-6 pt-4 border-t border-border">
-                    {safeTags.map(tag => (
-                      <span key={tag} className="font-sans text-xs bg-gray-100 text-muted px-3 py-1 border border-border">
-                        #{tag}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+              {/* Tags */}
+              {safeTags.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-6 pt-4 border-t border-border">
+                  {safeTags.map(tag => (
+                    <span key={tag} className="font-sans text-xs bg-gray-100 text-muted px-3 py-1 border border-border">
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {/* Internal Navigation Links */}
             <div className="mt-8 p-4 bg-[#f8f4ef] border-l-4 border-[#d4220a]">
