@@ -42,9 +42,20 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         type:      'article',
         publishedTime: article.publishDate,
         authors:   [article.author || 'Vijay Yadav'],
-        images:    article.featuredImage ? [{ url: article.featuredImage, width: 1200, height: 630 }] : [],
+        images:    article.featuredImage
+          ? [{ url: article.featuredImage, width: 1200, height: 630, alt: title }]
+          : [{ url: 'https://thetechbharat.com/og-image.jpg', width: 1200, height: 630, alt: 'The Tech Bharat' }],
       },
-      twitter: { card: 'summary_large_image', title, description },
+      twitter: {
+        card:        'summary_large_image',
+        title,
+        description,
+        site:        '@thetechbharat',
+        creator:     '@thetechbharat',
+        images:      article.featuredImage
+          ? [article.featuredImage]
+          : ['https://thetechbharat.com/og-image.jpg'],
+      },
     }
   } catch {
     return { title: 'The Tech Bharat' }

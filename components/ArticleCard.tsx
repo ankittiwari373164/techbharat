@@ -27,8 +27,9 @@ export default function ArticleCard({ article, variant = 'card' }: ArticleCardPr
           <div className="relative overflow-hidden" style={{ paddingBottom: '56.25%' }}>
             <img src={article.featuredImage || "https://picsum.photos/seed/tb/1200/675"} style={{position:"absolute",inset:0,width:"100%",height:"100%"}} onError={(e)=>{(e.target as HTMLImageElement).src="https://picsum.photos/seed/tb/1200/675"}}
               alt={article.title}
-              className="object-cover group-hover:scale-105 transition-transform duration-500"
-             loading="lazy" />
+              width={1200} height={675}
+            className="object-cover group-hover:scale-105 transition-transform duration-500"
+            loading="lazy" />
           </div>
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
@@ -58,8 +59,9 @@ export default function ArticleCard({ article, variant = 'card' }: ArticleCardPr
         <div className="flex-shrink-0 w-24 h-16 relative overflow-hidden">
           <img src={article.featuredImage || "https://picsum.photos/seed/tb/1200/675"} style={{position:"absolute",inset:0,width:"100%",height:"100%"}} onError={(e)=>{(e.target as HTMLImageElement).src="https://picsum.photos/seed/tb/1200/675"}}
             alt={article.title}
+            width={400} height={225}
             className="object-cover group-hover:scale-105 transition-transform duration-300"
-           loading="lazy" />
+            loading="lazy" />
         </div>
         <div className="flex-1 min-w-0">
           <span className={`${typeInfo.color} text-white font-sans text-[9px] font-bold px-1.5 py-0.5 uppercase tracking-wider`}>
@@ -83,8 +85,9 @@ export default function ArticleCard({ article, variant = 'card' }: ArticleCardPr
             <Link href={`/${article.slug}`}>
               <img src={article.featuredImage || "https://picsum.photos/seed/tb/1200/675"} style={{position:"absolute",inset:0,width:"100%",height:"100%"}} onError={(e)=>{(e.target as HTMLImageElement).src="https://picsum.photos/seed/tb/1200/675"}}
                 alt={article.title}
+                width={400} height={225}
                 className="object-cover hover:scale-105 transition-transform duration-300"
-               loading="lazy" />
+                loading="lazy" />
             </Link>
           </div>
           <div className="flex-1 min-w-0">
@@ -143,8 +146,9 @@ export default function ArticleCard({ article, variant = 'card' }: ArticleCardPr
       <Link href={`/${article.slug}`} className="block relative overflow-hidden" style={{ paddingBottom: '60%' }}>
         <img src={article.featuredImage || "https://picsum.photos/seed/tb/1200/675"} style={{position:"absolute",inset:0,width:"100%",height:"100%"}} onError={(e)=>{(e.target as HTMLImageElement).src="https://picsum.photos/seed/tb/1200/675"}}
           alt={article.title}
+          width={800} height={450}
           className="object-cover group-hover:scale-105 transition-transform duration-500"
-         loading="lazy" />
+          loading="lazy" />
         <span className={`absolute top-3 left-3 ${typeInfo.color} text-white font-sans text-[9px] font-bold px-2 py-1 uppercase tracking-wider z-10`}>
           {typeInfo.label}
         </span>

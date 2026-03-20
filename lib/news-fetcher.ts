@@ -486,7 +486,7 @@ export async function buildArticles(rawItems: RawNewsItem[]): Promise<Article[]>
         date:    now.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
         bullets: item.quickBullets || [],
       },
-      seoTitle:       (item.title.length > 55 ? item.title.slice(0, 55) + '...' : item.title) + ' | The Tech Bharat',
+      seoTitle:       ((item.title.length > 52 ? item.title.slice(0, 49) + '...' : item.title) + ' | The Tech Bharat').slice(0, 70),
       seoDescription: ((item.summary || '').replace(/<[^>]*>/g, '').slice(0, 152) + (item.summary.length > 152 ? '...' : '')),
       isFeatured:     i === 0,
       updatedDate:    now.toISOString(),

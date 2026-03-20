@@ -178,7 +178,11 @@ export default function ArticleClient({ article, similar, slug }: ArticleClientP
               <img
                 src={liveArticle.featuredImage || 'https://picsum.photos/seed/tb/1200/675'}
                 alt={liveArticle.title}
+                width={1200}
+                height={675}
                 style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}}
+                loading="eager"
+                fetchPriority="high"
                 onError={(e)=>{(e.target as HTMLImageElement).src='https://picsum.photos/seed/tb/1200/675'}}
               />
             </div>
@@ -243,7 +247,7 @@ export default function ArticleClient({ article, similar, slug }: ArticleClientP
                 {/* Inline image */}
                 {safeImages[1] && (
                   <div className="relative my-6 overflow-hidden" style={{ paddingBottom: '50%' }}>
-                    <img src={safeImages[1]} alt={`${liveArticle.title} detail`} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}} onError={(e)=>{(e.target as HTMLImageElement).src="https://picsum.photos/seed/tb2/800/600"}} />
+                    <img src={safeImages[1]} alt={`${liveArticle.title} — detailed view`} width={800} height={450} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}} loading="lazy" onError={(e)=>{(e.target as HTMLImageElement).src="https://picsum.photos/seed/tb2/800/600"}} />
                   </div>
                 )}
 
@@ -256,7 +260,7 @@ export default function ArticleClient({ article, similar, slug }: ArticleClientP
                 {/* More images */}
                 {safeImages[2] && (
                   <div className="relative my-6 overflow-hidden" style={{ paddingBottom: '50%' }}>
-                    <img src={safeImages[2]} alt={`${liveArticle.title} image 3`} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}} onError={(e)=>{(e.target as HTMLImageElement).src="https://picsum.photos/seed/tb3/800/600"}} />
+                    <img src={safeImages[2]} alt={`${liveArticle.title} — additional image`} width={800} height={450} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}} loading="lazy" onError={(e)=>{(e.target as HTMLImageElement).src="https://picsum.photos/seed/tb3/800/600"}} />
                   </div>
                 )}
 

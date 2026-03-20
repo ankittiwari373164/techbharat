@@ -37,7 +37,7 @@ export async function generateMetadata(): Promise<Metadata> {
       description: SITE_DESC,
       images: [{ url: '/og-image.jpg', width: 1200, height: 630 }],
     },
-    twitter: { card: 'summary_large_image', site: '@techbharat' },
+    twitter: { card: 'summary_large_image', site: '@thetechbharat', creator: '@thetechbharat', title: SITE_TITLE, description: SITE_DESC },
     robots: {
       index:  true,
       follow: true,
@@ -76,6 +76,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
         <link rel="icon" href="/favicon.ico" />
         <meta name="google-site-verification" content="YOUR_VERIFICATION_CODE" />
+        {/* Fix: max-image-preview:large for Google Discover large image cards */}
+        <meta name="robots" content="max-image-preview:large" />
+        {/* Fix: Twitter card complete */}
+        <meta name="twitter:site" content="@thetechbharat" />
+        <meta name="twitter:creator" content="@thetechbharat" />
+        <meta name="twitter:card" content="summary_large_image" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify({
