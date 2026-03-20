@@ -474,7 +474,14 @@ export async function buildArticles(rawItems: RawNewsItem[]): Promise<Article[]>
       title:         item.title,
       type:          item.type as 'mobile-news' | 'review' | 'compare',
       category:      item.type === 'review' ? 'Reviews' : item.type === 'compare' ? 'Compare' : 'Mobile News',
-      brand:         item.brand,
+      // Re-detect brand from title at save time — overrides AI response for accuracy
+      brand:         (() => {
+        const detected = detectBrand(item.title)
+        // Only use AI brand if our detector returns generic 'Mobile'
+        // and AI returned something specific
+        if (detected !== 'Mobile') return detected
+        return (item.brand && item.brand !== 'Mobile') ? item.brand : detected
+      })(),
       publishDate:   now.toISOString(),
       author:        'Vijay Yadav',
       readTime:      rt,
@@ -487,11 +494,11 @@ export async function buildArticles(rawItems: RawNewsItem[]): Promise<Article[]>
       relatedSlugs:  [],
       reviews:       [],
       quickSummary: {
-        brand:   item.brand,
+        brand:   (() => { const d = detectBrand(item.title); return d !== 'Mobile' ? d : (item.brand || d) })(),
         date:    now.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
         bullets: item.quickBullets || [],
       },
-      seoTitle:       ((item.title.length > 52 ? item.title.slice(0, 49) + '...' : item.title) + ' | The Tech Bharat').slice(0, 70),
+      seoTitle:       (item.title.length > 50 ? item.title.slice(0, 47) + '...' : item.title),
       seoDescription: ((item.summary || '').replace(/<[^>]*>/g, '').slice(0, 152) + (item.summary.length > 152 ? '...' : '')),
       isFeatured:     i === 0,
       updatedDate:    now.toISOString(),

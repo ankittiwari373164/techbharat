@@ -88,6 +88,22 @@ export default function ArticleClient({ article, similar, slug }: ArticleClientP
   const safeReviews   = Array.isArray(liveArticle.reviews)               ? liveArticle.reviews               : []
   const safeQSBullets = Array.isArray(liveArticle.quickSummary?.bullets) ? liveArticle.quickSummary!.bullets : []
   const safeQSBrand   = liveArticle.quickSummary?.brand || liveArticle.brand || ''
+
+  // Fix: if stored brand is generic 'Mobile', detect from title
+  const BRAND_DETECT: [RegExp, string][] = [
+    [/\bSamsung\b/i,'Samsung'],[/\bApple|iPhone\b/i,'Apple'],[/\bXiaomi|Redmi\b/i,'Xiaomi'],
+    [/\bOnePlus\b/i,'OnePlus'],[/\bRealme\b/i,'Realme'],[/\bVivo\b/i,'Vivo'],
+    [/\bOPPO\b/i,'OPPO'],[/\biQOO\b/i,'iQOO'],[/\bPoco\b/i,'Poco'],
+    [/\bMotorola|Moto\b/i,'Motorola'],[/\bNothing\b/i,'Nothing'],
+    [/\bGoogle Pixel|Pixel\b/i,'Google Pixel'],[/\bHonor\b/i,'Honor'],
+  ]
+  const resolvedBrand = (() => {
+    if (liveArticle.brand && liveArticle.brand !== 'Mobile') return liveArticle.brand
+    for (const [rx, name] of BRAND_DETECT) {
+      if (rx.test(liveArticle.title)) return name
+    }
+    return liveArticle.brand || 'Mobile'
+  })()
   const safeQSDate    = liveArticle.quickSummary?.date  || ''
 
   const pubDate = new Date(liveArticle.publishDate).toLocaleDateString('en-IN', {
@@ -134,7 +150,7 @@ export default function ArticleClient({ article, similar, slug }: ArticleClientP
               <span className={`${TYPE_COLORS[liveArticle.type]} text-white font-sans text-[10px] font-bold px-2.5 py-1 uppercase tracking-widest`}>
                 {liveArticle.category}
               </span>
-              <span className="font-sans text-xs font-bold text-[#d4220a] uppercase">{liveArticle.brand}</span>
+              <span className="font-sans text-xs font-bold text-[#d4220a] uppercase">{resolvedBrand}</span>
             </div>
 
             {/* Title */}
@@ -269,7 +285,7 @@ export default function ArticleClient({ article, similar, slug }: ArticleClientP
                 <a href="/mobile-news" className="font-sans text-xs text-ink border border-border bg-white px-3 py-1.5 hover:border-[#d4220a] hover:text-[#d4220a] transition-colors">📱 Mobile News</a>
                 <a href="/reviews" className="font-sans text-xs text-ink border border-border bg-white px-3 py-1.5 hover:border-[#d4220a] hover:text-[#d4220a] transition-colors">⭐ Phone Reviews</a>
                 <a href="/compare" className="font-sans text-xs text-ink border border-border bg-white px-3 py-1.5 hover:border-[#d4220a] hover:text-[#d4220a] transition-colors">⚖️ Compare Phones</a>
-                {liveArticle.brand && <a href={`/mobile-news?brand=${liveArticle.brand}`} className="font-sans text-xs text-ink border border-border bg-white px-3 py-1.5 hover:border-[#d4220a] hover:text-[#d4220a] transition-colors">🔍 More {liveArticle.brand} News</a>}
+                {resolvedBrand && resolvedBrand !== 'Mobile' && <a href={`/mobile-news?brand=${resolvedBrand}`} className="font-sans text-xs text-ink border border-border bg-white px-3 py-1.5 hover:border-[#d4220a] hover:text-[#d4220a] transition-colors">🔍 More {resolvedBrand} News</a>}
               </div>
             </div>
 

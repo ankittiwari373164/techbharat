@@ -125,17 +125,20 @@ HTML only. Return ONLY valid JSON:
   const wc = (parsed.fullContent || '').replace(/<[^>]*>/g, '').split(/\s+/).length
   const rt = Math.max(5, Math.ceil(wc / 220))
 
+  const cleanTitle = (parsed.title || article.title).replace(/\s*\|\s*The Tech Bharat\s*$/i, '').trim()
   return {
     ...article,
-    title:         parsed.title    || article.title,
+    title:         cleanTitle,
     summary:       parsed.summary  || article.summary,
     bullets:       parsed.bullets  || article.bullets,
     content:       parsed.fullContent || article.content,
     tags:          parsed.tags     || article.tags,
     readTime:      rt,
-    seoTitle:      (parsed.title || article.title) + ' | The Tech Bharat',
-    seoDescription: (parsed.summary || '').slice(0, 155),
+    seoTitle:      cleanTitle.length > 50 ? cleanTitle.slice(0, 47) + '...' : cleanTitle,
+    seoDescription: (parsed.summary || '').replace(/<[^>]*>/g, '').slice(0, 152),
+    updatedDate:   new Date().toISOString(),
     lastRewritten: new Date().toISOString(),
+    wordCount:     (parsed.fullContent || '').replace(/<[^>]*>/g, '').split(/\s+/).filter(Boolean).length,
   }
 }
 
