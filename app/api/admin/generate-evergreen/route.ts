@@ -130,7 +130,7 @@ async function buildEvergreenArticle(
       date:    new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
       bullets: (parsed.quickBullets as string[])   || [],
     },
-    seoTitle:       ((parsed.title as string) || topic.title).slice(0, 60) + ' | The Tech Bharat',
+    seoTitle:       ((parsed.title as string) || topic.title).replace(/\s*\|\s*The Tech Bharat\s*$/i, '').trim().slice(0, 60),
     seoDescription: ((parsed.summary as string) || '').slice(0, 155),
     isFeatured:     false,
     isEvergreen:    true,

@@ -232,10 +232,15 @@ export default function ArticleClient({ article, similar, slug }: ArticleClientP
                 </div>
               )}
 
-              {/* Full Content — always in HTML, Googlebot + AdSense see everything */}
+              {/* Full Content — strip any <h1> tags (page already has one H1 in header) */}
               <div
                 className="article-content"
-                dangerouslySetInnerHTML={{ __html: addInternalLinks(liveArticle.content, slug) }}
+                dangerouslySetInnerHTML={{ __html: addInternalLinks(
+                  (liveArticle.content || '')
+                    .replace(/<h1(\s[^>]*)?>/gi, '<h2$1>')
+                    .replace(/<\/h1>/gi, '</h2>'),
+                  slug
+                ) }}
               />
 
               {/* Mid-article image */}

@@ -27,7 +27,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const article = articles.find(a => a.slug === params.slug)
     if (!article) return { title: 'Article Not Found | The Tech Bharat' }
 
-    const title       = article.seoTitle       || article.title + ' | The Tech Bharat'
+    // Strip '| The Tech Bharat' from seoTitle if present — layout template adds it automatically
+    const rawTitle    = (article.seoTitle || article.title).replace(/\s*\|\s*The Tech Bharat\s*$/i, '').trim()
+    const title       = rawTitle
     const description = article.seoDescription || article.summary?.slice(0, 155) || ''
     const canonical   = `${SITE_URL}/${params.slug}`
 

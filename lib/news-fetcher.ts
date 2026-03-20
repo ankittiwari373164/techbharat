@@ -238,6 +238,7 @@ INTERNAL LINKS MANDATE: Every article must include exactly 2 internal links to o
 OR link to /reviews, /mobile-news, /web-stories as relevant. Place them naturally inside paragraphs — not in a list at the bottom.
 
 UNIQUE VALUE MANDATE: This article MUST offer something the reader cannot get from just reading the press release or spec sheet. Add at least ONE of: (a) your honest opinion on whether it's worth buying, (b) a comparison to a rival at similar price, (c) an India-specific insight about availability/value/5G, (d) a prediction or concern about this product's future. Generic spec summaries fail this test.
+FACTUAL ACCURACY MANDATE: ONLY write about real, confirmed products. DO NOT invent product names, specs, prices, or availability. If a product is unconfirmed, label it clearly as "rumoured" or "expected". Fabricated content violates Google AdSense policies and will cause site rejection. Stick strictly to facts from the provided source material.
 TOPIC: ${raw.title}
 TITLE REWRITE RULE: If the topic title is a plain spec/launch announcement (e.g. "Samsung Galaxy X specs", "Phone Y launch"), rewrite it as a question or opinion title that real readers would click. Examples:
   - "Samsung Galaxy S26 specs" → "Samsung Galaxy S26: Is India's ₹80K Investment Actually Worth It?"  
@@ -256,8 +257,10 @@ Section 2: Technical breakdown — what the specs/features actually mean for rea
 Section 3: India angle — price in ₹, Flipkart/Amazon availability, who will buy this
 Section 4: How it fits into the current Indian market (competitors, value proposition)
 Section 5 (H2): Your honest analysis — what's good, what's concerning, what's missing
-Closing: Direct verdict — should Indian buyers care about this?
-IMPORTANT FOR NEWS/LEAKS: If article is based on leaks or analyst reports, add a clearly labelled section:
+Section 5: Comparison to 2-3 competing phones at similar price — be specific with ₹ numbers (2 paragraphs)
+Section 6: Who should wait for this vs buy something else right now (2 paragraphs)
+Closing: Direct verdict — should Indian buyers care about this? Be specific.
+IMPORTANT FOR NEWS/LEAKS: ONLY write this if the product is real and confirmed. If article is based on leaks or analyst reports, add:
 <p><strong>Source Note:</strong> This article is based on [analyst reports / leaked specifications / industry sources]. These details are unconfirmed until official launch. Treat pricing and specs as estimates.</p>` : ''}
 ${isReview ? `
 Opening: Your immediate impression — what surprised you or stood out first
@@ -270,12 +273,14 @@ Specs table (HTML): key specs in a clean table
 Pros & Cons table (HTML): honest, not marketing fluff
 Closing verdict: Exactly who should and shouldn't buy this` : ''}
 ${isCompare ? `
-Opening: Set up the real buying dilemma — who is actually choosing between these two and why it's not obvious
-Section 1: Quick specs comparison (HTML <table> with at least 6 rows: price, display, chip, battery, camera, 5G)
-Section 2: Real-world differences that specs don't show (camera quality, software, heat management)
-Section 3: India-specific factors — service centres, warranty, Flipkart/Amazon pricing, EMI options
-Section 4: Value verdict — which is worth buying at what price point
-Closing: ONE clear winner recommendation — who should buy which phone. Never say "depends on your needs" without a concrete answer"` : ''}
+Opening: Set up the real buying dilemma — who is actually choosing between these two and why it's not obvious (2 paragraphs minimum)
+Section 1: Quick specs comparison (HTML <table> with at least 8 rows: price, display, chip, RAM, battery, camera, 5G, software updates)
+Section 2: Real-world performance differences — gaming, camera samples description, daily use (3 paragraphs minimum)
+Section 3: India-specific factors — service centres count, warranty terms, Flipkart/Amazon pricing, EMI breakdown, exchange offers (2 paragraphs minimum)
+Section 4: Who should buy Phone A and who should buy Phone B — specific buyer personas with concrete reasons (2 paragraphs minimum)
+Section 5: Value verdict with ₹ price analysis — which offers better value per rupee spent (2 paragraphs minimum)
+Closing: ONE clear winner recommendation with exact reasoning. Never say "depends on your needs" without specifying WHICH needs determine the choice.
+ONLY compare real products that exist. Do not invent brand names, product names, or specifications.` : ''}
 
 ━━━ SENTENCE VARIETY CHECKLIST ━━━
 Before writing, plan to include:
@@ -450,17 +455,17 @@ export async function buildArticles(rawItems: RawNewsItem[]): Promise<Article[]>
     // GSC quality gate: log if content is too short (target 1500+ words)
     if (wc < 1000) console.warn(`[TB:quality] Short article (${wc} words): ${item.title}`)
 
-    // Fetch 5 unique images for this article — each checked against Redis + session set
+    // Fetch 5 unique Unsplash images using the established unique image system:
+    // getUniqueUnsplashImage → fetches Unsplash → checks Redis dedup → stores clean proxy URL
+    // → returns thetechbharat.com/api/image/{id} (Unsplash URL never exposed)
+    // → falls back to local phone images automatically if Unsplash fails
     const images: string[] = []
+    const imgQuery = item.type === 'compare'
+      ? 'smartphone technology india'   // neutral query for compare — avoids wrong brand image
+      : `${item.brand} smartphone`      // brand-specific for news/review
     for (let j = 0; j < 5; j++) {
-      const img = await getUniqueUnsplashImage(item.brand + ' smartphone', sessionUsedIds)
+      const img = await getUniqueUnsplashImage(imgQuery, sessionUsedIds)
       if (img) images.push(img)
-    }
-
-    // Fallback to local images if Unsplash returned nothing
-    if (images.length === 0) {
-      const localImgs = await getArticleImages(item.brand + ' smartphone', 5)
-      images.push(...localImgs)
     }
 
     articles.push({
