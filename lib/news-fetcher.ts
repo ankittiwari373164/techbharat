@@ -229,7 +229,7 @@ function buildUserPrompt(raw: RawArticle, brand: string, type: string): string {
 
   const today = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
 
-  return `Write a 1500-word article for TechBharat about this topic.
+  return `Write a MINIMUM 1500-word article (count every word — do not stop before 1500). This article will be reviewed by Google AdSense. Short articles fail AdSense review. Write for The Tech Bharat about this topic.
 
 TODAY'S DATE: ${today} — All dates, timelines, and references must be consistent with this date. Never mention years before ${new Date().getFullYear()}.
 INTERNAL LINKS MANDATE: Every article must include exactly 2 internal links to other sections of thetechbharat.com using this format:
@@ -304,7 +304,7 @@ Escape all internal quotes with backslash.
     "A competitor comparison in one line",
     "Your opinion or prediction about this product"
   ],
-  "fullContent": "Full HTML article. MINIMUM 1500 words — this is a hard requirement. MANDATORY STRUCTURE: (1) Opening para with hook (2) Main content sections with H2 headings (3) India-specific section with ₹ price/Flipkart/Amazon (4) Honest verdict section (5) Source Note if based on leaks. Google indexes this content — it must be ORIGINAL and DETAILED, not a press release reword. Tags: <p>, <h2>, <h3>, <table>, <tr>, <th>, <td>, <strong>, <ul>, <li> only. Follow structure above. Apply ALL sentence variety rules. Use banned phrase list strictly. British English. NO source names anywhere.",
+  "fullContent": "HARD REQUIREMENT: 1500 WORDS MINIMUM — DO NOT STOP WRITING UNTIL YOU REACH 1500 WORDS. Count your words as you write. If you are below 1500 words, keep writing more sections. MANDATORY SECTIONS (each must be 2-4 paragraphs minimum): (1) Hook opening — what happened and why India buyers care RIGHT NOW (2) Full specs breakdown with real-world meaning, not just numbers (3) India pricing — exact ₹ estimate, compare to rivals at same price (4) Who should buy this and who should NOT (5) Your honest verdict — would Vijay recommend this or not and why (6) What to watch for next — upcoming competition or launch timeline. Include 1 HTML specs table and 1 pros/cons table. Use <h2> for each section. Google AdSense reviews this content — thin content = no approval. Tags: <p>, <h2>, <h3>, <table>, <tr>, <th>, <td>, <strong>, <ul>, <li> ONLY. British English. NO source names.",
   "tags": ["brand name", "model name", "brand model India price", "brand model review India", "best phone under Xk", "brand model 5G India"],
   "relatedTopics": ["suggest 3 related article topics from the same brand or price segment that would make good internal links — e.g. 'Samsung Galaxy S25 Review', 'Best Samsung phones under ₹60K'"]
   "quickBullets": ["Spec or fact, max 7 words", "Price point, max 7 words", "One-line verdict, max 7 words"]
@@ -325,7 +325,7 @@ async function rewriteWithAnthropic(raw: RawArticle, authorIndex = 0): Promise<R
     },
     body: JSON.stringify({
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 5500,
+      max_tokens: 8000,
       system: getSystemPrompt(authorIndex),
       messages: [{ role: 'user', content: buildUserPrompt(raw, brand, type) }],
     }),
@@ -358,7 +358,7 @@ async function rewriteWithGroq(raw: RawArticle, authorIndex = 0): Promise<RawNew
     },
     body: JSON.stringify({
       model: 'llama-3.3-70b-versatile',
-      max_tokens: 5500,
+      max_tokens: 8000,
       temperature: 0.88,
       messages: [
         { role: 'system', content: getSystemPrompt(authorIndex) },

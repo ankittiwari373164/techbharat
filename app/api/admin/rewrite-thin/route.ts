@@ -65,7 +65,7 @@ ALSO APPLY THESE RULES:
 - Mixed sentence lengths — short punchy + long analytical
 - NO banned phrases: "seamless", "robust", "cutting-edge", "revolutionary", "furthermore", "moreover", "in conclusion", "it is worth noting"
 - HTML only: <p>, <h2>, <h3>, <table>, <strong>, <ul>, <li>
-- Minimum 1500 words
+- HARD MINIMUM 1500 words — count as you write, do not stop before 1500
 - Add comparison table where relevant
 - Add FAQ section (4-5 questions)
 
@@ -74,7 +74,7 @@ Return ONLY valid JSON, no markdown:
   "title": "improved title (keep factual, add value signal)",
   "summary": "3-sentence improved summary",
   "bullets": ["5 specific improved bullets with numbers/facts"],
-  "fullContent": "full rewritten HTML, 1500+ words",
+  "fullContent": "HARD REQUIREMENT 1500+ words minimum. Do not stop before 1500 words. Each section 2-4 paragraphs. Include specs table, pros/cons table, India pricing, verdict.",
   "tags": ["6 improved SEO tags"]
 }`
     : `You are Vijay Yadav, founder of The Tech Bharat. This article is too short and thin. Expand it significantly.
@@ -109,7 +109,7 @@ HTML only. Return ONLY valid JSON:
     },
     body: JSON.stringify({
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 6000,
+      max_tokens: 8000,
       messages: [{ role: 'user', content: prompt }],
     }),
   })

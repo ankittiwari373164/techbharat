@@ -59,7 +59,7 @@ async function generateEvergreenContent(topic: typeof EVERGREEN_TOPICS[0]): Prom
     },
     body: JSON.stringify({
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 6000,
+      max_tokens: 8000,
       system: SYSTEM_PROMPT,
       messages: [{
         role: 'user',
@@ -70,7 +70,7 @@ Return ONLY valid JSON, no markdown fences:
   "title": "exact article title",
   "summary": "3-sentence summary, conversational, India-specific",
   "bullets": ["5 key points, specific with numbers"],
-  "fullContent": "full HTML article, 2000 words minimum",
+  "fullContent": "HARD REQUIREMENT: 2000 WORDS MINIMUM — DO NOT STOP WRITING UNTIL YOU REACH 2000 WORDS. Each section must be 3-4 paragraphs. Include: specs table, pros/cons table, India pricing comparison, who should buy verdict, what to watch next. Use <h2> for sections. Google AdSense reviews this — thin content fails review.",
   "tags": ["6 SEO tags including primary keyword"],
   "quickBullets": ["3 bullets max 7 words each"]
 }`,
