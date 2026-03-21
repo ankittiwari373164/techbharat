@@ -5,7 +5,7 @@ import type { Article } from '@/lib/store'
 import ArticleCard from '@/components/ArticleCard'
 
 // ── AUTO INTERNAL LINKER ──────────────────────────────────────────
-const INTERNAL_LINK_MAP: [RegExp, string, string][] = [
+function getInternalLinkMap(): [RegExp, string, string][] { return [
   [/\bSamsung\b/g, '/mobile-news?brand=Samsung', 'Latest Samsung news'],
   [/\b(Apple|iPhone)\b/g, '/mobile-news?brand=Apple', 'Latest Apple iPhone news'],
   [/\bXiaomi\b/g, '/mobile-news?brand=Xiaomi', 'Latest Xiaomi news'],
@@ -36,7 +36,7 @@ const INTERNAL_LINK_MAP: [RegExp, string, string][] = [
   [/\b(Flipkart|Amazon India)\b/g, '/mobile-news', 'Best phone deals India'],
   [/\b(Jio|Airtel|Vi Vodafone)\b/g, '/mobile-news', 'Latest 5G news India'],
   [/\b(web stor(?:y|ies))\b/gi, '/web-stories', 'Web Stories'],
-]
+]}
 
 function addInternalLinks(html: string, _currentSlug: string): string {
   if (!html || typeof html !== 'string') return ''
@@ -51,7 +51,7 @@ function addInternalLinks(html: string, _currentSlug: string): string {
     if (insideAnchor) return part
 
     let text = part
-    for (const [regex, url, title] of INTERNAL_LINK_MAP) {
+    for (const [regex, url, title] of getInternalLinkMap()) {
       if (linked.has(url)) continue
       regex.lastIndex = 0
       const newText = text.replace(regex, (match) => {
@@ -70,6 +70,17 @@ interface ArticleClientProps {
   similar: unknown[]
   slug: string
 }
+
+// Brand detection — defined outside component to prevent hydration mismatch
+const BRAND_DETECT_MAP: [RegExp, string][] = [
+  [/\bSamsung\b/i, 'Samsung'], [/\b(Apple|iPhone)\b/i, 'Apple'],
+  [/\b(Xiaomi|Redmi)\b/i, 'Xiaomi'], [/\bOnePlus\b/i, 'OnePlus'],
+  [/\bRealme\b/i, 'Realme'], [/\bVivo\b/i, 'Vivo'],
+  [/\bOPPO\b/i, 'OPPO'], [/\biQOO\b/i, 'iQOO'],
+  [/\bPoco\b/i, 'Poco'], [/\b(Motorola|Moto)\b/i, 'Motorola'],
+  [/\bNothing\b/i, 'Nothing'], [/\b(Google Pixel|Pixel)\b/i, 'Google Pixel'],
+  [/\bHonor\b/i, 'Honor'],
+]
 
 export default function ArticleClient({ article, similar, slug }: ArticleClientProps) {
   const [reviewName, setReviewName] = useState('')
@@ -90,25 +101,24 @@ export default function ArticleClient({ article, similar, slug }: ArticleClientP
   const safeQSBrand   = liveArticle.quickSummary?.brand || liveArticle.brand || ''
 
   // Fix: if stored brand is generic 'Mobile', detect from title
-  const BRAND_DETECT: [RegExp, string][] = [
-    [/\bSamsung\b/i,'Samsung'],[/\bApple|iPhone\b/i,'Apple'],[/\bXiaomi|Redmi\b/i,'Xiaomi'],
-    [/\bOnePlus\b/i,'OnePlus'],[/\bRealme\b/i,'Realme'],[/\bVivo\b/i,'Vivo'],
-    [/\bOPPO\b/i,'OPPO'],[/\biQOO\b/i,'iQOO'],[/\bPoco\b/i,'Poco'],
-    [/\bMotorola|Moto\b/i,'Motorola'],[/\bNothing\b/i,'Nothing'],
-    [/\bGoogle Pixel|Pixel\b/i,'Google Pixel'],[/\bHonor\b/i,'Honor'],
-  ]
   const resolvedBrand = (() => {
     if (liveArticle.brand && liveArticle.brand !== 'Mobile') return liveArticle.brand
-    for (const [rx, name] of BRAND_DETECT) {
+    for (const [rx, name] of BRAND_DETECT_MAP) {
       if (rx.test(liveArticle.title)) return name
     }
     return liveArticle.brand || 'Mobile'
   })()
   const safeQSDate    = liveArticle.quickSummary?.date  || ''
 
-  const pubDate = new Date(liveArticle.publishDate).toLocaleDateString('en-IN', {
-    day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit',
-  })
+  // Format date without locale — avoids Node.js vs browser hydration mismatch
+  const pubDate = liveArticle.publishDate
+    ? (() => {
+        const d = new Date(liveArticle.publishDate)
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+        const h = d.getHours(), m = d.getMinutes()
+        return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} at ${h % 12 || 12}:${m.toString().padStart(2,'0')} ${h >= 12 ? 'pm' : 'am'}`
+      })()
+    : 
 
   const TYPE_COLORS: Record<string, string> = {
     'mobile-news': 'bg-[#1a3a5c]',
@@ -170,7 +180,7 @@ export default function ArticleClient({ article, similar, slug }: ArticleClientP
                 </div>
               </div>
               <span className="font-sans text-[10px] text-muted">·</span>
-              <span className="font-sans text-xs text-muted">{pubDate}</span>
+              <span className="font-sans text-xs text-muted" suppressHydrationWarning>{pubDate}</span>
               <span className="font-sans text-[10px] text-muted">·</span>
               <span className="font-sans text-xs text-muted">{liveArticle.readTime} min read</span>
               {/* Share */}
