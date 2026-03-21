@@ -125,25 +125,55 @@ export default async function ArticlePage({ params }: PageProps) {
   }
 
   // FAQ schema — built from article bullets for rich result CTR boost
-  const safeB = Array.isArray((article as any).bullets) ? (article as any).bullets : []
-  const faqSchema = safeB.length >= 2 ? {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: safeB.slice(0, 4).map((bullet: string, i: number) => ({
-      '@type': 'Question',
-      name: i === 0
-        ? `What is the key highlight of the ${article.title}?`
-        : i === 1
-        ? `What is the India price or availability?`
-        : i === 2
-        ? `What are the limitations or concerns?`
-        : `Should Indian buyers consider this?`,
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: bullet,
-      },
-    })),
-  } : null
+  // FAQ schema — extract from article content if it has real FAQ section
+  // Otherwise build from bullets with validation
+  const buildFaqSchema = () => {
+    const content = (article as any).content || ''
+    // Try to extract real FAQ Q&A pairs from article HTML
+    const faqMatches: {q: string, a: string}[] = []
+    const h3Regex = /<h3[^>]*>(.*?)<\/h3>\s*<p[^>]*>(.*?)<\/p>/gi
+    let match
+    while ((match = h3Regex.exec(content)) !== null && faqMatches.length < 4) {
+      const q = match[1].replace(/<[^>]*>/g, '').trim()
+      const a = match[2].replace(/<[^>]*>/g, '').trim()
+      if (q.length > 10 && a.length > 20) {
+        faqMatches.push({ q, a })
+      }
+    }
+    if (faqMatches.length >= 2) {
+      return {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: faqMatches.map(({ q, a }) => ({
+          '@type': 'Question',
+          name: q,
+          acceptedAnswer: { '@type': 'Answer', text: a },
+        })),
+      }
+    }
+    // Fallback: use bullets, strip HTML, validate minimum length
+    const safeB = Array.isArray((article as any).bullets) ? (article as any).bullets : []
+    const validBullets = safeB
+      .map((b: string) => b.replace(/<[^>]*>/g, '').trim())
+      .filter((b: string) => b.length >= 20)
+    if (validBullets.length < 2) return null
+    const questions = [
+      `What is the key highlight of the ${article.title}?`,
+      `What is the India price or availability?`,
+      `What are the limitations or concerns?`,
+      `Should Indian buyers consider this?`,
+    ]
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: validBullets.slice(0, 4).map((b: string, i: number) => ({
+        '@type': 'Question',
+        name: questions[i] || `Question ${i + 1} about ${article.title}`,
+        acceptedAnswer: { '@type': 'Answer', text: b },
+      })),
+    }
+  }
+  const faqSchema = buildFaqSchema()
 
   return (
     <>
