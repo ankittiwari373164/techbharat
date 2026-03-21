@@ -258,6 +258,19 @@ export default function ArticleClient({ article, similar, slug }: ArticleClientP
                   slug
                 ) }}
               />
+              {/* Source note styling injected globally */}
+              <style>{`
+                .source-note {
+                  background: #f8f4ef;
+                  border-left: 3px solid #d4220a;
+                  padding: 10px 14px;
+                  margin: 16px 0;
+                  font-size: 13px;
+                  color: #555;
+                  border-radius: 0 4px 4px 0;
+                }
+                .source-note strong { color: #d4220a; }
+              `}</style>
 
               {/* Mid-article image */}
               {safeImages[2] && (

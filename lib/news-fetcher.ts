@@ -238,8 +238,23 @@ INTERNAL LINKS MANDATE: Every article must include exactly 2 internal links to o
 OR link to /reviews, /mobile-news, /web-stories as relevant. Place them naturally inside paragraphs — not in a list at the bottom.
 
 UNIQUE VALUE MANDATE: This article MUST offer something the reader cannot get from just reading the press release or spec sheet. Add at least ONE of: (a) your honest opinion on whether it's worth buying, (b) a comparison to a rival at similar price, (c) an India-specific insight about availability/value/5G, (d) a prediction or concern about this product's future. Generic spec summaries fail this test.
-FACTUAL ACCURACY MANDATE: ONLY write about real, confirmed products. DO NOT invent product names, specs, prices, or availability. If a product is unconfirmed, label it clearly as "rumoured" or "expected". Fabricated content violates Google AdSense policies and will cause site rejection. Stick strictly to facts from the provided source material.
+FACTUAL ACCURACY MANDATE: ONLY write about real, confirmed products. DO NOT invent product names, specs, prices, or availability. Stick strictly to facts from the provided source material.
+
+HONEST FRAMING MANDATE (CRITICAL FOR ADSENSE APPROVAL):
+- NEVER write as if you personally used, tested, or held a product that is NOT YET RELEASED or CONFIRMED
+- NEVER say "After two weeks with this phone..." or "In my hands-on time..." for unreleased/rumoured products
+- NEVER state "expected price" as confirmed fact — always use: "expected", "rumoured to be", "analyst estimates suggest", "likely to cost around"
+- If the article is about a LEAKED or UNCONFIRMED product: write as analysis/speculation, clearly labelled
+- If the article is about a CONFIRMED LAUNCHED product: you may use first-person usage framing
+- ALWAYS distinguish: (a) confirmed launched = write freely, (b) announced but not launched = "is expected to", (c) rumoured/leaked = "leaks suggest", "sources claim"
+- For pre-release articles: title must signal speculation — use "Expected", "Leaked", "What We Know", "Should You Wait?"
+- AdSense reviewers will REJECT sites that present unverified speculation as first-hand review experience
 TOPIC: ${raw.title}
+CONTENT TYPE DETECTION: Based on the topic and facts provided, determine if this is:
+(A) LAUNCHED — product is confirmed on sale in India right now → write as full review/analysis with confidence
+(B) ANNOUNCED — officially announced but not yet available in India → write as "what to expect" analysis
+(C) RUMOURED/LEAKED — based on leaks, no official confirmation → write as speculation analysis, clearly labelled
+Always match your writing tone to the content type. DO NOT use personal testing language for type B or C.
 TITLE REWRITE RULE: If the topic title is a plain spec/launch announcement (e.g. "Samsung Galaxy X specs", "Phone Y launch"), rewrite it as a question or opinion title that real readers would click. Examples:
   - "Samsung Galaxy S26 specs" → "Samsung Galaxy S26: Is India's ₹80K Investment Actually Worth It?"  
   - "iPhone 17e launch" → "iPhone 17e Reality Check: Better Value Than iPhone 16?"
@@ -260,14 +275,22 @@ Section 5 (H2): Your honest analysis — what's good, what's concerning, what's 
 Section 5: Comparison to 2-3 competing phones at similar price — be specific with ₹ numbers (2 paragraphs)
 Section 6: Who should wait for this vs buy something else right now (2 paragraphs)
 Closing: Direct verdict — should Indian buyers care about this? Be specific.
-IMPORTANT FOR NEWS/LEAKS: ONLY write this if the product is real and confirmed. If article is based on leaks or analyst reports, add:
-<p><strong>Source Note:</strong> This article is based on [analyst reports / leaked specifications / industry sources]. These details are unconfirmed until official launch. Treat pricing and specs as estimates.</p>` : ''}
+MANDATORY SOURCE NOTE: Every article MUST end with one of these disclosures before the FAQ:
+- If product IS LAUNCHED & AVAILABLE IN INDIA: <p class="source-note"><strong>Availability:</strong> This device is available now in India via Flipkart/Amazon. All specifications are from official sources.</p>
+- If product is ANNOUNCED but NOT YET LAUNCHED: <p class="source-note"><strong>Pre-Launch Analysis:</strong> This article is based on official announcements and confirmed specifications. India pricing and availability are estimates until official launch confirmation.</p>
+- If product is RUMOURED/LEAKED: <p class="source-note"><strong>Based on Leaks:</strong> This article is based on leaked specifications and industry reports. Details are unconfirmed until official announcement. Do not treat pricing or specs as final.</p>
+This disclosure is MANDATORY — articles without it will be rejected by AdSense reviewers.` : ''}
 ${isReview ? `
-Opening: Your immediate impression — what surprised you or stood out first
-Section 1: Design & build — how it actually feels (India heat/humidity context)
-Section 2: Display — daily use experience, not just specs
-Section 3: Camera — real-world results, not megapixel count
-Section 4: Performance & battery — honest assessment including weaknesses
+REVIEW FRAMING RULE: Check if this is a LAUNCHED product or PRE-RELEASE.
+- LAUNCHED (confirmed on sale in India): Write as genuine hands-on review with personal experience
+- PRE-RELEASE / ANNOUNCED: Write as "First Impressions" or "Early Analysis" — clearly state "Based on official specs and early hands-on reports" NOT personal testing
+- NEVER fake personal testing experience for unreleased products
+
+Opening: Your immediate impression based on [official info / early reports / confirmed hands-on] — be honest about what stage this is
+Section 1: Design & build — how it looks/feels based on [official renders / confirmed hands-on / your actual testing]
+Section 2: Display — specs analysis with real-world meaning
+Section 3: Camera — based on [sample shots provided / real testing / spec analysis]
+Section 4: Performance & battery — honest assessment with appropriate caveats for pre-release
 Section 5 (H2): India pricing & competition — who else is in this price bracket
 Specs table (HTML): key specs in a clean table
 Pros & Cons table (HTML): honest, not marketing fluff
@@ -280,7 +303,8 @@ Section 3: India-specific factors — service centres count, warranty terms, Fli
 Section 4: Who should buy Phone A and who should buy Phone B — specific buyer personas with concrete reasons (2 paragraphs minimum)
 Section 5: Value verdict with ₹ price analysis — which offers better value per rupee spent (2 paragraphs minimum)
 Closing: ONE clear winner recommendation with exact reasoning. Never say "depends on your needs" without specifying WHICH needs determine the choice.
-ONLY compare real products that exist. Do not invent brand names, product names, or specifications.` : ''}
+ONLY compare real products that exist. Do not invent brand names, product names, or specifications.
+MANDATORY SOURCE NOTE: End with: <p class="source-note"><strong>Comparison Note:</strong> Pricing and availability based on [official India listings / expected launch pricing]. Specifications from official sources. Check Flipkart/Amazon for current pricing before purchase.</p>` : ''}
 
 ━━━ SENTENCE VARIETY CHECKLIST ━━━
 Before writing, plan to include:

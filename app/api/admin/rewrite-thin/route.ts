@@ -60,14 +60,20 @@ ${specificFix}
 ALSO APPLY THESE RULES:
 - British English
 - Prices in ₹ where relevant
-- Personal opinions: "I think", "In my experience", "Personally"
+- Personal opinions: "I think", "In my experience", "Personally" — BUT ONLY for confirmed/launched products
 - India-specific context (Flipkart/Amazon, Indian buyers, Indian market data)
 - Mixed sentence lengths — short punchy + long analytical
 - NO banned phrases: "seamless", "robust", "cutting-edge", "revolutionary", "furthermore", "moreover", "in conclusion", "it is worth noting"
 - HTML only: <p>, <h2>, <h3>, <table>, <strong>, <ul>, <li>
 - HARD MINIMUM 1500 words — count as you write, do not stop before 1500
-- Add comparison table where relevant
+- Add specs comparison table
+- Add pros/cons table
 - Add FAQ section (4-5 questions)
+- CRITICAL FRAMING FIX: If the product in this article is NOT YET LAUNCHED or is RUMOURED:
+  * Remove any "after two weeks with this phone..." or "in my hands-on testing..." language
+  * Replace with "based on official specs", "leaks suggest", "expected to offer"
+  * Add this disclosure at end of article: <p class="source-note"><strong>Pre-Launch Analysis:</strong> This article is based on official announcements and leaked specifications. India pricing is estimated. Verify current availability on Flipkart/Amazon before purchase.</p>
+- If product IS launched and available: keep personal experience framing, it's accurate
 
 Return ONLY valid JSON, no markdown:
 {
