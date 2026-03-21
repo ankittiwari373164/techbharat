@@ -34,6 +34,33 @@ function isArticleThin(article: any): boolean {
   return wordCount < MIN_WORD_COUNT
 }
 
+// Detect articles that need framing fix — fake hands-on claims, no source note
+function needsFramingFix(article: any): boolean {
+  const content = (article.content || '').toLowerCase()
+  const hasSourceNote = content.includes('source-note') ||
+                        content.includes('pre-launch analysis') ||
+                        content.includes('based on leaks') ||
+                        content.includes('availability:') ||
+                        content.includes('comparison note')
+  // Already has proper disclosure — skip
+  if (hasSourceNote) return false
+  // Check for fake hands-on language on likely pre-release articles
+  const fakeHandsOn = [
+    'after two weeks with',
+    'in my hands-on',
+    'as my daily driver',
+    'i've been using',
+    'after spending time with',
+    'in my testing',
+    'during my review period',
+  ]
+  const hasFakeHandsOn = fakeHandsOn.some(phrase => content.includes(phrase))
+  if (hasFakeHandsOn) return true
+  // Check if article has no source note at all (all articles should have one)
+  if (!hasSourceNote) return true
+  return false
+}
+
 function matchesThinFix(article: any): string | null {
   const title = (article.title || '').toLowerCase()
   const slug = (article.slug || '').toLowerCase()
@@ -159,17 +186,22 @@ export async function POST(request: NextRequest) {
 
   // Determine which articles to rewrite
   let toRewrite: any[] = []
+  const forceAll = searchParams.get('all') === '1'
 
   if (targetSlug) {
     // Single article by slug
     const found = articles.find((a: any) => a.slug === targetSlug)
     if (!found) return NextResponse.json({ error: `Article not found: ${targetSlug}` }, { status: 404 })
     toRewrite = [found]
+  } else if (forceAll) {
+    // Rewrite ALL articles — full quality refresh
+    toRewrite = articles
   } else {
-    // All thin articles
+    // Articles that need work: thin OR framing issues OR known weak content
     toRewrite = articles.filter((a: any) => {
       if (isArticleThin(a)) return true
-      if (matchesThinFix(a)) return true // known weak articles even if word count is OK
+      if (matchesThinFix(a)) return true
+      if (needsFramingFix(a)) return true
       return false
     })
   }
@@ -226,17 +258,19 @@ export async function GET(request: NextRequest) {
   const articles = await getAllArticlesAsync()
 
   const thinArticles = articles
-    .filter((a: any) => isArticleThin(a) || matchesThinFix(a))
+    .filter((a: any) => isArticleThin(a) || matchesThinFix(a) || needsFramingFix(a))
     .map((a: any) => ({
       slug: a.slug,
       title: a.title,
       wordCount: (a.content || '').replace(/<[^>]*>/g, '').split(/\s+/).filter(Boolean).length,
       hasFix: !!matchesThinFix(a),
+      needsFraming: needsFramingFix(a),
       publishDate: a.publishDate,
     }))
 
   return NextResponse.json({
     thin_articles: thinArticles,
     count: thinArticles.length,
+    total_articles: articles.length,
   })
 }

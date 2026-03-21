@@ -62,7 +62,7 @@ export default function AdminPage() {
   const [indexLog,setIndexLog]         = useState<{url:string;status:string}[]>([])
   const [autoEgStatus,setAutoEgStatus] = useState<'idle'|'running'|'done'|'error'>('idle')
   const [autoEgMsg,setAutoEgMsg]       = useState('')
-  const [thinList,setThinList]         = useState<{slug:string;title:string;wordCount:number;hasFix:boolean}[]>([])
+  const [thinList,setThinList]         = useState<{slug:string;title:string;wordCount:number;hasFix:boolean;needsFraming:boolean}[]>([])
   const [thinSel,setThinSel]           = useState<Set<string>>(new Set())
   const [thinStatus,setThinStatus]     = useState<Record<string,'idle'|'running'|'done'|'error'>>({})
   const [thinScanMsg,setThinScanMsg]   = useState('')
@@ -919,17 +919,31 @@ export default function AdminPage() {
                     <h2 className="text-sm font-bold text-gray-800">📏 Thin Article Rewriter</h2>
                     <p className="text-xs text-gray-400 mt-0.5">Find articles under 800 words and rewrite them to 1500+ words for better SEO and AdSense.</p>
                   </div>
+                  <div className="flex items-center gap-2">
+                  <button disabled={thinScanning} onClick={async()=>{
+                    if(!confirm('Rewrite ALL 45+ articles? This will take 10-15 minutes and improve framing, word count, and add source notes to every article.')) return
+                    setThinScanning(true); setThinScanMsg('Rewriting all articles — this will take ~10 minutes...')
+                    try {
+                      const r=await fetch('/api/admin/rewrite-thin?all=1',{method:'POST'}); const d=await r.json()
+                      setThinScanMsg(`✅ Rewrote ${d.rewritten?.length||0} articles${d.errors?.length?` (${d.errors.length} errors)`:''}`)
+                      loadAll()
+                    } catch { setThinScanMsg('Failed — try again') }
+                    setThinScanning(false)
+                  }} className="bg-[#d4220a] hover:bg-[#b81d09] disabled:opacity-50 text-white text-xs font-bold px-4 py-2 rounded-lg">
+                    {thinScanning?'Rewriting…':'🔄 Rewrite ALL Articles'}
+                  </button>
                   <button disabled={thinScanning} onClick={async()=>{
                     setThinScanning(true); setThinScanMsg('Scanning...')
                     try {
                       const r=await fetch('/api/admin/rewrite-thin'); const d=await r.json()
                       setThinList(d.thin_articles||[]); setThinSel(new Set()); setThinStatus({})
-                      setThinScanMsg(`Found ${d.count||0} thin article${d.count!==1?'s':''}`)
+                      setThinScanMsg(`Found ${d.count||0} articles needing work (out of ${d.total_articles||0} total)`)
                     } catch { setThinScanMsg('Scan failed — try again') }
                     setThinScanning(false)
                   }} className="bg-[#1a3a5c] hover:bg-[#0f2a48] disabled:opacity-50 text-white text-xs font-bold px-4 py-2 rounded-lg">
                     {thinScanning?'Scanning…':'🔍 Scan Articles'}
                   </button>
+                  </div>
                 </div>
                 {thinScanMsg && <div className="px-5 py-2 text-xs text-gray-500 bg-gray-50 border-b border-gray-100">{thinScanMsg}</div>}
                 {thinList.length>0 && (
@@ -969,6 +983,7 @@ export default function AdminPage() {
                             </div>
                             <span className={`text-[10px] font-bold px-2 py-0.5 rounded flex-shrink-0 ${art.wordCount<500?'bg-red-100 text-red-700':art.wordCount<800?'bg-amber-100 text-amber-700':'bg-gray-100 text-gray-500'}`}>{art.wordCount}w</span>
                             {art.hasFix && <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-100 text-purple-700 flex-shrink-0">has fix</span>}
+                            {art.needsFraming && <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-700 flex-shrink-0">framing</span>}
                             <span className={`text-xs font-medium flex-shrink-0 ${st==='done'?'text-green-600':st==='running'?'text-amber-600':st==='error'?'text-red-500':'text-gray-300'}`}>{st==='running'?'⏳':st==='done'?'✅':st==='error'?'✗':''}</span>
                           </div>
                         )
@@ -978,7 +993,7 @@ export default function AdminPage() {
                 )}
                 {thinList.length===0 && !thinScanning && (
                   <div className="px-5 py-8 text-center text-gray-400 text-sm">
-                    {thinScanMsg&&!thinScanMsg.includes('Found 0')?thinScanMsg:thinScanMsg.includes('Found 0')?'✅ All articles meet the 800-word minimum.':'Click "Scan Articles" to find thin content.'}
+                    thinScanMsg || 'Click "Scan Articles" to find articles needing work, or "Rewrite ALL" to refresh every article.'
                   </div>
                 )}
               </div>
