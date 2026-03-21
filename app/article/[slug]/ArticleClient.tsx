@@ -118,7 +118,7 @@ export default function ArticleClient({ article, similar, slug }: ArticleClientP
         const h = d.getHours(), m = d.getMinutes()
         return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} at ${h % 12 || 12}:${m.toString().padStart(2,'0')} ${h >= 12 ? 'pm' : 'am'}`
       })()
-    : 
+    : ''
 
   const TYPE_COLORS: Record<string, string> = {
     'mobile-news': 'bg-[#1a3a5c]',
