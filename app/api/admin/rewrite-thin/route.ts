@@ -49,7 +49,7 @@ function needsFramingFix(article: any): boolean {
     'after two weeks with',
     'in my hands-on',
     'as my daily driver',
-    'i've been using',
+    "i've been using",
     'after spending time with',
     'in my testing',
     'during my review period',
