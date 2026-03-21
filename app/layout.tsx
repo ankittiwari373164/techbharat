@@ -127,7 +127,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           })}}
         />
       </head>
-      <body className={`${isAdmin ? 'bg-gray-50' : 'bg-paper text-ink'} min-h-screen flex flex-col`}>
+      <body suppressHydrationWarning className={`${isAdmin ? 'bg-gray-50' : 'bg-paper text-ink'} min-h-screen flex flex-col`}>
         {!isAdmin && <div id="reading-progress" style={{ width: '0%' }} />}
         {!isAdmin && <Header tickerItems={tickerItems} />}
         <main className="flex-1">{children}</main>
@@ -154,10 +154,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // 1. Disable right-click
   document.addEventListener("contextmenu",function(e){e.preventDefault();return false;});
 
-  // 2. Disable text selection + image drag via CSS
-  var s=document.createElement("style");
-  s.innerHTML="body,img,p,h1,h2,h3,h4,h5,h6,span,div,a,li{-webkit-user-select:none!important;-moz-user-select:none!important;user-select:none!important;}img{-webkit-user-drag:none!important;pointer-events:none!important;}";
-  document.head.appendChild(s);
+  // 2. Disable text selection + image drag via CSS (handled via static <style> in <head>)
 
   // 3. Block copy / cut
   document.addEventListener("copy",function(e){e.preventDefault();return false;});
