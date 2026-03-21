@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import SeoAnalyticsTab from '@/components/admin/SeoAnalyticsTab'
 
-interface Article { id:string; slug:string; title:string; type:string; brand:string; publishDate:string; readTime:number; isFeatured:boolean; summary:string; tags:string[] }
+interface Article { id:string; slug:string; title:string; type:string; brand:string; publishDate:string; readTime:number; isFeatured:boolean; summary:string; tags:string[]; content?:string }
 interface Stats { total:number; mobileNews:number; reviews:number; compare:number; brands:Record<string,number> }
 interface ScheduleSlot { index:number; type:string; label:string }
 interface ScheduleStatus { todaySlots:ScheduleSlot[]; publishedToday:number; nextSlotLabel:string; allDoneToday:boolean; istNow:string }
@@ -116,6 +116,15 @@ export default function AdminPage() {
   const handleDelete      = async (id:string) => { await fetch(`/api/admin/articles/${id}`,{method:'DELETE'}); setDeleteId(null); loadAll() }
   const handleToggleFeat  = async (id:string) => { await fetch(`/api/admin/articles/${id}/feature`,{method:'POST'}); loadAll() }
   const handleSaveEdit    = async () => { if(!editArticle)return; await fetch(`/api/admin/articles/${editArticle.id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(editArticle)}); setEditArticle(null); loadAll() }
+  const handleOpenEdit    = async (a: Article) => {
+    setEditArticle(a)
+    // Fetch full article including content field
+    try {
+      const r = await fetch(`/api/article/${a.slug}`)
+      const d = await r.json()
+      if (d.article?.content) setEditArticle({...a, content: d.article.content, summary: d.article.summary||a.summary})
+    } catch { /* use existing data */ }
+  }
 
   // ── Story handlers ────────────────────────────────────────────
   const handleSaveStory = async () => {
@@ -427,7 +436,7 @@ export default function AdminPage() {
                         <td className="px-3 py-2.5 text-xs text-gray-400">{pubDate(a.publishDate)}</td>
                         <td className="px-3 py-2.5 text-center"><span className="text-xs font-semibold text-gray-700">{(articleViews[a.slug]||0).toLocaleString()}</span></td>
                         <td className="px-3 py-2.5 text-center"><button onClick={()=>handleToggleFeat(a.id)} className={`text-base ${a.isFeatured?'opacity-100':'opacity-20 hover:opacity-50'}`}>⭐</button></td>
-                        <td className="px-4 py-2.5 text-right"><div className="flex items-center justify-end gap-2"><button onClick={()=>setEditArticle(a)} className="text-xs text-blue-600 hover:text-blue-800 font-medium">Edit</button><a href={`/article/${a.slug}`} target="_blank" className="text-xs text-gray-400 hover:text-gray-600">View</a><button onClick={()=>setDeleteId(a.id)} className="text-xs text-red-500 hover:text-red-700 font-medium">Del</button></div></td>
+                        <td className="px-4 py-2.5 text-right"><div className="flex items-center justify-end gap-2"><button onClick={()=>handleOpenEdit(a)} className="text-xs text-blue-600 hover:text-blue-800 font-medium">Edit</button><a href={`/article/${a.slug}`} target="_blank" className="text-xs text-gray-400 hover:text-gray-600">View</a><button onClick={()=>setDeleteId(a.id)} className="text-xs text-red-500 hover:text-red-700 font-medium">Del</button></div></td>
                       </tr>
                     ))}
                     {filtered.length===0 && <tr><td colSpan={7} className="px-4 py-10 text-center text-gray-400 text-sm">No articles.</td></tr>}
@@ -921,8 +930,8 @@ export default function AdminPage() {
                   </div>
                   <div className="flex items-center gap-2">
                   <button disabled={thinScanning} onClick={async()=>{
-                    if(!confirm('Rewrite ALL 45+ articles? This will take 10-15 minutes and improve framing, word count, and add source notes to every article.')) return
-                    setThinScanning(true); setThinScanMsg('Rewriting all articles — this will take ~10 minutes...')
+                    if(!confirm('Rewrite ALL articles? ~10-15 min. Fixes framing, word count, adds source notes.')) return
+                    setThinScanning(true); setThinScanMsg('Rewriting all articles — ~10 minutes...')
                     try {
                       const r=await fetch('/api/admin/rewrite-thin?all=1',{method:'POST'}); const d=await r.json()
                       setThinScanMsg(`✅ Rewrote ${d.rewritten?.length||0} articles${d.errors?.length?` (${d.errors.length} errors)`:''}`)
@@ -930,7 +939,19 @@ export default function AdminPage() {
                     } catch { setThinScanMsg('Failed — try again') }
                     setThinScanning(false)
                   }} className="bg-[#d4220a] hover:bg-[#b81d09] disabled:opacity-50 text-white text-xs font-bold px-4 py-2 rounded-lg">
-                    {thinScanning?'Rewriting…':'🔄 Rewrite ALL Articles'}
+                    {thinScanning?'Rewriting…':'🔄 Rewrite ALL'}
+                  </button>
+                  <button disabled={thinScanning} onClick={async()=>{
+                    if(!confirm('Rewrite all REVIEW articles only? Fixes fake hands-on claims and adds proper source notes. ~3-5 min.')) return
+                    setThinScanning(true); setThinScanMsg('Rewriting review articles — fixing framing...')
+                    try {
+                      const r=await fetch('/api/admin/rewrite-thin?all=1&type=review',{method:'POST'}); const d=await r.json()
+                      setThinScanMsg(`✅ Rewrote ${d.rewritten?.length||0} review articles${d.errors?.length?` (${d.errors.length} errors)`:''}`)
+                      loadAll()
+                    } catch { setThinScanMsg('Failed — try again') }
+                    setThinScanning(false)
+                  }} className="bg-[#1a3a5c] hover:bg-[#0f2a48] disabled:opacity-50 text-white text-xs font-bold px-4 py-2 rounded-lg">
+                    {thinScanning?'Rewriting…':'⭐ Rewrite Reviews Only'}
                   </button>
                   <button disabled={thinScanning} onClick={async()=>{
                     setThinScanning(true); setThinScanMsg('Scanning...')
@@ -1067,21 +1088,79 @@ export default function AdminPage() {
       {/* EDIT ARTICLE MODAL */}
       {editArticle && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto">
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white rounded-t-2xl">
-              <h3 className="font-bold text-gray-900">Edit Article</h3>
-              <button onClick={()=>setEditArticle(null)} className="text-gray-400 hover:text-gray-700 text-xl">✕</button>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[95vh] overflow-y-auto">
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white rounded-t-2xl z-10">
+              <div>
+                <h3 className="font-bold text-gray-900">Edit Article</h3>
+                <p className="text-xs text-gray-400 mt-0.5">{editArticle.slug}</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <a href={`/${editArticle.slug}`} target="_blank" className="text-xs text-[#d4220a] hover:underline">↗ View Live</a>
+                <button onClick={()=>setEditArticle(null)} className="text-gray-400 hover:text-gray-700 text-xl">✕</button>
+              </div>
             </div>
             <div className="p-6 space-y-4">
-              <div><label className="text-xs font-bold text-gray-500 uppercase block mb-1.5">Title</label><input type="text" value={editArticle.title} onChange={e=>setEditArticle({...editArticle,title:e.target.value})} className="w-full text-sm border border-gray-200 px-3 py-2.5 rounded-lg outline-none"/></div>
-              <div className="grid grid-cols-2 gap-4">
-                <div><label className="text-xs font-bold text-gray-500 uppercase block mb-1.5">Brand</label><input type="text" value={editArticle.brand} onChange={e=>setEditArticle({...editArticle,brand:e.target.value})} className="w-full text-sm border border-gray-200 px-3 py-2.5 rounded-lg outline-none"/></div>
-                <div><label className="text-xs font-bold text-gray-500 uppercase block mb-1.5">Type</label><select value={editArticle.type} onChange={e=>setEditArticle({...editArticle,type:e.target.value})} className="w-full text-sm border border-gray-200 px-3 py-2.5 rounded-lg outline-none bg-white"><option value="mobile-news">Mobile News</option><option value="review">Review</option><option value="compare">Compare</option></select></div>
+              {/* Title */}
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase block mb-1.5">Title</label>
+                <input type="text" value={editArticle.title} onChange={e=>setEditArticle({...editArticle,title:e.target.value})} className="w-full text-sm border border-gray-200 px-3 py-2.5 rounded-lg outline-none focus:border-[#1a3a5c]"/>
               </div>
-              <div><label className="text-xs font-bold text-gray-500 uppercase block mb-1.5">Summary</label><textarea rows={3} value={editArticle.summary} onChange={e=>setEditArticle({...editArticle,summary:e.target.value})} className="w-full text-sm border border-gray-200 px-3 py-2.5 rounded-lg outline-none resize-none"/></div>
-              <div><label className="text-xs font-bold text-gray-500 uppercase block mb-1.5">Tags</label><input type="text" value={editArticle.tags?.join(', ')||''} onChange={e=>setEditArticle({...editArticle,tags:e.target.value.split(',').map(t=>t.trim()).filter(Boolean)})} className="w-full text-sm border border-gray-200 px-3 py-2.5 rounded-lg outline-none"/></div>
-              <div className="flex items-center gap-2"><input type="checkbox" id="feat" checked={editArticle.isFeatured} onChange={e=>setEditArticle({...editArticle,isFeatured:e.target.checked})} className="w-4 h-4"/><label htmlFor="feat" className="text-sm text-gray-700">Featured</label></div>
-              <div className="flex gap-3 pt-2"><button onClick={handleSaveEdit} className="bg-[#1a3a5c] text-white text-sm font-bold px-6 py-2.5 rounded-lg">Save</button><button onClick={()=>setEditArticle(null)} className="text-sm text-gray-500 border border-gray-200 px-5 py-2.5 rounded-lg">Cancel</button></div>
+              {/* Brand + Type */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold text-gray-500 uppercase block mb-1.5">Brand</label>
+                  <input type="text" value={editArticle.brand} onChange={e=>setEditArticle({...editArticle,brand:e.target.value})} className="w-full text-sm border border-gray-200 px-3 py-2.5 rounded-lg outline-none"/>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 uppercase block mb-1.5">Type</label>
+                  <select value={editArticle.type} onChange={e=>setEditArticle({...editArticle,type:e.target.value})} className="w-full text-sm border border-gray-200 px-3 py-2.5 rounded-lg outline-none bg-white">
+                    <option value="mobile-news">Mobile News</option>
+                    <option value="review">Review</option>
+                    <option value="compare">Compare</option>
+                  </select>
+                </div>
+              </div>
+              {/* Summary */}
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase block mb-1.5">Summary <span className="text-gray-400 font-normal normal-case">(shown as intro paragraph)</span></label>
+                <textarea rows={3} value={editArticle.summary} onChange={e=>setEditArticle({...editArticle,summary:e.target.value})} className="w-full text-sm border border-gray-200 px-3 py-2.5 rounded-lg outline-none resize-none focus:border-[#1a3a5c]"/>
+              </div>
+              {/* Full Content */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-bold text-gray-500 uppercase">Full Article Content <span className="text-gray-400 font-normal normal-case">(HTML)</span></label>
+                  <span className="text-[10px] text-gray-400">
+                    {(editArticle.content||'').replace(/<[^>]*>/g,'').split(/\s+/).filter(Boolean).length} words
+                  </span>
+                </div>
+                <div className="text-[10px] text-amber-600 bg-amber-50 border border-amber-200 px-3 py-2 rounded-lg mb-2">
+                  ⚠️ For review articles: remove "after two weeks with this phone" if product not yet launched in India. Replace with "based on official specs" or add Pre-Launch Analysis source note.
+                </div>
+                <textarea
+                  rows={20}
+                  value={editArticle.content||''}
+                  onChange={e=>setEditArticle({...editArticle,content:e.target.value})}
+                  className="w-full text-xs border border-gray-200 px-3 py-2.5 rounded-lg outline-none resize-y focus:border-[#1a3a5c] font-mono"
+                  placeholder="Full HTML article content..."
+                  spellCheck={false}
+                />
+              </div>
+              {/* Tags + Featured */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold text-gray-500 uppercase block mb-1.5">Tags</label>
+                  <input type="text" value={editArticle.tags?.join(', ')||''} onChange={e=>setEditArticle({...editArticle,tags:e.target.value.split(',').map((t:string)=>t.trim()).filter(Boolean)})} className="w-full text-sm border border-gray-200 px-3 py-2.5 rounded-lg outline-none"/>
+                </div>
+                <div className="flex items-center gap-2 pt-6">
+                  <input type="checkbox" id="feat" checked={editArticle.isFeatured} onChange={e=>setEditArticle({...editArticle,isFeatured:e.target.checked})} className="w-4 h-4 accent-[#d4220a]"/>
+                  <label htmlFor="feat" className="text-sm text-gray-700">Featured article</label>
+                </div>
+              </div>
+              {/* Save */}
+              <div className="flex gap-3 pt-2 border-t border-gray-100 sticky bottom-0 bg-white py-4">
+                <button onClick={handleSaveEdit} className="bg-[#1a3a5c] text-white text-sm font-bold px-6 py-2.5 rounded-lg hover:bg-[#0f2a48]">Save Changes</button>
+                <button onClick={()=>setEditArticle(null)} className="text-sm text-gray-500 border border-gray-200 px-5 py-2.5 rounded-lg hover:bg-gray-50">Cancel</button>
+              </div>
             </div>
           </div>
         </div>
