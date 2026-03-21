@@ -281,20 +281,35 @@ MANDATORY SOURCE NOTE: Every article MUST end with one of these disclosures befo
 - If product is RUMOURED/LEAKED: <p class="source-note"><strong>Based on Leaks:</strong> This article is based on leaked specifications and industry reports. Details are unconfirmed until official announcement. Do not treat pricing or specs as final.</p>
 This disclosure is MANDATORY — articles without it will be rejected by AdSense reviewers.` : ''}
 ${isReview ? `
-REVIEW FRAMING RULE: Check if this is a LAUNCHED product or PRE-RELEASE.
-- LAUNCHED (confirmed on sale in India): Write as genuine hands-on review with personal experience
-- PRE-RELEASE / ANNOUNCED: Write as "First Impressions" or "Early Analysis" — clearly state "Based on official specs and early hands-on reports" NOT personal testing
-- NEVER fake personal testing experience for unreleased products
+REVIEW TYPE — STRICT RULES (AdSense approval depends on this):
 
-Opening: Your immediate impression based on [official info / early reports / confirmed hands-on] — be honest about what stage this is
-Section 1: Design & build — how it looks/feels based on [official renders / confirmed hands-on / your actual testing]
-Section 2: Display — specs analysis with real-world meaning
-Section 3: Camera — based on [sample shots provided / real testing / spec analysis]
-Section 4: Performance & battery — honest assessment with appropriate caveats for pre-release
-Section 5 (H2): India pricing & competition — who else is in this price bracket
-Specs table (HTML): key specs in a clean table
-Pros & Cons table (HTML): honest, not marketing fluff
-Closing verdict: Exactly who should and shouldn't buy this` : ''}
+STEP 1 — CHECK IF PRODUCT IS AVAILABLE IN INDIA RIGHT NOW:
+Look at the facts provided. Ask: Is this phone currently on sale in India on Flipkart or Amazon?
+
+IF YES (confirmed launched in India):
+- Write as a genuine analysis piece
+- Use "based on confirmed specs", "at this price point", "for Indian buyers"
+- You may use analytical first-person: "I think", "My assessment", "In my view"
+- Still NEVER claim "After two weeks with this phone" unless you literally have it — you don't
+- Title format: "[Phone]: Is It Worth ₹X for Indian Buyers?"
+
+IF NO (announced / rumoured / not yet in India):
+- Title MUST signal this: "First Look:", "Expected:", "What We Know:", "Should You Wait?"
+- NEVER use: "after testing", "in my hands", "daily driver", "two weeks with"
+- ALWAYS use: "based on official specs", "expected to", "announced specs suggest", "leaks indicate"
+- Opening line MUST state clearly: "The [phone] hasn't launched in India yet. Here's what official announcements tell us."
+- Add source note at end: <p class="source-note"><strong>Pre-Launch Analysis:</strong> This article is based on official announcements and confirmed specifications. India pricing and availability are estimates until official launch.</p>
+
+STRUCTURE FOR BOTH TYPES:
+Opening: Honest framing — what stage is this product at and what do we actually know
+Section 1: Design & build — describe from official renders/announcements
+Section 2: Display & specs — what the numbers mean for real Indian users  
+Section 3: Camera — based on official samples or spec analysis (label clearly)
+Section 4: Performance & battery — honest assessment with India-specific context (heat, 5G, gaming)
+Section 5: India pricing & competition — exact ₹ comparison with 2-3 rivals on Flipkart/Amazon
+Specs table (HTML): 8+ rows
+Pros & Cons table (HTML): honest, no marketing language
+Closing verdict: Exactly who should buy this and who should wait` : ''}
 ${isCompare ? `
 Opening: Set up the real buying dilemma — who is actually choosing between these two and why it's not obvious (2 paragraphs minimum)
 Section 1: Quick specs comparison (HTML <table> with at least 8 rows: price, display, chip, RAM, battery, camera, 5G, software updates)
