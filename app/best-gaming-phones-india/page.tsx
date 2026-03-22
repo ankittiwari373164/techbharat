@@ -1,25 +1,24 @@
 // app/best-gaming-phones-india/page.tsx
 import { Metadata } from 'next'
 import Link from 'next/link'
-import { getPillarArticles } from '@/lib/pillar-utils'
-import PillarArticleGrid from '@/components/PillarArticleGrid'
+import { getPillarArticles, formatPillarDate } from '@/lib/pillar-utils'
 
 export const revalidate = 3600
 
 export const metadata: Metadata = {
   title: 'Best Gaming Phones in India 2026 — BGMI, COD Mobile | The Tech Bharat',
-  description: 'Best gaming phones in India 2026. Top picks for BGMI, COD Mobile, and Genshin Impact at every budget. Ranked by sustained performance, cooling, and display.',
+  description: 'Best gaming phones in India 2026. Top picks for BGMI, COD Mobile at every budget. Ranked by sustained performance, cooling, and display.',
   alternates: { canonical: 'https://thetechbharat.com/best-gaming-phones-india' },
-  openGraph: {
-    title: 'Best Gaming Phones in India 2026',
-    description: 'Best phones for BGMI, COD Mobile, and mobile gaming in India — ranked by sustained performance, not just benchmarks.',
-    url: 'https://thetechbharat.com/best-gaming-phones-india',
-    type: 'article',
-  },
+  openGraph: { title: 'Best Gaming Phones in India 2026', url: 'https://thetechbharat.com/best-gaming-phones-india', type: 'article' },
 }
 
 export default async function BestGamingPhonesIndiaPage() {
-  const gamingArticles = await getPillarArticles(['gaming', 'BGMI', 'game', 'fps', 'performance', 'processor'], [], 10)
+  const articles = await getPillarArticles(
+    ['gaming', 'BGMI', 'game', 'fps', 'refresh rate', 'performance', 'snapdragon', 'processor', 'cooling', 'benchmark', 'gaming phone'],
+    [],
+    12
+  )
+
   return (
     <div className="bg-paper min-h-screen">
       <div className="max-w-4xl mx-auto px-4 py-10">
@@ -32,105 +31,46 @@ export default async function BestGamingPhonesIndiaPage() {
 
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-3">
-            <span className="bg-[#d4220a] text-white font-sans text-[10px] font-bold px-2.5 py-1 uppercase tracking-widest">Updated March 2026</span>
+            <span className="bg-[#d4220a] text-white font-sans text-[10px] font-bold px-2.5 py-1 uppercase tracking-widest">Updated Continuously</span>
           </div>
           <h1 className="font-playfair text-3xl md:text-4xl font-black text-ink leading-tight mb-4">
-            Best Gaming Phones in India 2026 — BGMI, COD Mobile, and Beyond
+            Best Gaming Phones in India — BGMI, COD Mobile, and Beyond
           </h1>
           <p className="font-body text-lg text-[#2a2a2a] leading-relaxed">
-            Mobile gaming in India is dominated by BGMI, COD Mobile, Free Fire, and increasingly Genshin Impact. These rankings focus on what actually matters for Indian gaming: sustained performance without throttling, display quality at 90-120fps, and thermal management in Indian summer conditions.
+            Mobile gaming in India is dominated by BGMI, COD Mobile, Free Fire, and Genshin Impact. Our rankings focus on sustained performance — not just benchmarks — thermal management in Indian summer conditions, and display quality at 90-120fps.
           </p>
         </div>
 
-        {/* What matters for gaming */}
+        {/* What gaming needs */}
         <div className="bg-[#1a3a5c]/5 border-l-4 border-[#1a3a5c] p-5 mb-8">
           <h2 className="font-sans text-sm font-bold text-[#1a3a5c] uppercase tracking-wider mb-3">What Gaming Phones Actually Need</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {[
-              ['Sustained performance', 'Can the phone maintain 90fps for 30+ minutes without throttling? Peak benchmarks are meaningless for gaming.'],
-              ['Thermal management', 'Vapour chamber cooling, graphite layers, or active cooling determines whether performance holds in Indian heat.'],
-              ['Display refresh rate', '120Hz minimum for competitive BGMI. 144Hz for dedicated gaming phones. 90Hz acceptable for casual gaming.'],
-              ['Touch response', 'Touch sampling rate (120Hz+) and low touch latency matters for BGMI aiming precision.'],
-              ['Battery during gaming', 'Gaming drains batteries fast. 5,000mAh+ recommended for 2+ hour sessions.'],
-              ['Trigger buttons', 'Dedicated shoulder triggers (physical or capacitive) give competitive advantage in BGMI.'],
+              ['Sustained performance', 'Can it maintain 90fps for 30+ minutes without throttling? Peak benchmarks are meaningless.'],
+              ['Thermal management', 'Vapour chamber or graphite cooling — determines whether performance holds in Indian heat.'],
+              ['Display refresh rate', '120Hz minimum for competitive BGMI. 144Hz for dedicated gaming phones.'],
+              ['Touch response', '120Hz+ touch sampling rate matters for BGMI aiming precision.'],
+              ['Battery during gaming', 'Gaming drains fast. 5,000mAh+ recommended for 2+ hour sessions.'],
+              ['Shoulder triggers', 'Physical or capacitive triggers give competitive advantage in BGMI.'],
             ].map(([title, desc]) => (
               <div key={title} className="bg-white border border-border p-3">
-                <p className="font-sans text-xs font-bold text-ink mb-1">{title}</p>
+                <p className="font-sans text-xs font-bold text-ink mb-0.5">{title}</p>
                 <p className="font-sans text-xs text-muted">{desc}</p>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Rankings */}
-        {[
-          {
-            title: 'Best Gaming Phone Under ₹20,000',
-            winner: 'Poco X6',
-            price: '~₹18,999',
-            articleSlug: null,
-            chip: 'Snapdragon 7s Gen 2',
-            display: '6.67" AMOLED, 120Hz',
-            why: 'The most sustained gaming performance under ₹20K. Poco\'s gaming mode disables background processes aggressively, maintaining 60fps in BGMI at high settings consistently. The 120Hz AMOLED is genuinely sharp for the price.',
-            limitation: 'Throttles more noticeably above 45°C ambient. MIUI requires cleanup. No dedicated shoulder triggers.',
-          },
-          {
-            title: 'Best Gaming Phone ₹20,000 – ₹35,000',
-            winner: 'iQOO Neo 10',
-            price: '~₹34,999',
-            articleSlug: '/iqoo-z11-review-9020mah-battery-beast',
-            chip: 'Snapdragon 8 Gen 3',
-            display: '6.78" AMOLED, 144Hz',
-            why: 'iQOO builds phones specifically for gaming — the Neo 10 brings a flagship Snapdragon 8 Gen 3 to ₹35K with dedicated shoulder triggers, 144Hz display, and vapour chamber cooling. BGMI at 90fps is sustained without throttling for 45+ minutes.',
-            limitation: 'FunTouchOS is cluttered but gaming mode effectively isolates performance. Camera not competitive at this price.',
-          },
-          {
-            title: 'Best Gaming Phone ₹35,000 – ₹60,000',
-            winner: 'OnePlus 13R',
-            price: '~₹39,999',
-            articleSlug: null,
-            chip: 'Snapdragon 8 Gen 2',
-            display: '6.78" AMOLED, 120Hz',
-            why: 'Snapdragon 8 Gen 2 with OnePlus\'s thermal management delivers excellent sustained gaming performance. The 5,500mAh battery handles long sessions. OxygenOS gaming mode is clean and effective. Genuinely well-rounded — not just a gaming phone but a great daily driver that games well.',
-            limitation: 'No dedicated gaming triggers. iQOO Neo 10\'s 144Hz has advantage for competitive play.',
-          },
-          {
-            title: 'Best Gaming Phone Above ₹60,000',
-            winner: 'ASUS ROG Phone 8',
-            price: '~₹79,999',
-            articleSlug: null,
-            chip: 'Snapdragon 8 Gen 3',
-            display: '6.78" AMOLED, 165Hz',
-            why: 'The dedicated gaming phone for serious Indian mobile gamers. Active cooling fan (AeroActive Cooler accessory), AirTrigger shoulder buttons, 165Hz display, GameCool 8 thermal system, and ASUS\'s Game Genie overlay. No other phone sustains 90fps in demanding titles as consistently in Indian summer conditions.',
-            limitation: 'Large and heavy (225g). Camera system is secondary. Niche purchase for serious gamers only.',
-          },
-        ].map(({ title, winner, price, chip, display, why, limitation }) => (
-          <section key={title} className="mb-8">
-            <h2 className="font-playfair text-2xl font-bold text-ink mb-4 pb-2 border-b-2 border-[#d4220a]">{title}</h2>
-            <div className="bg-white border border-border p-5">
-              <div className="flex items-start gap-3 mb-3">
-                <span className="bg-[#d4220a] text-white font-sans text-xs font-bold px-2 py-1 flex-shrink-0">TOP PICK</span>
-                <div>
-                  <h3 className="font-sans text-lg font-bold text-ink">{winner}</h3>
-                  <p className="font-sans text-sm font-semibold text-[#d4220a]">{price} · {chip} · {display}</p>
-                </div>
-              </div>
-              <p className="font-sans text-sm text-muted mb-3 leading-relaxed">✓ {why}</p>
-              <p className="font-sans text-sm text-red-600 border-t border-border pt-3">⚠ {limitation}</p>
-            </div>
-          </section>
-        ))}
-
-        {/* BGMI Settings Guide */}
+        {/* BGMI fps table */}
         <section className="mb-10">
-          <h2 className="font-playfair text-2xl font-bold text-ink mb-4 pb-2 border-b border-border">Which Phones Support 90fps in BGMI?</h2>
+          <h2 className="font-playfair text-xl font-bold text-ink mb-4 pb-2 border-b border-border">Which Chipsets Support 90fps in BGMI?</h2>
           <div className="overflow-x-auto">
             <table className="w-full border-collapse font-sans text-sm">
               <thead>
                 <tr className="bg-[#1a3a5c] text-white">
                   <th className="px-3 py-2 text-left">Chipset</th>
                   <th className="px-3 py-2 text-left">Max BGMI FPS</th>
-                  <th className="px-3 py-2 text-left">Sustained (30 min)</th>
+                  <th className="px-3 py-2 text-left">Sustained 30 min</th>
                   <th className="px-3 py-2 text-left">India Price Range</th>
                 </tr>
               </thead>
@@ -155,7 +95,50 @@ export default async function BestGamingPhonesIndiaPage() {
           </div>
         </section>
 
-        {/* Related */}
+        {/* Dynamic articles */}
+        <section className="mb-10">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-6 h-0.5 bg-[#d4220a]" />
+            <h2 className="font-playfair text-2xl font-bold text-ink">Gaming & Performance Articles</h2>
+            {articles.length > 0 && <span className="font-sans text-xs text-muted bg-gray-100 px-2 py-0.5 rounded">{articles.length}</span>}
+          </div>
+          {articles.length === 0 ? (
+            <div className="border border-border p-8 text-center bg-white">
+              <p className="font-sans text-sm text-muted">Gaming articles coming soon. <Link href="/mobile-news" className="text-[#d4220a] hover:underline">Browse all mobile news →</Link></p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {articles.map(article => (
+                <Link key={article.slug} href={`/${article.slug}`}
+                  className="bg-white border border-border hover:border-[#d4220a] transition-colors group block">
+                  {article.featuredImage && (
+                    <div className="relative overflow-hidden" style={{ paddingBottom: '56.25%' }}>
+                      <img src={article.featuredImage} alt={article.title} width={400} height={225} loading="lazy"
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
+                      <span className="absolute top-2 left-2 bg-[#d4220a] text-white font-sans text-[9px] font-bold px-2 py-0.5 uppercase tracking-wider z-10">
+                        {article.type === 'review' ? 'Review' : article.type === 'compare' ? 'Compare' : 'News'}
+                      </span>
+                    </div>
+                  )}
+                  <div className="p-3">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className="font-sans text-[10px] font-bold text-[#d4220a] uppercase tracking-wide">{article.brand}</span>
+                      <span className="font-sans text-[10px] text-muted ml-auto">{formatPillarDate(article.publishDate)}</span>
+                    </div>
+                    <h3 className="font-sans text-sm font-bold text-ink leading-snug group-hover:text-[#d4220a] transition-colors line-clamp-2 mb-1">{article.title}</h3>
+                    <p className="font-sans text-xs text-muted line-clamp-2">{article.summary}</p>
+                    <div className="mt-2 flex justify-between">
+                      <span className="font-sans text-[10px] text-muted">{article.readTime} min read</span>
+                      <span className="font-sans text-xs font-semibold text-[#d4220a]">Read →</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
+
         <section className="mt-8 pt-6 border-t border-border">
           <h2 className="font-playfair text-xl font-bold text-ink mb-4">Related Guides</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -174,7 +157,7 @@ export default async function BestGamingPhonesIndiaPage() {
 
         <div className="mt-8 bg-[#f8f4ef] border-l-4 border-[#d4220a] p-5">
           <p className="font-sans text-xs font-bold text-[#d4220a] uppercase tracking-wider mb-2">Editorial Note</p>
-          <p className="font-sans text-sm text-muted">Rankings based on BGMI and gaming benchmark data from published reviews, sustained performance testing, and India-specific thermal testing in summer conditions. Updated March 2026. By Vijay Yadav, The Tech Bharat.</p>
+          <p className="font-sans text-sm text-muted">Articles fetched in real-time from The Tech Bharat's published content. Rankings based on sustained performance testing and India-specific thermal conditions. By Vijay Yadav.</p>
         </div>
 
       </div>
