@@ -1,6 +1,10 @@
 // app/android-battery-health-guide/page.tsx
 import { Metadata } from 'next'
 import Link from 'next/link'
+import { getPillarArticles } from '@/lib/pillar-utils'
+import PillarArticleGrid from '@/components/PillarArticleGrid'
+
+export const revalidate = 3600
 
 export const metadata: Metadata = {
   title: 'Android Battery Health Guide India 2026 — Charging Tips | The Tech Bharat',
@@ -25,7 +29,8 @@ const faqSchema = {
   ],
 }
 
-export default function AndroidBatteryHealthGuidePage() {
+export default async function AndroidBatteryHealthGuidePage() {
+  const batteryArticles = await getPillarArticles(['battery', 'charging', 'fast charge', 'mAh', 'battery life'], [], 10)
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
@@ -181,7 +186,13 @@ export default function AndroidBatteryHealthGuidePage() {
               </div>
             </section>
 
-            {/* Related */}
+            <PillarArticleGrid
+            articles={batteryArticles}
+            title="Battery & Charging Articles"
+            emptyMessage="No related articles yet — check back after new articles are published."
+          />
+
+                    {/* Related */}
             <section className="pt-6 border-t border-border">
               <h2 className="font-playfair text-xl font-bold text-ink mb-4">Related Guides</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

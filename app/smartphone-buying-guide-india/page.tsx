@@ -1,6 +1,10 @@
 // app/smartphone-buying-guide-india/page.tsx
 import { Metadata } from 'next'
 import Link from 'next/link'
+import { getPillarArticles } from '@/lib/pillar-utils'
+import PillarArticleGrid from '@/components/PillarArticleGrid'
+
+export const revalidate = 3600
 
 export const metadata: Metadata = {
   title: 'Smartphone Buying Guide India 2026 | The Tech Bharat',
@@ -36,7 +40,8 @@ const breadcrumbSchema = {
   ],
 }
 
-export default function SmartphoneBuyingGuidePage() {
+export default async function SmartphoneBuyingGuidePage() {
+  const guideArticles = await getPillarArticles(['buying guide', 'how to choose', 'best phone', 'worth buying', 'india', 'review'], [], 12)
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />

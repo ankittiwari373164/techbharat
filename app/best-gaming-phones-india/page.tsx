@@ -1,6 +1,10 @@
 // app/best-gaming-phones-india/page.tsx
 import { Metadata } from 'next'
 import Link from 'next/link'
+import { getPillarArticles } from '@/lib/pillar-utils'
+import PillarArticleGrid from '@/components/PillarArticleGrid'
+
+export const revalidate = 3600
 
 export const metadata: Metadata = {
   title: 'Best Gaming Phones in India 2026 — BGMI, COD Mobile | The Tech Bharat',
@@ -14,7 +18,8 @@ export const metadata: Metadata = {
   },
 }
 
-export default function BestGamingPhonesIndiaPage() {
+export default async function BestGamingPhonesIndiaPage() {
+  const gamingArticles = await getPillarArticles(['gaming', 'BGMI', 'game', 'fps', 'performance', 'processor'], [], 10)
   return (
     <div className="bg-paper min-h-screen">
       <div className="max-w-4xl mx-auto px-4 py-10">
@@ -63,6 +68,7 @@ export default function BestGamingPhonesIndiaPage() {
             title: 'Best Gaming Phone Under ₹20,000',
             winner: 'Poco X6',
             price: '~₹18,999',
+            articleSlug: null,
             chip: 'Snapdragon 7s Gen 2',
             display: '6.67" AMOLED, 120Hz',
             why: 'The most sustained gaming performance under ₹20K. Poco\'s gaming mode disables background processes aggressively, maintaining 60fps in BGMI at high settings consistently. The 120Hz AMOLED is genuinely sharp for the price.',
@@ -72,6 +78,7 @@ export default function BestGamingPhonesIndiaPage() {
             title: 'Best Gaming Phone ₹20,000 – ₹35,000',
             winner: 'iQOO Neo 10',
             price: '~₹34,999',
+            articleSlug: '/iqoo-z11-review-9020mah-battery-beast',
             chip: 'Snapdragon 8 Gen 3',
             display: '6.78" AMOLED, 144Hz',
             why: 'iQOO builds phones specifically for gaming — the Neo 10 brings a flagship Snapdragon 8 Gen 3 to ₹35K with dedicated shoulder triggers, 144Hz display, and vapour chamber cooling. BGMI at 90fps is sustained without throttling for 45+ minutes.',
@@ -81,6 +88,7 @@ export default function BestGamingPhonesIndiaPage() {
             title: 'Best Gaming Phone ₹35,000 – ₹60,000',
             winner: 'OnePlus 13R',
             price: '~₹39,999',
+            articleSlug: null,
             chip: 'Snapdragon 8 Gen 2',
             display: '6.78" AMOLED, 120Hz',
             why: 'Snapdragon 8 Gen 2 with OnePlus\'s thermal management delivers excellent sustained gaming performance. The 5,500mAh battery handles long sessions. OxygenOS gaming mode is clean and effective. Genuinely well-rounded — not just a gaming phone but a great daily driver that games well.',
@@ -90,6 +98,7 @@ export default function BestGamingPhonesIndiaPage() {
             title: 'Best Gaming Phone Above ₹60,000',
             winner: 'ASUS ROG Phone 8',
             price: '~₹79,999',
+            articleSlug: null,
             chip: 'Snapdragon 8 Gen 3',
             display: '6.78" AMOLED, 165Hz',
             why: 'The dedicated gaming phone for serious Indian mobile gamers. Active cooling fan (AeroActive Cooler accessory), AirTrigger shoulder buttons, 165Hz display, GameCool 8 thermal system, and ASUS\'s Game Genie overlay. No other phone sustains 90fps in demanding titles as consistently in Indian summer conditions.',
