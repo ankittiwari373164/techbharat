@@ -1,7 +1,7 @@
 // app/smartphone-buying-guide-india/page.tsx
 import { Metadata } from 'next'
 import Link from 'next/link'
-import { getPillarArticles } from '@/lib/pillar-utils'
+import { getPillarArticles, formatPillarDate } from '@/lib/pillar-utils'
 import PillarArticleGrid from '@/components/PillarArticleGrid'
 
 export const revalidate = 3600
