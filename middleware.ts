@@ -11,10 +11,26 @@ import { NextRequest, NextResponse } from 'next/server'
 
 // Known top-level pages — these must NOT be treated as article slugs
 const TOP_LEVEL_ROUTES = new Set([
+  // Core nav pages
   'mobile-news', 'reviews', 'compare', 'web-stories',
+  // Static pages
   'about', 'contact', 'privacy-policy', 'disclaimer', 'terms',
   'editorial-policy', 'corrections-policy', 'author',
+  // System
   'admin', 'api', '_next', 'sitemap.xml', 'robots.txt',
+  // Evergreen pillar pages
+  'smartphone-buying-guide-india',
+  'best-smartphones-india',
+  'best-camera-phones-india',
+  'best-battery-backup-phones-india',
+  'android-battery-health-guide',
+  'best-gaming-phones-india',
+  'phone-comparison-guide-india',
+  'best-phones-for-students-india',
+  'best-phones-for-working-professionals',
+  'iphone-buying-guide-india',
+  'used-refurbished-phone-buying-guide-india',
+  'guides',
 ])
 
 function isArticleSlug(pathname: string): boolean {
