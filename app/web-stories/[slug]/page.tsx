@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -9,12 +9,10 @@ interface WebStory { id:string; slug:string; title:string; brand:string; categor
 
 export default function StoryViewer() {
   const params               = useParams()
-  const router               = useRouter()
   const [story,setStory]     = useState<WebStory|null>(null)
   const [current,setCurrent] = useState(0)
   const [loading,setLoading] = useState(true)
   const [paused,setPaused]   = useState(false)
-  // Key used to force progress bar animation restart on every slide change
   const [progressKey,setProgressKey] = useState(0)
 
   useEffect(()=>{
@@ -24,7 +22,6 @@ export default function StoryViewer() {
       .catch(()=>setLoading(false))
   },[params.slug])
 
-  // Preload adjacent slides so images are ready before the user taps next
   useEffect(()=>{
     if (!story) return
     const toPreload = [current+1, current+2, current-1]
@@ -37,7 +34,6 @@ export default function StoryViewer() {
     })
   },[current, story])
 
-  // Auto-advance slides every 5s
   useEffect(()=>{
     if (!story||paused) return
     const t = setTimeout(()=>{
@@ -58,20 +54,21 @@ export default function StoryViewer() {
   },[current,story])
 
   const handleTap = (e: React.MouseEvent) => {
-    const x = e.clientX / window.innerWidth
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+    const x = (e.clientX - rect.left) / rect.width
     if (x < 0.35) prev()
     else if (x > 0.65) next()
     else setPaused(p=>!p)
   }
 
   if (loading) return (
-    <div className="fixed inset-0 bg-black flex items-center justify-center">
+    <div className="fixed inset-0 bg-black z-50 flex items-center justify-center">
       <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"/>
     </div>
   )
 
   if (!story) return (
-    <div className="fixed inset-0 bg-black flex flex-col items-center justify-center text-white">
+    <div className="fixed inset-0 bg-black z-50 flex flex-col items-center justify-center text-white">
       <p className="text-xl font-bold mb-4">Story not found</p>
       <Link href="/web-stories" className="text-[#d4220a] hover:underline">← Back to stories</Link>
     </div>
@@ -80,7 +77,7 @@ export default function StoryViewer() {
   const slide = story.slides[current]
 
   return (
-    <div className="fixed inset-0 bg-black select-none overflow-hidden" onClick={handleTap} style={{touchAction:'none'}}>
+    <div className="fixed inset-0 bg-black z-50 select-none overflow-hidden" onClick={handleTap} style={{touchAction:'none'}}>
       {/* Background image */}
       {slide.imageUrl ? (
         <img
@@ -93,13 +90,13 @@ export default function StoryViewer() {
         <div className="absolute inset-0 bg-gradient-to-br from-[#1a3a5c] to-[#0d0d0d]"/>
       )}
 
-      {/* Dark overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/50"/>
+      {/* Dark overlay gradient */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-black/40 z-5"/>
 
       {/* Progress bars */}
-      <div className="absolute top-3 left-3 right-3 flex gap-1 z-10">
+      <div className="absolute top-4 left-4 right-4 flex gap-1.5 z-20">
         {story.slides.map((_,i)=>(
-          <div key={i} className="flex-1 h-1 bg-white/30 rounded-full overflow-hidden">
+          <div key={i} className="flex-1 h-1 bg-white/40 rounded-full overflow-hidden">
             <div
               className="h-full bg-white rounded-full"
               style={
@@ -111,16 +108,15 @@ export default function StoryViewer() {
                       : { width: 'var(--paused-width, 0%)', animationPlayState: 'paused' })
                   : { width: '0%' }
               }
-              // Use key on the active bar to restart animation on every slide change
               key={i === current ? `bar-${progressKey}` : i}
             />
           </div>
         ))}
       </div>
 
-      {/* Header with Logo */}
-      <div className="absolute top-6 left-4 right-12 flex items-center gap-2 z-10">
-        <div className="w-10 h-10 relative flex-shrink-0">
+      {/* Header with Brand Logo and Info */}
+      <div className="absolute top-6 left-5 right-14 flex items-center gap-3 z-20">
+        <div className="w-11 h-11 relative flex-shrink-0">
           <Image
             src="/logo.png"
             alt="Logo"
@@ -129,46 +125,46 @@ export default function StoryViewer() {
             priority
           />
         </div>
-        <div className="min-w-0">
-          <p className="text-white text-xs font-bold font-sans truncate">{story.brand}</p>
-          <p className="text-white/60 text-[10px] font-sans truncate">{story.category}</p>
+        <div className="min-w-0 flex-1">
+          <p className="text-white text-sm font-bold font-sans truncate">{story.brand}</p>
+          <p className="text-white/70 text-xs font-sans truncate">{story.category}</p>
         </div>
       </div>
 
       {/* Close button */}
       <Link href="/web-stories" onClick={e=>e.stopPropagation()}
-        className="absolute top-6 right-4 z-10 w-9 h-9 bg-black/40 rounded-full flex items-center justify-center text-white text-lg hover:bg-black/60 transition-colors">
+        className="absolute top-6 right-5 z-20 w-10 h-10 bg-black/50 rounded-full flex items-center justify-center text-white text-2xl hover:bg-black/70 transition-colors">
         ✕
       </Link>
 
       {/* Pause indicator */}
       {paused && (
-        <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
-          <div className="w-16 h-16 bg-black/50 rounded-full flex items-center justify-center backdrop-blur">
+        <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
+          <div className="w-16 h-16 bg-black/60 rounded-full flex items-center justify-center backdrop-blur-sm">
             <span className="text-white text-3xl">⏸</span>
           </div>
         </div>
       )}
 
-      {/* Slide content */}
-      <div className="absolute bottom-0 left-0 right-0 p-6 z-10">
+      {/* Bottom content - Slide information */}
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 to-transparent pt-20 pb-8 px-6 z-20">
         {slide.headline && (
-          <h2 className="font-playfair text-3xl md:text-4xl font-bold text-white leading-tight mb-3">
+          <h2 className="font-playfair text-4xl md:text-5xl font-bold text-white leading-tight mb-4">
             {slide.headline}
           </h2>
         )}
         {slide.body && (
-          <p className="font-sans text-sm md:text-base text-white/85 leading-relaxed mb-4">
+          <p className="font-sans text-base md:text-lg text-white/90 leading-relaxed mb-6">
             {slide.body}
           </p>
         )}
         {slide.ctaText && slide.ctaLink && (
           <a href={slide.ctaLink} onClick={e=>e.stopPropagation()}
-            className="inline-block bg-[#d4220a] text-white font-sans font-bold text-sm md:text-base px-6 py-3 rounded-full hover:bg-[#b81d09] transition-colors w-fit">
+            className="inline-block bg-[#d4220a] text-white font-sans font-bold text-base md:text-lg px-7 py-3 rounded-full hover:bg-[#b81d09] transition-colors w-fit mb-6">
             {slide.ctaText} →
           </a>
         )}
-        <p className="text-white/40 text-xs font-sans mt-4">{current+1} / {story.slides.length}</p>
+        <p className="text-white/50 text-xs font-sans font-medium tracking-wide">{current+1} / {story.slides.length}</p>
       </div>
 
       <style>{`
