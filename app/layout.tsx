@@ -73,7 +73,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en">
       <head>
-      {/* Google Analytics GA4 */}
+        {/* Google Analytics GA4 */}
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-S7VTT9Z82Q" />
         <script
           dangerouslySetInnerHTML={{ __html: `
@@ -83,7 +83,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             gtag('config', 'G-S7VTT9Z82Q');
           `}}
         />
-                <link rel="preconnect" href="https://fonts.googleapis.com" />
+
+        {/* Google AdSense */}
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4463674323364072"
+          crossOrigin="anonymous"
+        />
+
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
           href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,400&family=DM+Sans:wght@400;500;600;700&display=swap"
