@@ -31,6 +31,7 @@ interface Review {
   date: string
 }
 
+
 // Auto internal link keywords
 const LINK_RULES: { pattern: RegExp; href: string }[] = [
   { pattern: /\b(Samsung)\b/gi,   href: '/mobile-news?brand=Samsung' },

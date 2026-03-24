@@ -7,12 +7,14 @@ interface StorySlide { id:string; headline:string; body:string; imageUrl:string;
 interface WebStory { id:string; slug:string; title:string; brand:string; category:string; coverImage:string; slides:StorySlide[]; publishDate:string; isPublished:boolean; tags:string[] }
 
 export default function StoryViewer() {
-  const params             = useParams()
-  const router             = useRouter()
-  const [story,setStory]   = useState<WebStory|null>(null)
+  const params               = useParams()
+  const router               = useRouter()
+  const [story,setStory]     = useState<WebStory|null>(null)
   const [current,setCurrent] = useState(0)
   const [loading,setLoading] = useState(true)
   const [paused,setPaused]   = useState(false)
+  // Key used to force progress bar animation restart on every slide change
+  const [progressKey,setProgressKey] = useState(0)
 
   useEffect(()=>{
     fetch(`/api/stories/${params.slug}`)
@@ -21,17 +23,38 @@ export default function StoryViewer() {
       .catch(()=>setLoading(false))
   },[params.slug])
 
+  // Preload adjacent slides so images are ready before the user taps next
+  useEffect(()=>{
+    if (!story) return
+    const toPreload = [current+1, current+2, current-1]
+      .filter(i => i >= 0 && i < story.slides.length)
+    toPreload.forEach(i => {
+      if (story.slides[i]?.imageUrl) {
+        const img = new window.Image()
+        img.src = story.slides[i].imageUrl
+      }
+    })
+  },[current, story])
+
   // Auto-advance slides every 5s
   useEffect(()=>{
     if (!story||paused) return
     const t = setTimeout(()=>{
-      if (current < story.slides.length-1) setCurrent(c=>c+1)
+      if (current < story.slides.length-1) {
+        setCurrent(c=>c+1)
+        setProgressKey(k=>k+1)
+      }
     }, 5000)
     return ()=>clearTimeout(t)
   },[current,story,paused])
 
-  const prev = useCallback(()=>{ if(current>0) setCurrent(c=>c-1) },[current])
-  const next = useCallback(()=>{ if(story && current<story.slides.length-1) setCurrent(c=>c+1) },[current,story])
+  const prev = useCallback(()=>{
+    if (current>0) { setCurrent(c=>c-1); setProgressKey(k=>k+1) }
+  },[current])
+
+  const next = useCallback(()=>{
+    if (story && current<story.slides.length-1) { setCurrent(c=>c+1); setProgressKey(k=>k+1) }
+  },[current,story])
 
   const handleTap = (e: React.MouseEvent) => {
     const x = e.clientX / window.innerWidth
@@ -59,7 +82,12 @@ export default function StoryViewer() {
     <div className="fixed inset-0 bg-black select-none" onClick={handleTap} style={{touchAction:'none'}}>
       {/* Background image */}
       {slide.imageUrl ? (
-        <img src={slide.imageUrl} alt={slide.headline} className="absolute inset-0 w-full h-full object-cover"/>
+        <img
+          key={slide.id}
+          src={slide.imageUrl}
+          alt={slide.headline}
+          className="absolute inset-0 w-full h-full object-cover"
+        />
       ) : (
         <div className="absolute inset-0 bg-gradient-to-br from-[#1a3a5c] to-[#0d0d0d]"/>
       )}
@@ -71,8 +99,20 @@ export default function StoryViewer() {
       <div className="absolute top-3 left-3 right-3 flex gap-1 z-10">
         {story.slides.map((_,i)=>(
           <div key={i} className="flex-1 h-0.5 bg-white/30 rounded-full overflow-hidden">
-            <div className={`h-full bg-white rounded-full transition-all duration-300 ${i<current?'w-full':i===current?'w-full':'w-0'}`}
-              style={i===current&&!paused?{animation:'progress 5s linear forwards'}:{}}/>
+            <div
+              className="h-full bg-white rounded-full"
+              style={
+                i < current
+                  ? { width: '100%' }
+                  : i === current
+                  ? (!paused
+                      ? { width: '0%', animation: 'progress 5s linear forwards' }
+                      : { width: 'var(--paused-width, 0%)', animationPlayState: 'paused' })
+                  : { width: '0%' }
+              }
+              // Use key on the active bar to restart animation on every slide change
+              key={i === current ? `bar-${progressKey}` : i}
+            />
           </div>
         ))}
       </div>
@@ -117,11 +157,9 @@ export default function StoryViewer() {
             {slide.ctaText} →
           </a>
         )}
-        {/* Slide counter */}
         <p className="text-white/40 text-xs font-sans mt-3">{current+1} / {story.slides.length}</p>
       </div>
 
-      {/* Tap zones hint on first view */}
       <style>{`
         @keyframes progress { from { width: 0% } to { width: 100% } }
       `}</style>

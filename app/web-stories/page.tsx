@@ -38,7 +38,7 @@ export default async function WebStoriesPage() {
           {stories.map(story => (
             <Link key={story.id} href={`/web-stories/${story.slug}`}
               className="group block relative overflow-hidden rounded-xl shadow-md hover:shadow-xl transition-all cursor-pointer"
-              style={{ paddingBottom: '177%' }}>
+              style={{ paddingBottom: '177.78%' }}>
               {story.coverImage ? (
                 <img src={story.coverImage} alt={story.title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
               ) : (
