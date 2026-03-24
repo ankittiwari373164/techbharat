@@ -77,24 +77,26 @@ export default function StoryViewer() {
   const slide = story.slides[current]
 
   return (
-    <div className="fixed inset-0 bg-black z-50 select-none overflow-hidden" onClick={handleTap} style={{touchAction:'none'}}>
-      {/* Background image */}
-      {slide.imageUrl ? (
-        <img
-          key={slide.id}
-          src={slide.imageUrl}
-          alt={slide.headline}
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-      ) : (
-        <div className="absolute inset-0 bg-gradient-to-br from-[#1a3a5c] to-[#0d0d0d]"/>
-      )}
+    <div className="fixed inset-0 bg-black/95 z-50 select-none overflow-hidden flex items-center justify-center" onClick={handleTap} style={{touchAction:'none'}}>
+      {/* Desktop: Centered 9:16 modal, Mobile: Full-screen */}
+      <div className="w-full h-full md:w-[360px] md:h-auto md:aspect-[9/16] md:rounded-xl md:shadow-2xl relative bg-black overflow-hidden">
+        {/* Background image */}
+        {slide.imageUrl ? (
+          <img
+            key={slide.id}
+            src={slide.imageUrl}
+            alt={slide.headline}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-[#1a3a5c] to-[#0d0d0d]"/>
+        )}
 
-      {/* Dark overlay gradient */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-black/40 z-5"/>
+        {/* Dark overlay gradient */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-black/40 z-5"/>
 
-      {/* Progress bars */}
-      <div className="absolute top-4 left-4 right-4 flex gap-1.5 z-20">
+        {/* Progress bars */}
+        <div className="absolute top-4 left-4 right-4 flex gap-1.5 z-20">
         {story.slides.map((_,i)=>(
           <div key={i} className="flex-1 h-1 bg-white/40 rounded-full overflow-hidden">
             <div
@@ -167,9 +169,10 @@ export default function StoryViewer() {
         <p className="text-white/50 text-xs font-sans font-medium tracking-wide">{current+1} / {story.slides.length}</p>
       </div>
 
-      <style>{`
-        @keyframes progress { from { width: 0% } to { width: 100% } }
-      `}</style>
+        <style>{`
+          @keyframes progress { from { width: 0% } to { width: 100% } }
+        `}</style>
+      </div>
     </div>
   )
 }
