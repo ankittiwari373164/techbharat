@@ -1,70 +1,180 @@
-import { getPublishedStoriesAsync } from '@/lib/stories-store'
+'use client'
+import { useState, useEffect, useCallback } from 'react'
+import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import type { Metadata } from 'next'
 
-export const metadata: Metadata = {
-  title: 'Web Stories – Mobile Tech Stories India',
-  description: 'Tap through visual web stories about the latest mobile technology, phone launches, and smartphone news.',
-}
+interface StorySlide { id:string; headline:string; body:string; imageUrl:string; ctaText?:string; ctaLink?:string }
+interface WebStory { id:string; slug:string; title:string; brand:string; category:string; coverImage:string; slides:StorySlide[]; publishDate:string; isPublished:boolean; tags:string[] }
 
-export const revalidate = 60
+export default function StoryViewer() {
+  const params               = useParams()
+  const router               = useRouter()
+  const [story,setStory]     = useState<WebStory|null>(null)
+  const [current,setCurrent] = useState(0)
+  const [loading,setLoading] = useState(true)
+  const [paused,setPaused]   = useState(false)
+  // Key used to force progress bar animation restart on every slide change
+  const [progressKey,setProgressKey] = useState(0)
 
-export default async function WebStoriesPage() {
-  const stories = await getPublishedStoriesAsync()
+  useEffect(()=>{
+    fetch(`/api/stories/${params.slug}`)
+      .then(r=>r.json())
+      .then(d=>{ setStory(d.story||null); setLoading(false) })
+      .catch(()=>setLoading(false))
+  },[params.slug])
+
+  // Preload adjacent slides so images are ready before the user taps next
+  useEffect(()=>{
+    if (!story) return
+    const toPreload = [current+1, current+2, current-1]
+      .filter(i => i >= 0 && i < story.slides.length)
+    toPreload.forEach(i => {
+      if (story.slides[i]?.imageUrl) {
+        const img = new window.Image()
+        img.src = story.slides[i].imageUrl
+      }
+    })
+  },[current, story])
+
+  // Auto-advance slides every 5s
+  useEffect(()=>{
+    if (!story||paused) return
+    const t = setTimeout(()=>{
+      if (current < story.slides.length-1) {
+        setCurrent(c=>c+1)
+        setProgressKey(k=>k+1)
+      }
+    }, 5000)
+    return ()=>clearTimeout(t)
+  },[current,story,paused])
+
+  const prev = useCallback(()=>{
+    if (current>0) { setCurrent(c=>c-1); setProgressKey(k=>k+1) }
+  },[current])
+
+  const next = useCallback(()=>{
+    if (story && current<story.slides.length-1) { setCurrent(c=>c+1); setProgressKey(k=>k+1) }
+  },[current,story])
+
+  const handleTap = (e: React.MouseEvent) => {
+    const x = e.clientX / window.innerWidth
+    if (x < 0.35) prev()
+    else if (x > 0.65) next()
+    else setPaused(p=>!p)
+  }
+
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-screen bg-black">
+      <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"/>
+    </div>
+  )
+
+  if (!story) return (
+    <div className="flex items-center justify-center min-h-screen bg-black">
+      <div className="flex flex-col items-center justify-center text-white px-6">
+        <p className="text-xl font-bold mb-4">Story not found</p>
+        <Link href="/web-stories" className="text-[#d4220a] hover:underline">← Back to stories</Link>
+      </div>
+    </div>
+  )
+
+  const slide = story.slides[current]
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="border-b-2 border-[#d4220a] mb-8 pb-4">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-8 h-8 bg-[#d4220a] flex items-center justify-center">
-            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-          </div>
-          <h1 className="font-playfair text-3xl font-bold text-ink">Web Stories</h1>
-        </div>
-        <p className="font-sans text-sm text-muted">Tap through visual stories about the latest mobile tech</p>
-      </div>
+    <div className="flex items-center justify-center min-h-screen bg-black px-4 py-4">
+      {/* 9:16 Container (portrait, mobile-optimized) */}
+      <div className="relative w-full max-w-[360px] h-[640px] md:h-screen md:max-h-screen md:aspect-[9/16] bg-black rounded-2xl md:rounded-none overflow-hidden shadow-2xl md:shadow-none" 
+        onClick={handleTap} 
+        style={{touchAction:'none'}}>
+        
+        {/* Background image */}
+        {slide.imageUrl ? (
+          <img
+            key={slide.id}
+            src={slide.imageUrl}
+            alt={slide.headline}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-[#1a3a5c] to-[#0d0d0d]"/>
+        )}
 
-      {stories.length === 0 ? (
-        <div className="text-center py-20">
-          <p className="text-6xl mb-4">📖</p>
-          <p className="font-playfair text-2xl font-bold mb-3">Stories Coming Soon</p>
-          <p className="font-sans text-muted">Check back soon for visual stories about the latest phones.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-          {stories.map(story => (
-            <Link key={story.id} href={`/web-stories/${story.slug}`}
-              className="group block relative overflow-hidden rounded-xl shadow-md hover:shadow-xl transition-all cursor-pointer"
-              style={{ paddingBottom: '177.78%' }}>
-              {story.coverImage ? (
-                <img src={story.coverImage} alt={story.title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
-              ) : (
-                <div className="absolute inset-0 bg-gradient-to-br from-[#1a3a5c] to-[#0d0d0d] flex items-center justify-center">
-                  <span className="text-4xl">📱</span>
-                </div>
-              )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"/>
-              <div className="absolute top-3 left-3 right-3 flex gap-1">
-                {story.slides.slice(0,5).map((_,i) => <div key={i} className={`flex-1 h-0.5 rounded-full ${i===0?'bg-white':'bg-white/40'}`}/>)}
-              </div>
-              <div className="absolute top-7 left-3 flex items-center gap-1.5">
-                <div className="w-6 h-6 rounded-full bg-white/20 border border-white/50 flex items-center justify-center">
-                  <span className="text-white text-[7px] font-bold leading-none">TB</span>
-                </div>
-                <span className="text-white text-[10px] font-semibold font-sans">{story.brand}</span>
-              </div>
-              <div className="absolute bottom-0 left-0 right-0 p-3">
-                <span className="font-sans text-[8px] font-bold text-[#d4220a] uppercase tracking-wider bg-black/40 px-1.5 py-0.5">{story.category}</span>
-                <p className="font-sans text-xs font-bold text-white mt-1.5 leading-tight line-clamp-3">{story.title}</p>
-                <p className="text-white/60 text-[9px] font-sans mt-1">{story.slides.length} slides · Tap to view</p>
-              </div>
-            </Link>
+        {/* Dark overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/50"/>
+
+        {/* Progress bars */}
+        <div className="absolute top-3 left-3 right-3 flex gap-1 z-10">
+          {story.slides.map((_,i)=>(
+            <div key={i} className="flex-1 h-1 bg-white/30 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-white rounded-full"
+                style={
+                  i < current
+                    ? { width: '100%' }
+                    : i === current
+                    ? (!paused
+                        ? { width: '0%', animation: 'progress 5s linear forwards' }
+                        : { width: 'var(--paused-width, 0%)', animationPlayState: 'paused' })
+                    : { width: '0%' }
+                }
+                // Use key on the active bar to restart animation on every slide change
+                key={i === current ? `bar-${progressKey}` : i}
+              />
+            </div>
           ))}
         </div>
-      )}
+
+        {/* Header */}
+        <div className="absolute top-6 left-4 right-12 flex items-center gap-2 z-10">
+          <div className="w-10 h-10 rounded-full bg-white/20 border border-white/50 flex items-center justify-center flex-shrink-0">
+            <span className="text-white text-[11px] font-bold">TB</span>
+          </div>
+          <div className="min-w-0">
+            <p className="text-white text-xs font-bold font-sans truncate">{story.brand}</p>
+            <p className="text-white/60 text-[10px] font-sans truncate">{story.category}</p>
+          </div>
+        </div>
+
+        {/* Close button */}
+        <Link href="/web-stories" onClick={e=>e.stopPropagation()}
+          className="absolute top-6 right-4 z-10 w-9 h-9 bg-black/40 rounded-full flex items-center justify-center text-white text-lg hover:bg-black/60 transition-colors">
+          ✕
+        </Link>
+
+        {/* Pause indicator */}
+        {paused && (
+          <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
+            <div className="w-16 h-16 bg-black/50 rounded-full flex items-center justify-center backdrop-blur">
+              <span className="text-white text-3xl">⏸</span>
+            </div>
+          </div>
+        )}
+
+        {/* Slide content */}
+        <div className="absolute bottom-0 left-0 right-0 p-6 z-10 max-h-[50%] flex flex-col justify-end">
+          {slide.headline && (
+            <h2 className="font-playfair text-3xl md:text-4xl font-bold text-white leading-tight mb-3 line-clamp-4">
+              {slide.headline}
+            </h2>
+          )}
+          {slide.body && (
+            <p className="font-sans text-sm md:text-base text-white/85 leading-relaxed mb-4 line-clamp-3">
+              {slide.body}
+            </p>
+          )}
+          {slide.ctaText && slide.ctaLink && (
+            <a href={slide.ctaLink} onClick={e=>e.stopPropagation()}
+              className="inline-block bg-[#d4220a] text-white font-sans font-bold text-sm md:text-base px-6 py-3 rounded-full hover:bg-[#b81d09] transition-colors w-fit">
+              {slide.ctaText} →
+            </a>
+          )}
+          <p className="text-white/40 text-xs font-sans mt-4">{current+1} / {story.slides.length}</p>
+        </div>
+
+        <style>{`
+          @keyframes progress { from { width: 0% } to { width: 100% } }
+        `}</style>
+      </div>
     </div>
   )
 }
