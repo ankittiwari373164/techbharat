@@ -14,11 +14,17 @@ Disallow: /api/admin/
 Disallow: /api/scheduler
 Disallow: /api/seo-cron
 Disallow: /api/fetch
+Disallow: /api/img
 Disallow: /private/
+Disallow: /article/
+Disallow: /default
+Disallow: /feeds/
 
-# Allow image proxy — critical for Google to index article images
-# Allow article API — used for SSR content rendering
-# Block only admin/internal APIs
+# /api/image/ = Unsplash proxy — allow so Google can load article images
+# /api/img    = Old image proxy format — block (not real pages)
+# /article/   = Old article URL format — block (canonical is /<slug>)
+# /default    = Soft 404 page — block from indexing
+# /feeds/     = Old RSS/Blogger feeds — block
 
 Sitemap: ${SITE_URL}/sitemap.xml`
 

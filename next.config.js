@@ -35,6 +35,18 @@ const nextConfig = {
         destination: '/:slug',
         permanent: true,
       },
+      // Fix: /default soft 404 page → redirect to home
+      {
+        source: '/default',
+        destination: '/',
+        permanent: true,
+      },
+      // Fix: /api/img proxy URLs shouldn't be crawled as pages
+      {
+        source: '/api/img',
+        destination: '/',
+        permanent: false,
+      },
     ]
   },
   async headers() {
