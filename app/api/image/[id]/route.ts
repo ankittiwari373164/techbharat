@@ -50,7 +50,7 @@ export async function GET(
           try {
             const { Redis } = await import('@upstash/redis')
             const redis = Redis.fromEnv()
-            await redis.set(`${IMG_KEY_PREFIX}${id}`, imageUrl, { ex: 60 * 60 * 24 * 30 }) // 30 days
+            await redis.set(`${IMG_KEY_PREFIX}${id}`, imageUrl, { ex: 60 * 60 * 24 * 365 }) // 1 year
           } catch { /* non-fatal */ }
         }
       }
@@ -58,7 +58,8 @@ export async function GET(
   }
 
   if (!imageUrl) {
-    return new NextResponse('Image not found', { status: 404 })
+    // Fallback to site OG image rather than broken image
+    return NextResponse.redirect('https://thetechbharat.com/og-image.jpg', { status: 302 })
   }
 
   // 3. Fetch the actual image server-side (Unsplash URL never reaches the browser)
@@ -74,7 +75,29 @@ export async function GET(
     })
 
     if (!imgRes.ok) {
-      return new NextResponse('Failed to fetch image', { status: 502 })
+      // Unsplash URL may have expired — try fetching fresh from Unsplash API
+      if (UNSPLASH_ACCESS_KEY) {
+        try {
+          const refreshRes = await fetch(`https://api.unsplash.com/photos/${id}`, {
+            headers: { Authorization: `Client-ID ${UNSPLASH_ACCESS_KEY}` },
+          })
+          if (refreshRes.ok) {
+            const data = await refreshRes.json()
+            const freshUrl = data.urls?.regular || ''
+            if (freshUrl) {
+              // Update Redis with fresh URL
+              try {
+                const { Redis } = await import('@upstash/redis')
+                const redis = Redis.fromEnv()
+                await redis.set(`${IMG_KEY_PREFIX}${id}`, freshUrl, { ex: 60 * 60 * 24 * 365 })
+              } catch { /* non-fatal */ }
+              // Redirect to fresh URL via our own proxy (recursive but correct)
+              return NextResponse.redirect(`https://thetechbharat.com/api/image/${id}`, { status: 302 })
+            }
+          }
+        } catch { /* fall through to fallback */ }
+      }
+      return NextResponse.redirect('https://thetechbharat.com/og-image.jpg', { status: 302 })
     }
 
     const contentType = imgRes.headers.get('content-type') || 'image/jpeg'
@@ -92,6 +115,6 @@ export async function GET(
       },
     })
   } catch {
-    return new NextResponse('Image fetch failed', { status: 502 })
+    return NextResponse.redirect('https://thetechbharat.com/og-image.jpg', { status: 302 })
   }
 }

@@ -1,27 +1,64 @@
+// app/api/img/route.ts
 import { NextRequest, NextResponse } from 'next/server'
-export const runtime = 'edge'
+
+export const dynamic = 'force-dynamic'
+
+const UNSPLASH_KEY = process.env.UNSPLASH_ACCESS_KEY || ''
+
 export async function GET(request: NextRequest) {
-  const url = request.nextUrl.searchParams.get('u')
-  if (!url) return new NextResponse('Missing url', { status: 400 })
-  // Only allow known image hosts
-  const allowed = ['images.unsplash.com', 'picsum.photos', 'source.unsplash.com', 'plus.unsplash.com']
+  const { searchParams } = new URL(request.url)
+  const url = searchParams.get('url')
+
+  if (!url) {
+    return new NextResponse('Missing url param', { status: 400 })
+  }
+
+  let targetUrl: string
   try {
-    const parsed = new URL(url)
-    if (!allowed.includes(parsed.hostname)) {
-      return new NextResponse('Not allowed', { status: 403 })
-    }
+    targetUrl = decodeURIComponent(url)
   } catch {
     return new NextResponse('Invalid url', { status: 400 })
   }
-  const res = await fetch(url, { headers: { 'Accept': 'image/*' } })
-  if (!res.ok) return new NextResponse('Fetch failed', { status: 502 })
-  const contentType = res.headers.get('content-type') || 'image/jpeg'
-  const buffer = await res.arrayBuffer()
-  return new NextResponse(buffer, {
-    headers: {
-      'Content-Type': contentType,
-      'Cache-Control': 'public, max-age=86400, s-maxage=604800',
-      'CDN-Cache-Control': 'public, max-age=604800',
-    },
-  })
+
+  // Only allow images.unsplash.com and plus.unsplash.com
+  if (!targetUrl.includes('unsplash.com')) {
+    return new NextResponse('Forbidden', { status: 403 })
+  }
+
+  try {
+    const headers: Record<string, string> = {
+      'Accept': 'image/*',
+    }
+
+    // Add Authorization for Unsplash API images
+    if (UNSPLASH_KEY && targetUrl.includes('images.unsplash.com')) {
+      headers['Authorization'] = `Client-ID ${UNSPLASH_KEY}`
+    }
+
+    const res = await fetch(targetUrl, {
+      headers,
+      // Follow redirects (Unsplash redirects to CDN)
+      redirect: 'follow',
+    })
+
+    if (!res.ok) {
+      return new NextResponse(`Upstream error: ${res.status}`, { status: res.status })
+    }
+
+    const contentType = res.headers.get('content-type') || 'image/jpeg'
+    const buffer = await res.arrayBuffer()
+
+    return new NextResponse(buffer, {
+      status: 200,
+      headers: {
+        'Content-Type': contentType,
+        'Cache-Control': 'public, max-age=86400, s-maxage=86400',
+        'Access-Control-Allow-Origin': '*',
+        'X-Robots-Tag': 'noindex',  // Don't index image proxy URLs as pages
+      },
+    })
+  } catch (err) {
+    console.error('img proxy error:', err)
+    return new NextResponse('Proxy error', { status: 500 })
+  }
 }

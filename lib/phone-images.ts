@@ -165,7 +165,7 @@ export async function getUniqueUnsplashImage(
       if (redis) {
         try {
           await Promise.all([
-            redis.set(`${IMG_KEY_PREFIX}${id}`, rawUrl, { ex: 60 * 60 * 24 * 30 }), // 30 day TTL
+            redis.set(`${IMG_KEY_PREFIX}${id}`, rawUrl, { ex: 60 * 60 * 24 * 365 }), // 1 year TTL
             redis.set(USED_IDS_KEY, Array.from(redisUsedIds).slice(-2000)),
           ])
         } catch { /* non-fatal */ }

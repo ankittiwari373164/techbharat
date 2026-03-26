@@ -14,14 +14,14 @@ Disallow: /api/admin/
 Disallow: /api/scheduler
 Disallow: /api/seo-cron
 Disallow: /api/fetch
-Disallow: /api/img
+Allow: /api/img
 Disallow: /private/
 Disallow: /article/
 Disallow: /default
 Disallow: /feeds/
 
 # /api/image/ = Unsplash proxy — allow so Google can load article images
-# /api/img    = Old image proxy format — block (not real pages)
+# /api/img    = Old Unsplash proxy — ALLOW so images load, but add noindex header in route
 # /article/   = Old article URL format — block (canonical is /<slug>)
 # /default    = Soft 404 page — block from indexing
 # /feeds/     = Old RSS/Blogger feeds — block
