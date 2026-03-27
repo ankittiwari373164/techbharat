@@ -68,7 +68,9 @@ export function middleware(req: NextRequest) {
 
   // ── 3. Protect admin routes ──────────────────────────────────────────────
   const isAdminPage = pathname.startsWith('/admin') && !pathname.startsWith('/admin/login')
-  const isAdminApi  = pathname.startsWith('/api/admin') && !pathname.startsWith('/api/admin/login')
+  const isAdminApi  = pathname.startsWith('/api/admin')
+    && !pathname.startsWith('/api/admin/login')
+    && !pathname.startsWith('/api/admin/uploaded-image') // public — serves images to all users
 
   if (isAdminPage || isAdminApi) {
     const cookie = req.cookies.get('__tb_admin')?.value || ''
