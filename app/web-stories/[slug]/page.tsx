@@ -151,7 +151,7 @@ export default function StoryViewer() {
       {/* Bottom content - Slide information */}
       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 to-transparent pt-20 pb-8 px-6 z-20">
         {slide.headline && (
-          <h2 className="font-playfair text-4xl md:text-5xl font-bold text-white leading-tight mb-4">
+          <h2 className="font-playfair text-3xl md:text-4xl font-bold text-white leading-tight mb-4">
             {slide.headline}
           </h2>
         )}
