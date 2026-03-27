@@ -38,8 +38,6 @@ export async function POST(req: NextRequest) {
     const filename = `article-${articleId || timestamp}-${timestamp}.${ext}`
 
     // Store as base64 in Redis
-    // Key: tb:uploaded:{filename}
-    // Served at: /api/admin/uploaded-image/{filename}
     const { Redis } = await import('@upstash/redis')
     const redis = Redis.fromEnv()
 
@@ -47,23 +45,40 @@ export async function POST(req: NextRequest) {
     const key = `tb:uploaded:${filename}`
 
     // Store with 1 year TTL
-    await redis.set(key, JSON.stringify({
+    const setResult = await redis.set(key, {
       data: base64,
       type: file.type,
       size: file.size,
       uploadedAt: new Date().toISOString(),
       articleId: articleId || '',
-    }), { ex: 60 * 60 * 24 * 365 })
+    }, { ex: 60 * 60 * 24 * 365 })
 
-    const url = `${process.env.SITE_URL || 'https://thetechbharat.com'}/api/admin/uploaded-image/${filename}`
+    if (!setResult) {
+      console.error('[upload-image] Redis set returned null for key:', key)
+      return NextResponse.json({ error: 'Storage write failed' }, { status: 500 })
+    }
+
+    // Verify it was stored correctly
+    const verify = await redis.get<unknown>(key)
+    if (!verify) {
+      console.error('[upload-image] Redis verify read returned null for key:', key)
+      return NextResponse.json({ error: 'Storage verify failed' }, { status: 500 })
+    }
+
+    // Build the URL using the request's own host — this ensures correct domain
+    // regardless of SITE_URL env variable being set or not
+    const host = req.headers.get('host') || 'thetechbharat.com'
+    const protocol = host.includes('localhost') ? 'http' : 'https'
+    const url = `${protocol}://${host}/api/admin/uploaded-image/${filename}`
 
     // Update article's featuredImage in Redis
-    if (articleId) await updateArticleImage(articleId, url)
+    if (articleId && !articleId.startsWith('story-')) {
+      await updateArticleImage(articleId, url)
+    }
 
     return NextResponse.json({ url, success: true })
-
   } catch (err) {
-    console.error('Upload error:', err)
+    console.error('[upload-image] Upload error:', err)
     return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
   }
 }
@@ -79,6 +94,6 @@ async function updateArticleImage(articleId: string, imageUrl: string) {
     articles[idx].images = [imageUrl, ...(articles[idx].images || []).slice(1)]
     await saveArticlesAsync(articles)
   } catch (e) {
-    console.error('Failed to update article image in Redis:', e)
+    console.error('[upload-image] Failed to update article image in Redis:', e)
   }
 }
