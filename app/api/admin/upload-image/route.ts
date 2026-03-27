@@ -1,16 +1,12 @@
 // app/api/admin/upload-image/route.ts
-// Accepts image upload from admin panel → stores as base64 in Redis
-// Served at: /api/admin/uploaded-image/{filename}
-
 import { NextRequest, NextResponse } from 'next/server'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-const MAX_SIZE = 5 * 1024 * 1024 // 5MB
+const MAX_SIZE = 5 * 1024 * 1024
 
 export async function POST(req: NextRequest) {
-  // Auth check
   const cookie = req.cookies.get('__tb_admin')?.value || ''
   if (!cookie.startsWith('TBOK:')) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -31,59 +27,73 @@ export async function POST(req: NextRequest) {
 
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
+    const base64 = buffer.toString('base64')
 
-    // Generate unique filename
+    if (!base64 || base64.length < 10) {
+      return NextResponse.json({ error: 'File read failed — empty buffer' }, { status: 400 })
+    }
+
     const ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg'
     const timestamp = Date.now()
     const filename = `article-${articleId || timestamp}-${timestamp}.${ext}`
+    const key = `tb:uploaded:${filename}`
 
-    // Store as base64 in Redis
+    // Check env vars exist
+    if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+      return NextResponse.json({
+        error: 'Redis env vars missing — UPSTASH_REDIS_REST_URL or UPSTASH_REDIS_REST_TOKEN not set in Vercel'
+      }, { status: 500 })
+    }
+
     const { Redis } = await import('@upstash/redis')
     const redis = Redis.fromEnv()
 
-    const base64 = buffer.toString('base64')
-    const key = `tb:uploaded:${filename}`
-
-    // Store with 1 year TTL
-    const setResult = await redis.set(key, {
+    // Store as plain object (no JSON.stringify — let Upstash handle it)
+    const payload = {
       data: base64,
       type: file.type,
       size: file.size,
       uploadedAt: new Date().toISOString(),
       articleId: articleId || '',
-    }, { ex: 60 * 60 * 24 * 365 })
-
-    if (!setResult) {
-      console.error('[upload-image] Redis set returned null for key:', key)
-      return NextResponse.json({ error: 'Storage write failed' }, { status: 500 })
     }
 
-    // Verify it was stored correctly
-    const verify = await redis.get<unknown>(key)
-    if (!verify) {
-      console.error('[upload-image] Redis verify read returned null for key:', key)
-      return NextResponse.json({ error: 'Storage verify failed' }, { status: 500 })
+    const setResult = await redis.set(key, payload, { ex: 60 * 60 * 24 * 365 })
+
+    if (setResult !== 'OK') {
+      return NextResponse.json({
+        error: `Redis write failed — got: ${JSON.stringify(setResult)}`
+      }, { status: 500 })
     }
 
-    // Build the URL using the request's own host — this ensures correct domain
-    // regardless of SITE_URL env variable being set or not
+    // Immediately verify it's readable
+    const verify = await redis.get<any>(key)
+    if (!verify?.data) {
+      return NextResponse.json({
+        error: 'Redis verify failed — wrote but cannot read back',
+        verifyType: typeof verify,
+        verifyValue: JSON.stringify(verify)?.substring(0, 100),
+      }, { status: 500 })
+    }
+
     const host = req.headers.get('host') || 'thetechbharat.com'
     const protocol = host.includes('localhost') ? 'http' : 'https'
     const url = `${protocol}://${host}/api/admin/uploaded-image/${filename}`
 
-    // Update article's featuredImage in Redis
     if (articleId && !articleId.startsWith('story-')) {
       await updateArticleImage(articleId, url)
     }
 
-    return NextResponse.json({ url, success: true })
-  } catch (err) {
-    console.error('[upload-image] Upload error:', err)
-    return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
+    return NextResponse.json({ url, success: true, filename, dataLength: base64.length })
+
+  } catch (err: any) {
+    console.error('[upload-image] fatal error:', err)
+    return NextResponse.json({
+      error: err?.message || 'Upload failed',
+      detail: err?.stack?.split('\n').slice(0, 3).join(' | ')
+    }, { status: 500 })
   }
 }
 
-// Update the article's featuredImage field in Redis
 async function updateArticleImage(articleId: string, imageUrl: string) {
   try {
     const { getAllArticlesAsync, saveArticlesAsync } = await import('@/lib/store')
@@ -93,7 +103,7 @@ async function updateArticleImage(articleId: string, imageUrl: string) {
     articles[idx].featuredImage = imageUrl
     articles[idx].images = [imageUrl, ...(articles[idx].images || []).slice(1)]
     await saveArticlesAsync(articles)
-  } catch (e) {
-    console.error('[upload-image] Failed to update article image in Redis:', e)
+  } catch (e: any) {
+    console.error('[upload-image] updateArticleImage failed:', e?.message)
   }
 }
