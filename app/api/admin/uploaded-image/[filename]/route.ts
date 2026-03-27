@@ -18,16 +18,22 @@ export async function GET(
     const { Redis } = await import('@upstash/redis')
     const redis = Redis.fromEnv()
 
-    const stored = await redis.get<string>(`tb:uploaded:${filename}`)
+    // Upstash auto-parses JSON — use unknown and handle both cases
+    const stored = await redis.get<unknown>(`tb:uploaded:${filename}`)
     if (!stored) return new NextResponse('Image not found', { status: 404 })
 
-    const { data, type } = JSON.parse(stored)
-    const buffer = Buffer.from(data, 'base64')
+    // Handle: already an object (Upstash auto-parsed) OR a raw JSON string
+    const parsed: { data: string; type: string } =
+      typeof stored === 'string' ? JSON.parse(stored) : (stored as any)
+
+    if (!parsed?.data) return new NextResponse('Image data missing', { status: 404 })
+
+    const buffer = Buffer.from(parsed.data, 'base64')
 
     return new NextResponse(buffer, {
       status: 200,
       headers: {
-        'Content-Type': type || 'image/jpeg',
+        'Content-Type': parsed.type || 'image/jpeg',
         'Cache-Control': 'public, max-age=31536000, immutable',
         'X-Robots-Tag': 'noindex',
       },
