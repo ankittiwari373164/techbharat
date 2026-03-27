@@ -38,17 +38,19 @@ export async function POST(req: NextRequest) {
     const filename = `article-${articleId || timestamp}-${timestamp}.${ext}`
     const key = `tb:uploaded:${filename}`
 
-    // Check env vars exist
-    if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    // Support both Upstash native names AND Vercel KV names (which are the same service)
+    const redisUrl   = process.env.UPSTASH_REDIS_REST_URL   || process.env.KV_REST_API_URL
+    const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN
+
+    if (!redisUrl || !redisToken) {
       return NextResponse.json({
-        error: 'Redis env vars missing — UPSTASH_REDIS_REST_URL or UPSTASH_REDIS_REST_TOKEN not set in Vercel'
+        error: 'Redis not configured — set KV_REST_API_URL and KV_REST_API_TOKEN in Vercel env vars'
       }, { status: 500 })
     }
 
     const { Redis } = await import('@upstash/redis')
-    const redis = Redis.fromEnv()
+    const redis = new Redis({ url: redisUrl, token: redisToken })
 
-    // Store as plain object (no JSON.stringify — let Upstash handle it)
     const payload = {
       data: base64,
       type: file.type,
@@ -65,13 +67,12 @@ export async function POST(req: NextRequest) {
       }, { status: 500 })
     }
 
-    // Immediately verify it's readable
+    // Verify it's readable
     const verify = await redis.get<any>(key)
     if (!verify?.data) {
       return NextResponse.json({
         error: 'Redis verify failed — wrote but cannot read back',
         verifyType: typeof verify,
-        verifyValue: JSON.stringify(verify)?.substring(0, 100),
       }, { status: 500 })
     }
 
@@ -86,7 +87,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ url, success: true, filename, dataLength: base64.length })
 
   } catch (err: any) {
-    console.error('[upload-image] fatal error:', err)
+    console.error('[upload-image] fatal:', err)
     return NextResponse.json({
       error: err?.message || 'Upload failed',
       detail: err?.stack?.split('\n').slice(0, 3).join(' | ')
