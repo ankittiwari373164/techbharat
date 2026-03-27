@@ -1,6 +1,6 @@
 // app/api/admin/upload-image/route.ts
-// Accepts image upload from admin panel → stores in Cloudflare R2 or as base64 in Redis
-// Falls back to storing as Vercel Blob if R2 not configured
+// Accepts image upload from admin panel → stores as base64 in Redis
+// Served at: /api/admin/uploaded-image/{filename}
 
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -37,55 +37,30 @@ export async function POST(req: NextRequest) {
     const timestamp = Date.now()
     const filename = `article-${articleId || timestamp}-${timestamp}.${ext}`
 
-    // Strategy 1: Try Vercel Blob (only if token is configured AND package is available)
-    if (process.env.BLOB_READ_WRITE_TOKEN) {
-      try {
-        // Dynamic import — won't cause build error if @vercel/blob is not installed
-        const blobModule = await import('@vercel/blob').catch(() => null)
-        if (blobModule) {
-          const blob = await blobModule.put(`images/${filename}`, buffer, {
-            access: 'public',
-            contentType: file.type,
-          })
-          if (articleId) await updateArticleImage(articleId, blob.url)
-          return NextResponse.json({ url: blob.url, success: true })
-        }
-      } catch (e) {
-        console.error('Vercel Blob upload failed:', e)
-        // Fall through to Redis strategy
-      }
-    }
-
-    // Strategy 2: Store as base64 in Redis with a served route
-    // Key: tb:uploaded:{filename} → base64 image data
+    // Store as base64 in Redis
+    // Key: tb:uploaded:{filename}
     // Served at: /api/admin/uploaded-image/{filename}
-    try {
-      const { Redis } = await import('@upstash/redis')
-      const redis = Redis.fromEnv()
+    const { Redis } = await import('@upstash/redis')
+    const redis = Redis.fromEnv()
 
-      // Store image data as base64 in Redis (max ~6MB after base64 encoding)
-      const base64 = buffer.toString('base64')
-      const key = `tb:uploaded:${filename}`
+    const base64 = buffer.toString('base64')
+    const key = `tb:uploaded:${filename}`
 
-      // Store with 1 year TTL
-      await redis.set(key, JSON.stringify({
-        data: base64,
-        type: file.type,
-        size: file.size,
-        uploadedAt: new Date().toISOString(),
-        articleId: articleId || '',
-      }), { ex: 60 * 60 * 24 * 365 })
+    // Store with 1 year TTL
+    await redis.set(key, JSON.stringify({
+      data: base64,
+      type: file.type,
+      size: file.size,
+      uploadedAt: new Date().toISOString(),
+      articleId: articleId || '',
+    }), { ex: 60 * 60 * 24 * 365 })
 
-      const url = `${process.env.SITE_URL || 'https://thetechbharat.com'}/api/admin/uploaded-image/${filename}`
+    const url = `${process.env.SITE_URL || 'https://thetechbharat.com'}/api/admin/uploaded-image/${filename}`
 
-      // Update article's featuredImage in Redis
-      if (articleId) await updateArticleImage(articleId, url)
+    // Update article's featuredImage in Redis
+    if (articleId) await updateArticleImage(articleId, url)
 
-      return NextResponse.json({ url, success: true })
-    } catch (e) {
-      console.error('Redis upload failed:', e)
-      return NextResponse.json({ error: 'Upload failed — storage unavailable' }, { status: 500 })
-    }
+    return NextResponse.json({ url, success: true })
 
   } catch (err) {
     console.error('Upload error:', err)
