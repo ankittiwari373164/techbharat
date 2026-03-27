@@ -6,6 +6,7 @@ const nextConfig = {
       { protocol: 'https', hostname: 'picsum.photos' },
       { protocol: 'https', hostname: 'source.unsplash.com' },
       { protocol: 'https', hostname: 'thetechbharat.com' },
+      { protocol: 'https', hostname: 'thetechbharat.com', pathname: '/api/admin/uploaded-image/**' },
     ],
   },
   async redirects() {
