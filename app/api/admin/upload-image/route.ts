@@ -37,19 +37,19 @@ export async function POST(req: NextRequest) {
     const timestamp = Date.now()
     const filename = `article-${articleId || timestamp}-${timestamp}.${ext}`
 
-    // Strategy 1: Try Vercel Blob (if configured)
+    // Strategy 1: Try Vercel Blob (only if token is configured AND package is available)
     if (process.env.BLOB_READ_WRITE_TOKEN) {
       try {
-        const { put } = await import('@vercel/blob')
-        const blob = await put(`images/${filename}`, buffer, {
-          access: 'public',
-          contentType: file.type,
-        })
-        
-        // Also update article's featuredImage in Redis
-        if (articleId) await updateArticleImage(articleId, blob.url)
-        
-        return NextResponse.json({ url: blob.url, success: true })
+        // Dynamic import — won't cause build error if @vercel/blob is not installed
+        const blobModule = await import('@vercel/blob').catch(() => null)
+        if (blobModule) {
+          const blob = await blobModule.put(`images/${filename}`, buffer, {
+            access: 'public',
+            contentType: file.type,
+          })
+          if (articleId) await updateArticleImage(articleId, blob.url)
+          return NextResponse.json({ url: blob.url, success: true })
+        }
       } catch (e) {
         console.error('Vercel Blob upload failed:', e)
         // Fall through to Redis strategy
@@ -62,11 +62,11 @@ export async function POST(req: NextRequest) {
     try {
       const { Redis } = await import('@upstash/redis')
       const redis = Redis.fromEnv()
-      
+
       // Store image data as base64 in Redis (max ~6MB after base64 encoding)
       const base64 = buffer.toString('base64')
       const key = `tb:uploaded:${filename}`
-      
+
       // Store with 1 year TTL
       await redis.set(key, JSON.stringify({
         data: base64,
@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
       }), { ex: 60 * 60 * 24 * 365 })
 
       const url = `${process.env.SITE_URL || 'https://thetechbharat.com'}/api/admin/uploaded-image/${filename}`
-      
+
       // Update article's featuredImage in Redis
       if (articleId) await updateArticleImage(articleId, url)
 
