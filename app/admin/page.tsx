@@ -48,6 +48,12 @@ export default function AdminPage() {
   const [imgUploading,setImgUploading]  = useState(false)
   const [imgUploadMsg,setImgUploadMsg]  = useState('')
   const [storyMsg,setStoryMsg]         = useState('')
+  // story slide image upload state: track per-slide upload status
+  const [slideUploadMsg,setSlideUploadMsg] = useState<Record<number,string>>({})
+  const [slideUploading,setSlideUploading] = useState<Record<number,boolean>>({})
+  // story cover image upload
+  const [coverUploading,setCoverUploading] = useState(false)
+  const [coverUploadMsg,setCoverUploadMsg] = useState('')
   // phone images
   const [phoneImages,setPhoneImages]   = useState<{name:string;slug:string;count:number}[]>([])
   // seo
@@ -142,6 +148,9 @@ export default function AdminPage() {
         setStoryMsg('✅ Story saved!')
         setStoryForm(emptyStory())
         setEditStory(null)
+        setSlideUploadMsg({})
+        setSlideUploading({})
+        setCoverUploadMsg('')
         loadAll()
       } else { setStoryMsg('❌ '+(data.error||'Save failed')) }
     } catch { setStoryMsg('❌ Network error') }
@@ -151,6 +160,9 @@ export default function AdminPage() {
   const handleEditStory = (s:WebStory) => {
     setEditStory(s)
     setStoryForm({ title:s.title, brand:s.brand, category:s.category, coverImage:s.coverImage, tags:(s.tags||[]).join(', '), seoTitle:'', seoDescription:'', isPublished:s.isPublished, slides:s.slides })
+    setSlideUploadMsg({})
+    setSlideUploading({})
+    setCoverUploadMsg('')
     setTab('stories')
     setTimeout(()=>window.scrollTo({top:0,behavior:'smooth'}),100)
   }
@@ -166,6 +178,48 @@ export default function AdminPage() {
     const j = i+dir
     if (j<0||j>=storyForm.slides.length) return
     const s=[...storyForm.slides]; [s[i],s[j]]=[s[j],s[i]]; setStoryForm(f=>({...f,slides:s}))
+  }
+
+  // ── Upload image for a slide ──────────────────────────────────
+  const handleSlideImageUpload = async (i: number, file: File) => {
+    if (file.size > 5 * 1024 * 1024) { setSlideUploadMsg(p=>({...p,[i]:'❌ Max 5MB'})); return }
+    setSlideUploading(p=>({...p,[i]:true}))
+    setSlideUploadMsg(p=>({...p,[i]:'Uploading...'}))
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('articleId', `story-slide-${Date.now()}`)
+      const r = await fetch('/api/admin/upload-image', { method:'POST', body:formData })
+      const d = await r.json()
+      if (d.url) {
+        updateSlide(i, 'imageUrl', d.url)
+        setSlideUploadMsg(p=>({...p,[i]:'✅ Uploaded!'}))
+      } else {
+        setSlideUploadMsg(p=>({...p,[i]:'❌ '+(d.error||'Upload failed')}))
+      }
+    } catch { setSlideUploadMsg(p=>({...p,[i]:'❌ Upload failed'})) }
+    setSlideUploading(p=>({...p,[i]:false}))
+  }
+
+  // ── Upload cover image ────────────────────────────────────────
+  const handleCoverImageUpload = async (file: File) => {
+    if (file.size > 5 * 1024 * 1024) { setCoverUploadMsg('❌ Max 5MB'); return }
+    setCoverUploading(true)
+    setCoverUploadMsg('Uploading...')
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('articleId', `story-cover-${Date.now()}`)
+      const r = await fetch('/api/admin/upload-image', { method:'POST', body:formData })
+      const d = await r.json()
+      if (d.url) {
+        setStoryForm(f=>({...f, coverImage: d.url}))
+        setCoverUploadMsg('✅ Uploaded!')
+      } else {
+        setCoverUploadMsg('❌ '+(d.error||'Upload failed'))
+      }
+    } catch { setCoverUploadMsg('❌ Upload failed') }
+    setCoverUploading(false)
   }
 
   const handleLogout = async () => { await fetch('/api/admin/logout',{method:'POST'}); window.location.href='/admin/login' }
@@ -475,10 +529,30 @@ export default function AdminPage() {
                       {CATS.map(c=><option key={c}>{c}</option>)}
                     </select>
                   </div>
+
+                  {/* Cover Image with upload */}
                   <div className="col-span-2">
-                    <label className="text-xs font-bold text-gray-500 uppercase block mb-1.5">Cover Image URL <span className="text-gray-400 font-normal normal-case">(9:16 portrait — appears in stories grid)</span></label>
-                    <input type="text" value={storyForm.coverImage} onChange={e=>setStoryForm(f=>({...f,coverImage:e.target.value}))} placeholder="https://images.unsplash.com/... or /phone-images/samsung-s25/1.jpg" className="w-full text-sm border border-gray-200 px-3 py-2.5 rounded-lg outline-none focus:border-[#d4220a]"/>
+                    <label className="text-xs font-bold text-gray-500 uppercase block mb-1.5">Cover Image <span className="text-gray-400 font-normal normal-case">(9:16 portrait — appears in stories grid)</span></label>
+                    {storyForm.coverImage && (
+                      <div className="mb-2 relative w-24">
+                        <img src={storyForm.coverImage} alt="cover" className="w-24 h-40 object-cover rounded-lg border border-gray-200"/>
+                      </div>
+                    )}
+                    {/* Upload button */}
+                    <div className="flex gap-2 mb-2">
+                      <input type="file" accept="image/jpeg,image/png,image/webp" id="cover-upload" className="hidden"
+                        onChange={async e=>{ const f=e.target.files?.[0]; if(f) await handleCoverImageUpload(f); e.target.value='' }}/>
+                      <label htmlFor="cover-upload"
+                        className={`flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-lg border-2 border-dashed cursor-pointer transition-colors
+                          ${coverUploading?'border-gray-300 text-gray-400 cursor-not-allowed':'border-[#d4220a] text-[#d4220a] hover:bg-[#d4220a]/5'}`}>
+                        {coverUploading ? '⏳ Uploading...' : '📁 Upload Cover Image'}
+                      </label>
+                      {coverUploadMsg && <span className={`text-xs self-center ${coverUploadMsg.startsWith('✅')?'text-green-600':'text-red-500'}`}>{coverUploadMsg}</span>}
+                    </div>
+                    {/* Or paste URL */}
+                    <input type="text" value={storyForm.coverImage} onChange={e=>setStoryForm(f=>({...f,coverImage:e.target.value}))} placeholder="Or paste URL: https://images.unsplash.com/..." className="w-full text-sm border border-gray-200 px-3 py-2.5 rounded-lg outline-none focus:border-[#d4220a]"/>
                   </div>
+
                   <div className="col-span-2">
                     <label className="text-xs font-bold text-gray-500 uppercase block mb-1.5">Tags <span className="text-gray-400 font-normal normal-case">(comma separated)</span></label>
                     <input type="text" value={storyForm.tags} onChange={e=>setStoryForm(f=>({...f,tags:e.target.value}))} placeholder="Samsung, Galaxy S25, Flagship 2025" className="w-full text-sm border border-gray-200 px-3 py-2.5 rounded-lg outline-none"/>
@@ -508,10 +582,34 @@ export default function AdminPage() {
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-3">
+
+                          {/* ── Slide Background Image with upload ── */}
                           <div className="col-span-2">
-                            <label className="text-xs text-gray-500 block mb-1">Background Image URL *</label>
-                            <input type="text" value={slide.imageUrl} onChange={e=>updateSlide(i,'imageUrl',e.target.value)} placeholder="https://images.unsplash.com/..." className="w-full text-xs border border-gray-200 px-2.5 py-2 rounded-lg outline-none focus:border-[#d4220a] bg-white"/>
+                            <label className="text-xs text-gray-500 block mb-1">Background Image *</label>
+                            {/* Preview if image set */}
+                            {slide.imageUrl && (
+                              <div className="mb-2">
+                                <img src={slide.imageUrl} alt="slide preview" className="h-24 w-auto rounded-lg border border-gray-200 object-cover"/>
+                              </div>
+                            )}
+                            {/* Upload button */}
+                            <div className="flex gap-2 mb-1.5">
+                              <input type="file" accept="image/jpeg,image/png,image/webp" id={`slide-upload-${i}`} className="hidden"
+                                onChange={async e=>{ const f=e.target.files?.[0]; if(f) await handleSlideImageUpload(i,f); e.target.value='' }}
+                                disabled={slideUploading[i]}/>
+                              <label htmlFor={`slide-upload-${i}`}
+                                className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg border-2 border-dashed cursor-pointer transition-colors
+                                  ${slideUploading[i]?'border-gray-300 text-gray-400 cursor-not-allowed':'border-[#d4220a] text-[#d4220a] hover:bg-[#d4220a]/5'}`}>
+                                {slideUploading[i] ? '⏳ Uploading...' : '📁 Upload Image'}
+                              </label>
+                              {slideUploadMsg[i] && (
+                                <span className={`text-xs self-center ${slideUploadMsg[i].startsWith('✅')?'text-green-600':'text-red-500'}`}>{slideUploadMsg[i]}</span>
+                              )}
+                            </div>
+                            {/* Or paste URL */}
+                            <input type="text" value={slide.imageUrl} onChange={e=>updateSlide(i,'imageUrl',e.target.value)} placeholder="Or paste URL: https://images.unsplash.com/..." className="w-full text-xs border border-gray-200 px-2.5 py-2 rounded-lg outline-none focus:border-[#d4220a] bg-white"/>
                           </div>
+
                           <div className="col-span-2">
                             <label className="text-xs text-gray-500 block mb-1">Headline * <span className="text-gray-400">(bold text — keep under 60 chars)</span></label>
                             <input type="text" value={slide.headline} onChange={e=>updateSlide(i,'headline',e.target.value)} placeholder="Samsung S25 Ultra Gets 200MP Camera" className="w-full text-xs border border-gray-200 px-2.5 py-2 rounded-lg outline-none focus:border-[#d4220a] bg-white"/>
@@ -550,7 +648,7 @@ export default function AdminPage() {
                   <button onClick={handleSaveStory} disabled={storySaving} className="bg-[#d4220a] hover:bg-[#b81d09] disabled:opacity-50 text-white font-bold px-6 py-2.5 rounded-lg text-sm">
                     {storySaving?'Saving…':editStory?'Update Story':'Publish Story'}
                   </button>
-                  {editStory && <button onClick={()=>{setEditStory(null);setStoryForm(emptyStory());setStoryMsg('')}} className="text-sm text-gray-500 border border-gray-200 px-4 py-2.5 rounded-lg hover:bg-gray-50">Cancel Edit</button>}
+                  {editStory && <button onClick={()=>{setEditStory(null);setStoryForm(emptyStory());setStoryMsg('');setSlideUploadMsg({});setSlideUploading({});setCoverUploadMsg('')}} className="text-sm text-gray-500 border border-gray-200 px-4 py-2.5 rounded-lg hover:bg-gray-50">Cancel Edit</button>}
                 </div>
               </div>
 
