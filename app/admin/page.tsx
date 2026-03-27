@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import SeoAnalyticsTab from '@/components/admin/SeoAnalyticsTab'
 
-interface Article { id:string; slug:string; title:string; type:string; brand:string; publishDate:string; readTime:number; isFeatured:boolean; summary:string; tags:string[]; content?:string }
+interface Article { id:string; slug:string; title:string; type:string; brand:string; publishDate:string; readTime:number; isFeatured:boolean; summary:string; tags:string[]; content?:string; featuredImage?:string; images?:string[] }
 interface Stats { total:number; mobileNews:number; reviews:number; compare:number; brands:Record<string,number> }
 interface ScheduleSlot { index:number; type:string; label:string }
 interface ScheduleStatus { todaySlots:ScheduleSlot[]; publishedToday:number; nextSlotLabel:string; allDoneToday:boolean; istNow:string }
@@ -45,6 +45,8 @@ export default function AdminPage() {
   const [editStory,setEditStory]       = useState<WebStory|null>(null)
   const [deleteStoryId,setDeleteStoryId] = useState<string|null>(null)
   const [storySaving,setStorySaving]   = useState(false)
+  const [imgUploading,setImgUploading]  = useState(false)
+  const [imgUploadMsg,setImgUploadMsg]  = useState('')
   const [storyMsg,setStoryMsg]         = useState('')
   // phone images
   const [phoneImages,setPhoneImages]   = useState<{name:string;slug:string;count:number}[]>([])
@@ -1120,6 +1122,87 @@ export default function AdminPage() {
                   </select>
                 </div>
               </div>
+              {/* Featured Image */}
+              <div className="border border-gray-200 rounded-xl p-4 bg-gray-50">
+                <label className="text-xs font-bold text-gray-500 uppercase block mb-3">🖼️ Featured Image</label>
+                
+                {/* Current image preview */}
+                {editArticle.featuredImage && (
+                  <div className="mb-3 relative">
+                    <img
+                      src={editArticle.featuredImage}
+                      alt="Current featured image"
+                      className="w-full h-40 object-cover rounded-lg border border-gray-200"
+                      onError={e=>{(e.target as HTMLImageElement).src='/og-image.jpg'}}
+                    />
+                    <span className="absolute top-2 left-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded font-sans">Current Image</span>
+                  </div>
+                )}
+
+                {/* Upload from system */}
+                <div className="mb-3">
+                  <p className="text-xs text-gray-500 mb-2 font-sans">Upload from your computer:</p>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    id="img-upload-input"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      if (file.size > 5 * 1024 * 1024) { setImgUploadMsg('❌ Max 5MB allowed'); return }
+                      setImgUploading(true)
+                      setImgUploadMsg('Uploading...')
+                      try {
+                        const formData = new FormData()
+                        formData.append('file', file)
+                        formData.append('articleId', editArticle.id)
+                        const r = await fetch('/api/admin/upload-image', { method: 'POST', body: formData })
+                        const d = await r.json()
+                        if (d.url) {
+                          setEditArticle({...editArticle, featuredImage: d.url, images: [d.url, ...(editArticle.images||[]).slice(1)]})
+                          setImgUploadMsg('✅ Image uploaded!')
+                        } else {
+                          setImgUploadMsg('❌ Upload failed: ' + (d.error||'unknown error'))
+                        }
+                      } catch { setImgUploadMsg('❌ Upload failed') }
+                      setImgUploading(false)
+                      e.target.value = ''
+                    }}
+                  />
+                  <label
+                    htmlFor="img-upload-input"
+                    className={`flex items-center justify-center gap-2 w-full border-2 border-dashed rounded-lg px-4 py-3 cursor-pointer transition-colors font-sans text-sm font-semibold
+                      ${imgUploading ? 'border-gray-300 text-gray-400 cursor-not-allowed' : 'border-[#d4220a] text-[#d4220a] hover:bg-[#d4220a]/5'}`}
+                  >
+                    {imgUploading ? '⏳ Uploading...' : '📁 Choose Image (JPG/PNG/WebP, max 5MB)'}
+                  </label>
+                  {imgUploadMsg && (
+                    <p className={`text-xs mt-1.5 font-sans ${imgUploadMsg.startsWith('✅') ? 'text-green-600' : 'text-red-500'}`}>{imgUploadMsg}</p>
+                  )}
+                </div>
+
+                {/* Or paste URL */}
+                <div>
+                  <p className="text-xs text-gray-500 mb-1.5 font-sans">Or paste image URL directly:</p>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="https://images.unsplash.com/photo-..."
+                      value={editArticle.featuredImage||''}
+                      onChange={e=>setEditArticle({...editArticle,featuredImage:e.target.value})}
+                      className="flex-1 text-xs border border-gray-200 px-3 py-2 rounded-lg outline-none focus:border-[#1a3a5c] font-mono"
+                    />
+                    {editArticle.featuredImage && (
+                      <button
+                        onClick={()=>setEditArticle({...editArticle,featuredImage:'',images:[]})}
+                        className="text-xs text-red-500 border border-red-200 px-3 py-2 rounded-lg hover:bg-red-50"
+                      >Clear</button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               {/* Summary */}
               <div>
                 <label className="text-xs font-bold text-gray-500 uppercase block mb-1.5">Summary <span className="text-gray-400 font-normal normal-case">(shown as intro paragraph)</span></label>

@@ -7,8 +7,10 @@ export async function GET() {
   const robots = `User-agent: *
 Allow: /
 Allow: /api/image/
+Allow: /api/img
 Allow: /api/article/
 Allow: /api/ticker/
+Allow: /api/admin/uploaded-image/
 Disallow: /admin/
 Disallow: /api/admin/
 Disallow: /api/scheduler
