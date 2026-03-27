@@ -1,4 +1,5 @@
 // app/api/admin/uploaded-image/[filename]/route.ts
+// NO AUTH REQUIRED — this is a public image serving endpoint
 import { NextRequest, NextResponse } from 'next/server'
 
 export const runtime = 'nodejs'
@@ -15,24 +16,28 @@ export async function GET(
   if (safe !== filename) return new NextResponse('Invalid filename', { status: 400 })
 
   try {
+    // Support both Upstash native names AND Vercel KV names (same service)
     const redisUrl   = process.env.UPSTASH_REDIS_REST_URL   || process.env.KV_REST_API_URL
     const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN
 
     if (!redisUrl || !redisToken) {
+      console.error('[uploaded-image] Redis env vars not set')
       return new NextResponse('Redis not configured', { status: 500 })
     }
 
     const { Redis } = await import('@upstash/redis')
+    // Use explicit constructor — NOT Redis.fromEnv() which requires UPSTASH_ prefix names
     const redis = new Redis({ url: redisUrl, token: redisToken })
 
     const key = `tb:uploaded:${safe}`
     const stored = await redis.get<unknown>(key)
 
     if (!stored) {
+      console.error(`[uploaded-image] Key not found: ${key}`)
       return new NextResponse('Image not found', { status: 404 })
     }
 
-    // Upstash may return object or string depending on how it was stored
+    // Upstash auto-parses JSON objects; handle both object and string cases
     const parsed: { data: string; type: string } =
       typeof stored === 'string' ? JSON.parse(stored) : (stored as any)
 
@@ -41,7 +46,6 @@ export async function GET(
     }
 
     const buffer = Buffer.from(parsed.data, 'base64')
-
     if (buffer.length === 0) {
       return new NextResponse('Image corrupt', { status: 500 })
     }
@@ -55,8 +59,9 @@ export async function GET(
         'X-Robots-Tag': 'noindex',
       },
     })
-  } catch (e) {
-    console.error('[uploaded-image] error:', e)
+
+  } catch (e: any) {
+    console.error('[uploaded-image] error:', e?.message)
     return new NextResponse('Server error', { status: 500 })
   }
 }
