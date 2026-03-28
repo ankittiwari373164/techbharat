@@ -25,7 +25,7 @@ export default function ArticleCard({ article, variant = 'card' }: ArticleCardPr
       <div className="relative group cursor-pointer">
         <Link href={`/${article.slug}`} className="block">
           <div className="relative overflow-hidden" style={{ paddingBottom: '56.25%' }}>
-            <img src={article.featuredImage || "https://picsum.photos/seed/tb/1200/675"} style={{position:"absolute",inset:0,width:"100%",height:"100%"}} onError={(e)=>{(e.target as HTMLImageElement).src="https://picsum.photos/seed/tb/1200/675"}}
+            <img src={(article.featuredImage && !article.featuredImage.startsWith("/phone-images/") ? article.featuredImage : "https://thetechbharat.com/og-image.jpg")} style={{position:"absolute",inset:0,width:"100%",height:"100%"}} onError={(e)=>{(e.target as HTMLImageElement).src="https://thetechbharat.com/og-image.jpg"}}
               alt={article.title}
               width={1200} height={675}
             className="object-cover group-hover:scale-105 transition-transform duration-500"
@@ -57,7 +57,7 @@ export default function ArticleCard({ article, variant = 'card' }: ArticleCardPr
     return (
       <Link href={`/${article.slug}`} className="flex gap-3 group">
         <div className="flex-shrink-0 w-24 h-16 relative overflow-hidden">
-          <img src={article.featuredImage || "https://picsum.photos/seed/tb/1200/675"} style={{position:"absolute",inset:0,width:"100%",height:"100%"}} onError={(e)=>{(e.target as HTMLImageElement).src="https://picsum.photos/seed/tb/1200/675"}}
+          <img src={(article.featuredImage && !article.featuredImage.startsWith("/phone-images/") ? article.featuredImage : "https://thetechbharat.com/og-image.jpg")} style={{position:"absolute",inset:0,width:"100%",height:"100%"}} onError={(e)=>{(e.target as HTMLImageElement).src="https://thetechbharat.com/og-image.jpg"}}
             alt={article.title}
             width={400} height={225}
             className="object-cover group-hover:scale-105 transition-transform duration-300"
@@ -83,7 +83,7 @@ export default function ArticleCard({ article, variant = 'card' }: ArticleCardPr
         <div className="flex gap-4">
           <div className="flex-shrink-0 w-36 h-24 relative overflow-hidden">
             <Link href={`/${article.slug}`}>
-              <img src={article.featuredImage || "https://picsum.photos/seed/tb/1200/675"} style={{position:"absolute",inset:0,width:"100%",height:"100%"}} onError={(e)=>{(e.target as HTMLImageElement).src="https://picsum.photos/seed/tb/1200/675"}}
+              <img src={(article.featuredImage && !article.featuredImage.startsWith("/phone-images/") ? article.featuredImage : "https://thetechbharat.com/og-image.jpg")} style={{position:"absolute",inset:0,width:"100%",height:"100%"}} onError={(e)=>{(e.target as HTMLImageElement).src="https://thetechbharat.com/og-image.jpg"}}
                 alt={article.title}
                 width={400} height={225}
                 className="object-cover hover:scale-105 transition-transform duration-300"
@@ -144,7 +144,7 @@ export default function ArticleCard({ article, variant = 'card' }: ArticleCardPr
   return (
     <div className="bg-white border border-border hover:border-[#d4220a] transition-colors group animate-fade-in-up">
       <Link href={`/${article.slug}`} className="block relative overflow-hidden" style={{ paddingBottom: '60%' }}>
-        <img src={article.featuredImage || "https://picsum.photos/seed/tb/1200/675"} style={{position:"absolute",inset:0,width:"100%",height:"100%"}} onError={(e)=>{(e.target as HTMLImageElement).src="https://picsum.photos/seed/tb/1200/675"}}
+        <img src={(article.featuredImage && !article.featuredImage.startsWith("/phone-images/") ? article.featuredImage : "https://thetechbharat.com/og-image.jpg")} style={{position:"absolute",inset:0,width:"100%",height:"100%"}} onError={(e)=>{(e.target as HTMLImageElement).src="https://thetechbharat.com/og-image.jpg"}}
           alt={article.title}
           width={800} height={450}
           className="object-cover group-hover:scale-105 transition-transform duration-500"

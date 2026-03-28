@@ -6,6 +6,7 @@ import ArticleCard from '@/components/ArticleCard'
 
 // ── AUTO INTERNAL LINKER ──────────────────────────────────────────
 function getInternalLinkMap(): [RegExp, string, string][] { return [
+  // ── Brand pages ──────────────────────────────────────────────────────────
   [/\bSamsung\b/g, '/mobile-news?brand=Samsung', 'Latest Samsung news'],
   [/\b(Apple|iPhone)\b/g, '/mobile-news?brand=Apple', 'Latest Apple iPhone news'],
   [/\bXiaomi\b/g, '/mobile-news?brand=Xiaomi', 'Latest Xiaomi news'],
@@ -19,22 +20,22 @@ function getInternalLinkMap(): [RegExp, string, string][] { return [
   [/\bPoco\b/g, '/mobile-news?brand=Poco', 'Latest Poco news'],
   [/\bRedmi\b/g, '/mobile-news?brand=Xiaomi', 'Latest Xiaomi Redmi news'],
   [/\bGoogle Pixel\b/g, '/mobile-news', 'Latest mobile news'],
-  [/\bHonor\b/g, '/mobile-news', 'Latest mobile news'],
-  [/\bInfinix\b/g, '/mobile-news', 'Latest mobile news'],
-  [/\bTecno\b/g, '/mobile-news', 'Latest mobile news'],
-  [/\bLava\b/g, '/mobile-news', 'Latest mobile news'],
-  [/\b(action camera|action cam)s?\b/gi, '/mobile-news', 'Latest tech news'],
-  [/\b(smartphone|mobile phone|android phone)s?\b/gi, '/mobile-news', 'Latest mobile phone news'],
+  // ── Pillar pages — high-value evergreen internal links ───────────────────
+  [/\b(buying guide|how to choose a (smartphone|phone)|which phone to buy)\b/gi, '/smartphone-buying-guide-india', 'Smartphone Buying Guide India'],
+  [/\b(best (smartphone|phone)s? (in India|for India|under ₹))\b/gi, '/best-smartphones-india', 'Best Smartphones India'],
+  [/\b(best camera phone|camera phone ranking|camera comparison)s?\b/gi, '/best-camera-phones-india', 'Best Camera Phones India'],
+  [/\b(battery (health|life|degradation|drain)|charging habit|fast charging (myth|damage|safe))s?\b/gi, '/android-battery-health-guide', 'Android Battery Health Guide India'],
+  [/\b(gaming phone|BGMI phone|mobile gaming|best phone for (gaming|BGMI))s?\b/gi, '/best-gaming-phones-india', 'Best Gaming Phones India'],
+  [/\b(phone comparison|compare phone|vs\. which is better)\b/gi, '/phone-comparison-guide-india', 'Phone Comparison Guide India'],
+  // ── Content sections ─────────────────────────────────────────────────────
   [/\b(phone review|hands-on|first look|specs breakdown)s?\b/gi, '/reviews', 'Phone reviews India'],
-  [/\b(compare|head-to-head|versus|vs\.)\b/gi, '/compare', 'Compare phones India'],
-  [/\b(best phone|best smartphone|top phone|worth buying)s?\b/gi, '/compare', 'Best phones India'],
+  [/\b(compare|head-to-head|versus)\b/gi, '/compare', 'Compare phones India'],
   [/\b5G (phone|smartphone|band|support|network)s?\b/gi, '/mobile-news', 'Latest 5G phones India'],
-  [/\b(budget phone|budget smartphone|affordable phone|mid-range phone)s?\b/gi, '/mobile-news', 'Budget phones India'],
+  [/\b(budget phone|affordable phone|mid-range phone)s?\b/gi, '/mobile-news', 'Budget phones India'],
   [/\b(flagship phone|premium smartphone|flagship smartphone)s?\b/gi, '/mobile-news', 'Flagship phones India'],
   [/\b(foldable phone|foldable smartphone)s?\b/gi, '/mobile-news', 'Foldable phones India'],
-  [/\b(tablet|smartwatch|TWS earbuds|wireless earbuds|earphones)s?\b/gi, '/mobile-news', 'Latest tech news'],
   [/\b(Flipkart|Amazon India)\b/g, '/mobile-news', 'Best phone deals India'],
-  [/\b(Jio|Airtel|Vi Vodafone)\b/g, '/mobile-news', 'Latest 5G news India'],
+  [/\b(Jio|Airtel)\b/g, '/mobile-news', 'Latest 5G news India'],
   [/\b(web stor(?:y|ies))\b/gi, '/web-stories', 'Web Stories'],
 ]}
 
@@ -93,7 +94,17 @@ export default function ArticleClient({ article, similar, slug }: ArticleClientP
   const similarArticles = similar as Article[]
 
   // ── Defensive data normalisation (Redis may return nulls) ──────────────
-  const safeImages    = Array.isArray(liveArticle.images)                ? liveArticle.images                : []
+  // Filter out local /phone-images/ fallbacks and empty strings — only use real proxy URLs
+  const safeImages = (Array.isArray(liveArticle.images) ? liveArticle.images : [])
+    .filter((img: string) => img && !img.startsWith('/phone-images/') && !img.includes('picsum'))
+
+  // Featured image: use first valid image, skip local fallbacks
+  const featuredImg = (() => {
+    const fi = liveArticle.featuredImage || ''
+    if (fi && !fi.startsWith('/phone-images/') && !fi.includes('picsum')) return fi
+    if (safeImages[0]) return safeImages[0]
+    return 'https://thetechbharat.com/og-image.jpg'
+  })()
   const safeBullets   = Array.isArray(liveArticle.bullets)               ? liveArticle.bullets               : []
   const safeTags      = Array.isArray(liveArticle.tags)                  ? liveArticle.tags                  : []
   const safeReviews   = Array.isArray(liveArticle.reviews)               ? liveArticle.reviews               : []
@@ -201,14 +212,14 @@ export default function ArticleClient({ article, similar, slug }: ArticleClientP
             {/* Featured Image */}
             <div className="relative mb-5 overflow-hidden" style={{ paddingBottom: '56.25%' }}>
               <img
-                src={liveArticle.featuredImage || 'https://thetechbharat.com/og-image.jpg'}
+                src={featuredImg}
                 alt={liveArticle.title}
                 width={1200}
                 height={675}
                 style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}}
                 loading="eager"
                 fetchPriority="high"
-                onError={(e)=>{(e.target as HTMLImageElement).src='https://thetechbharat.com/og-image.jpg'}}
+                onError={(e)=>{const t=e.target as HTMLImageElement; if(t.src!=='https://thetechbharat.com/og-image.jpg')t.src='https://thetechbharat.com/og-image.jpg'}}
               />
             </div>
 

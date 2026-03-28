@@ -117,7 +117,10 @@ export async function getUniqueUnsplashImage(
   sessionUsedIds: Set<string>,
   maxAttempts = 5
 ): Promise<string> {
-  if (!UNSPLASH_ACCESS_KEY) return getPhoneImage(query)
+  if (!UNSPLASH_ACCESS_KEY) {
+    console.warn('[TB:images] No UNSPLASH_ACCESS_KEY set')
+    return ''
+  }
 
   // Load all previously used IDs from Redis
   let redisUsedIds: Set<string> = new Set()
@@ -179,9 +182,10 @@ export async function getUniqueUnsplashImage(
     }
   }
 
-  // Fallback to local image
-  console.log(`[TB:images] Falling back to local image for: ${query}`)
-  return getPhoneImage(query)
+  // All Unsplash attempts failed — return empty string
+  // ArticleClient will show og-image.jpg via onError handler
+  console.warn(`[TB:images] All Unsplash attempts failed for: ${query}`)
+  return ''
 }
 
 export function listPhonesWithImages(): { name: string; slug: string; count: number }[] {
