@@ -46,7 +46,7 @@ export async function generateMetadata(): Promise<Metadata> {
     alternates: { canonical: 'https://thetechbharat.com' },
     icons: {
       icon:        [{ url: '/logo.png', type: 'image/png' }],
-      apple:       [{ url: '/logo.png', sizes: '180x180', type: 'image/png' }],
+      apple:       [{ url: '/logo2.png', sizes: '180x180', type: 'image/png' }],
       shortcut:    [{ url: '/logo.png' }],
     },
   }
@@ -98,9 +98,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         />
         {/* Favicon — using logo.png for all sizes */}
         <link rel="icon" type="image/png" href="/logo.png" />
-        <link rel="icon" type="image/png" sizes="32x32" href="/logo.png" />
-        <link rel="icon" type="image/png" sizes="16x16" href="/logo.png" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/logo.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/logo1.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/logo2.png" />
         <link rel="shortcut icon" href="/logo.png" />
         <meta name="msapplication-TileImage" content="/logo.png" />
         <meta name="theme-color" content="#d4220a" />
