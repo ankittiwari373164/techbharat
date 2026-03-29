@@ -28,7 +28,9 @@ Disallow: /feeds/
 # /default    = Soft 404 page — block from indexing
 # /feeds/     = Old RSS/Blogger feeds — block
 
-Sitemap: ${SITE_URL}/sitemap.xml`
+Sitemap: ${SITE_URL}/sitemap.xml
+Sitemap: ${SITE_URL}/web-stories-sitemap.xml
+Sitemap: ${SITE_URL}/sitemap-index.xml`
 
   return new NextResponse(robots, {
     headers: {
