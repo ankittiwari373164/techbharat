@@ -77,3 +77,15 @@ declare namespace JSX {
     key?: React.Key
   }
 }
+
+// Extend global div element to support AMP overflow attribute
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      div: React.DetailedHTMLProps<
+        React.HTMLAttributes<HTMLDivElement> & { overflow?: string },
+        HTMLDivElement
+      >
+    }
+  }
+}

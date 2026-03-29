@@ -135,7 +135,7 @@ export default async function ArticleAmpPage({ params }: { params: { slug: strin
               data-ad-slot="auto"
               data-auto-format="rspv"
               data-full-width="">
-              <div overflow=""></div>
+              
             </amp-ad>
           </div>
 
@@ -155,7 +155,7 @@ export default async function ArticleAmpPage({ params }: { params: { slug: strin
               data-ad-slot="auto"
               data-auto-format="rspv"
               data-full-width="">
-              <div overflow=""></div>
+              
             </amp-ad>
           </div>
 
