@@ -29,15 +29,21 @@ export default async function ArticleAmpPage({ params }: { params: { slug: strin
   const published   = article.publishDate || new Date().toISOString()
   const modified    = article.updatedDate || published
 
-  // Strip non-AMP HTML from content
-  const ampContent = (article.content || article.summary || '')
-    .replace(/<script[^>]*>.*?<\/script>/gis, '')
-    .replace(/<iframe[^>]*>.*?<\/iframe>/gis, '')
-    .replace(/<style[^>]*>.*?<\/style>/gis, '')
-    .replace(/style="[^"]*"/gi, '')
-    .replace(/class="[^"]*"/gi, '')
-    .replace(/<(img)[^>]*src="([^"]*)"[^>]*>/gi, (_: string, _tag: string, src: string) =>
-      `<amp-img src="${src}" width="800" height="450" layout="responsive" alt="${title}"></amp-img>`)
+  // Strip non-AMP HTML from content — use safe string methods instead of regex with flags
+  let ampContent = (article.content || article.summary || '')
+  // Remove script tags
+  ampContent = ampContent.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/g, '')
+  // Remove iframe tags
+  ampContent = ampContent.replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/g, '')
+  // Remove style tags
+  ampContent = ampContent.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/g, '')
+  // Remove inline styles
+  ampContent = ampContent.replace(/\s*style="[^"]*"/g, '')
+  // Remove classes
+  ampContent = ampContent.replace(/\s*class="[^"]*"/g, '')
+  // Replace img tags with amp-img
+  ampContent = ampContent.replace(/<img\s+(?:[^>]*?\s+)?src="([^"]*)"/g, 
+    () => `<amp-img src="${arguments[1]}" width="800" height="450" layout="responsive" alt="${title}"></amp-img>`)
 
   const schema = JSON.stringify({
     '@context': 'https://schema.org',
