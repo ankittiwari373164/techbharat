@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return {
       title,
       description,
-      alternates: { canonical, types: { 'application/amphtml': `${SITE_URL}/${slug}/amp` } },
+      alternates: { canonical, types: { 'application/amphtml': `${SITE_URL}/${params.slug}/amp` } },
       openGraph: {
         title, description,
         url:       canonical,
@@ -131,7 +131,7 @@ export default async function ArticlePage({ params }: PageProps) {
     const content = (article as any).content || ''
     // Try to extract real FAQ Q&A pairs from article HTML
     const faqMatches: {q: string, a: string}[] = []
-    const h3Regex = /<h3[^>]*>(.*?)<\/h3>\s*<p[^>]*>(.*?)<\/p>/gi
+    const h3Regex = /<h3[^>]*>(.*?)<\/h3>\s*<p[^>]*>(.*?)<\/p>/g
     let match
     while ((match = h3Regex.exec(content)) !== null && faqMatches.length < 4) {
       const q = match[1].replace(/<[^>]*>/g, '').trim()
