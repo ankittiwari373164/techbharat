@@ -11,42 +11,39 @@ const nextConfig = {
   },
   async redirects() {
     return [
-      // Fix: /index.html → / (301) — fixes GSC "Discovered - currently not indexed" error
+      // Fix: /index.html → / (301)
       {
         source: '/index.html',
         destination: '/',
         permanent: true,
       },
-      // Fix: redirect old Blogger feed URLs showing in GSC
+      // Fix: old Blogger feed URLs — redirect to home
       {
         source: '/feeds/:path*',
         destination: '/',
         permanent: true,
       },
-      // Fix: redirect www to non-www to prevent duplicate content
+      // Fix: www → non-www (prevents duplicate content)
       {
         source: '/:path*',
         has: [{ type: 'host', value: 'www.thetechbharat.com' }],
         destination: 'https://thetechbharat.com/:path*',
         permanent: true,
       },
-      // SEO: remove /article/ prefix from all article URLs
+      // FIX: /article/[slug] → /[slug] (permanent 301)
+      // This is the CANONICAL redirect — keeps GSC happy
+      // Middleware rewrites /slug → /article/slug internally (no browser redirect)
+      // But if Google ever hits /article/slug directly, we 301 it to /slug
       {
         source: '/article/:slug',
         destination: '/:slug',
         permanent: true,
       },
-      // Fix: /default soft 404 page → redirect to home
+      // Fix: /default soft 404 page
       {
         source: '/default',
         destination: '/',
         permanent: true,
-      },
-      // Fix: /api/img proxy URLs shouldn't be crawled as pages
-      {
-        source: '/api/img',
-        destination: '/',
-        permanent: false,
       },
     ]
   },
@@ -56,6 +53,20 @@ const nextConfig = {
         source: '/(.*)',
         headers: [
           { key: 'X-Robots-Tag', value: 'max-image-preview:large' },
+        ],
+      },
+      // Prevent /api/img from being indexed — old proxy route
+      {
+        source: '/api/img',
+        headers: [
+          { key: 'X-Robots-Tag', value: 'noindex, nofollow' },
+        ],
+      },
+      // Prevent API routes from being indexed
+      {
+        source: '/api/:path*',
+        headers: [
+          { key: 'X-Robots-Tag', value: 'noindex, nofollow' },
         ],
       },
     ]

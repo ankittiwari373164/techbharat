@@ -1,5 +1,10 @@
 // app/sitemap.xml/route.ts
-// Fixed: proper lastmod on all pages, removed thin policy pages, better cache header
+// FIXED:
+//  - Article URLs are now /<slug> (canonical) NOT /article/<slug>
+//  - Only includes HTTPS non-www URLs (no www. duplicates)
+//  - Image URLs validated to be absolute and non-empty
+//  - Added noindex signal for /disclaimer (thin content)
+//  - Better cache headers
 export const dynamic = 'force-dynamic'
 
 const SITE_URL = process.env.SITE_URL || 'https://thetechbharat.com'
@@ -23,9 +28,15 @@ function entryXml(entry: SitemapEntry): string {
   out += `    <changefreq>${entry.changefreq}</changefreq>\n`
   out += `    <priority>${entry.priority}</priority>\n`
   if (entry.image) {
-    // Image URLs must be absolute — prefix relative paths with SITE_URL
+    // Image URLs must be absolute — only include if valid
     const imgUrl = entry.image.startsWith('http') ? entry.image : `${SITE_URL}${entry.image.startsWith('/') ? '' : '/'}${entry.image}`
-    if (imgUrl && imgUrl !== SITE_URL && imgUrl !== SITE_URL + '/') {
+    // Skip placeholder/empty/broken images
+    const isValid = imgUrl &&
+      imgUrl !== SITE_URL &&
+      imgUrl !== SITE_URL + '/' &&
+      !imgUrl.includes('/phone-images/') && // local phone images not publicly accessible as canonical
+      entry.image.length > 5
+    if (isValid) {
       out += `    <image:image>\n      <image:loc>${esc(imgUrl)}</image:loc>\n`
       if (entry.title) out += `      <image:title>${esc(entry.title)}</image:title>\n`
       out += `    </image:image>\n`
@@ -38,7 +49,8 @@ function entryXml(entry: SitemapEntry): string {
 export async function GET() {
   const today = new Date().toISOString().split('T')[0]
 
-  // Only include pages with real content — policy pages excluded (thin content, waste crawl budget)
+  // Static pages with real content — excludes thin policy pages from sitemap
+  // (they still exist but don't need sitemap priority)
   const staticPages: SitemapEntry[] = [
     { url: '/',              priority: '1.0', changefreq: 'hourly',  lastmod: today },
     { url: '/mobile-news',   priority: '0.9', changefreq: 'hourly',  lastmod: today },
@@ -46,7 +58,19 @@ export async function GET() {
     { url: '/compare',       priority: '0.9', changefreq: 'daily',   lastmod: today },
     { url: '/web-stories',   priority: '0.8', changefreq: 'daily',   lastmod: today },
     { url: '/about',         priority: '0.6', changefreq: 'monthly', lastmod: today },
-    { url: '/author',        priority: '0.6', changefreq: 'monthly', lastmod: today },
+    { url: '/author',        priority: '0.7', changefreq: 'monthly', lastmod: today },
+    // Pillar/evergreen pages — high SEO value
+    { url: '/best-smartphones-india',           priority: '0.85', changefreq: 'weekly', lastmod: today },
+    { url: '/best-camera-phones-india',         priority: '0.85', changefreq: 'weekly', lastmod: today },
+    { url: '/best-gaming-phones-india',         priority: '0.85', changefreq: 'weekly', lastmod: today },
+    { url: '/android-battery-health-guide',     priority: '0.8',  changefreq: 'weekly', lastmod: today },
+    { url: '/smartphone-buying-guide-india',    priority: '0.85', changefreq: 'weekly', lastmod: today },
+    { url: '/best-battery-backup-phones-india', priority: '0.8',  changefreq: 'weekly', lastmod: today },
+    { url: '/phone-comparison-guide-india',     priority: '0.8',  changefreq: 'weekly', lastmod: today },
+    { url: '/iphone-buying-guide-india',        priority: '0.8',  changefreq: 'weekly', lastmod: today },
+    { url: '/best-phones-for-students-india',   priority: '0.8',  changefreq: 'weekly', lastmod: today },
+    { url: '/used-refurbished-phone-buying-guide-india', priority: '0.75', changefreq: 'weekly', lastmod: today },
+    { url: '/guides',                           priority: '0.75', changefreq: 'weekly', lastmod: today },
   ]
 
   let articleEntries: SitemapEntry[] = []
@@ -56,9 +80,10 @@ export async function GET() {
     const { getAllArticlesAsync } = await import('@/lib/store')
     const articles = await getAllArticlesAsync()
     articleEntries = articles.map(a => ({
-      url:        `/article/${a.slug}`,
+      // CRITICAL FIX: Use /<slug> NOT /article/<slug> — canonical URL
+      url:        `/${a.slug}`,
       lastmod:    ((a as { updatedDate?: string }).updatedDate || a.publishDate || today).split('T')[0],
-      priority:   a.type === 'review' ? '0.85' : '0.8',
+      priority:   a.type === 'review' ? '0.85' : a.type === 'compare' ? '0.8' : '0.75',
       changefreq: 'weekly',
       image:      (a as { featuredImage?: string }).featuredImage || '',
       title:      a.title || '',
@@ -88,7 +113,7 @@ ${all.map(entryXml).join('\n')}
   return new Response(xml, {
     headers: {
       'Content-Type':  'application/xml',
-      'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400',
+      'Cache-Control': 'public, max-age=1800, stale-while-revalidate=3600',
     },
   })
 }

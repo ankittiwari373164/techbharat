@@ -3,6 +3,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { fetchSingleArticle, buildArticles } from '@/lib/news-fetcher'
 import { getAllArticlesAsync, addArticleAsync } from '@/lib/store'
 import { getNextDueSlot, isDuplicate, nowIST, getTodaySchedule } from '@/lib/scheduler'
+import { autoIndexArticle } from '@/lib/auto-index'
+
+
+
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 300
@@ -85,6 +89,7 @@ export async function GET(request: NextRequest) {
     const [article] = await buildArticles([rawItem])
     if (isDuplicate(article.title, article.brand, existing)) { isRunning = false; return NextResponse.json({ success: false, reason: 'Duplicate' }) }
     await addArticleAsync(article)
+    await autoIndexArticle(article.slug)
     await incrementCounter()
     isRunning = false
     return NextResponse.json({ success: true, slot: slot.index + 1, type: article.type, title: article.title, slug: article.slug })
