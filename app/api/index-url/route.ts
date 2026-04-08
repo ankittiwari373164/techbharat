@@ -119,20 +119,21 @@ export async function GET(req: NextRequest) {
   try {
     const { getAllArticlesAsync } = await import('@/lib/store')
     const articles = await getAllArticlesAsync() as any[]
-    articles.forEach(a => { if (a.slug) urls.push(`${SITE_URL}/${a.slug}`) })
+    articles.forEach((a: any) => { if (a.slug) urls.push(`${SITE_URL}/${a.slug}`) })
   } catch {}
 
   // 2. Pillar pages
-  const PILLAR_SLUGS = [
+  const PILLAR_SLUGS: string[] = [
     'best-camera-phones-india', 'best-smartphones-india', 'best-battery-backup-phones-india',
     'best-gaming-phones-india', 'smartphone-buying-guide-india', 'best-5g-phones-india',
     'best-budget-phones-india', 'best-flagship-phones-india', 'best-phones-for-students-india',
     'phone-comparison-guide-india',
   ]
-  PILLAR_SLUGS.forEach(s => urls.push(`${SITE_URL}/${s}`))
+  PILLAR_SLUGS.forEach((s: string) => urls.push(`${SITE_URL}/${s}`))
 
   // 3. Key static pages
-  ['/', '/mobile-news', '/reviews', '/compare', '/web-stories'].forEach(p => urls.push(`${SITE_URL}${p}`))
+  const STATIC_PAGES: string[] = ['/', '/mobile-news', '/reviews', '/compare', '/web-stories']
+  STATIC_PAGES.forEach((p: string) => urls.push(`${SITE_URL}${p}`))
 
   // Push in batches (100 per day limit)
   const toIndex = urls.slice(0, 100)
