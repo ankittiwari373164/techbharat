@@ -18,8 +18,8 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function SmartphoneBuyingGuidePage() {
   const { month, year } = currentMonthYear()
   const articles = await getPillarArticles(['buying guide', 'how to choose', 'worth it', 'should you buy', 'india price'], [], 15)
-  const reviews  = articles.filter(a => a.type === 'review' || a.type === 'compare')
-  const news     = articles.filter(a => a.type === 'mobile-news')
+  const reviews  = articles.filter((a: any) => a.type === 'review' || a.type === 'compare')
+  const news     = articles.filter((a: any) => a.type === 'mobile-news')
 
   const faqSchema = {
     '@context': 'https://schema.org',
@@ -54,7 +54,7 @@ export default async function SmartphoneBuyingGuidePage() {
               </div>
               <div className="bg-white border border-border p-4">
                 <p className="font-sans text-xs font-bold text-ink mb-1">Megapixels: mostly marketing</p>
-                <p className="font-sans text-xs text-muted leading-relaxed">50MP with good sensor > 108MP with small sensor. Look for OIS and sensor size.</p>
+                <p className="font-sans text-xs text-muted leading-relaxed">50MP with good sensor &gt; 108MP with small sensor. Look for OIS and sensor size.</p>
               </div>
               <div className="bg-white border border-border p-4">
                 <p className="font-sans text-xs font-bold text-ink mb-1">5G bands: verify n78</p>
@@ -75,7 +75,7 @@ export default async function SmartphoneBuyingGuidePage() {
                 <span className="font-sans text-xs text-muted bg-gray-100 px-2 py-0.5 rounded">{reviews.length}</span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {reviews.map(article => (
+                {reviews.map((article: any) => (
                   <Link key={article.slug} href={`/${article.slug}`}
                     className="bg-white border border-border hover:border-[#d4220a] transition-colors group block">
                     {article.featuredImage && !article.featuredImage.startsWith('/phone-images/') && (
@@ -112,7 +112,7 @@ export default async function SmartphoneBuyingGuidePage() {
                 <span className="font-sans text-xs text-muted bg-gray-100 px-2 py-0.5 rounded">{news.length}</span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {news.map(article => (
+                {news.map((article: any) => (
                   <Link key={article.slug} href={`/${article.slug}`}
                     className="bg-white border border-border hover:border-[#d4220a] transition-colors group block">
                     {article.featuredImage && !article.featuredImage.startsWith('/phone-images/') && (
