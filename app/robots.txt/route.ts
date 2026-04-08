@@ -18,11 +18,13 @@ Disallow: /api/scheduler
 Disallow: /api/seo-cron
 Disallow: /api/fetch
 Disallow: /api/analytics
+Disallow: /api/auto-index
+Disallow: /api/index-url
 Disallow: /article/
 Disallow: /default
 Disallow: /feeds/
 
-User-agent: Googlebot
+User-agent: Googlebot-Image
 Allow: /api/image/
 Allow: /api/img
 

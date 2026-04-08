@@ -121,8 +121,8 @@ export async function GET(
         // Cache aggressively — image content never changes for a given ID
         'Cache-Control': 'public, max-age=2592000, s-maxage=2592000, immutable',
         'CDN-Cache-Control': 'public, max-age=2592000',
-        // Security: never leak referrer to Unsplash
         'Referrer-Policy': 'no-referrer',
+        'X-Robots-Tag': 'noindex',  // Prevent /api/image/* from appearing in GSC as pages
       },
     })
   } catch {

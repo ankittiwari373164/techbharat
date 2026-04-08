@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return {
       title,
       description,
-      alternates: { canonical, types: { 'application/amphtml': `${SITE_URL}/${slug}/amp` } },
+      alternates: { canonical, types: { 'application/amphtml': `${SITE_URL}/${params.slug}/amp` } },
       openGraph: {
         title, description,
         url:       canonical,
@@ -156,7 +156,11 @@ export default async function ArticlePage({ params }: PageProps) {
       })),
     }
   }
-  const faqSchema = buildFaqSchema()
+  // Only generate FAQPage if content doesn't already have one embedded
+  // This prevents the duplicate FAQPage GSC error
+  const contentHasFAQ = ((article as any).content || '').includes('"@type":"FAQPage"') ||
+                         ((article as any).content || '').includes("'@type':'FAQPage'")
+  const faqSchema = contentHasFAQ ? null : buildFaqSchema()
 
   return (
     <>
