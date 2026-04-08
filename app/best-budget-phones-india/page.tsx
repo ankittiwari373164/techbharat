@@ -1,4 +1,4 @@
-// app/best-camera-phones-india/page.tsx
+// app/best-budget-phones-india/page.tsx
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { getPillarArticles, formatPillarDate, currentMonthYear } from '@/lib/pillar-utils'
@@ -8,16 +8,16 @@ export const revalidate = 3600
 export async function generateMetadata(): Promise<Metadata> {
   const { month, year } = currentMonthYear()
   return {
-    title: `Best Camera Phones in India — ${month} ${year} Picks | The Tech Bharat`,
-    description: `Best camera phones for India in ${month} ${year} — ranked for Indian conditions: harsh sunlight, weddings, low-light photography. Updated monthly.`,
-    alternates: { canonical: 'https://thetechbharat.com/best-camera-phones-india' },
-    openGraph: { title: `Best Camera Phones in India — ${month} ${year} Picks | The Tech Bharat`, url: 'https://thetechbharat.com/best-camera-phones-india', type: 'article' },
+    title: `Best Budget Phones India Under ₹15K & ₹20K — ${month} ${year} | The Tech Bharat`,
+    description: `Best budget smartphones India ${month} ${year} under ₹15,000 and ₹20,000. Honest picks with India-specific value analysis.`,
+    alternates: { canonical: 'https://thetechbharat.com/best-budget-phones-india' },
+    openGraph: { title: `Best Budget Phones India Under ₹15K & ₹20K — ${month} ${year} | The Tech Bharat`, url: 'https://thetechbharat.com/best-budget-phones-india', type: 'article' },
   }
 }
 
-export default async function BestCameraPhonesPage() {
+export default async function BestBudgetPhonesPage() {
   const { month, year } = currentMonthYear()
-  const articles = await getPillarArticles(['camera', 'photo', 'photography', 'selfie', 'portrait', 'night mode', 'low light', 'megapixel'], [], 15)
+  const articles = await getPillarArticles(['budget', 'under 15000', 'under 20000', 'affordable', 'value for money'], [], 15)
   const reviews  = articles.filter(a => a.type === 'review' || a.type === 'compare')
   const news     = articles.filter(a => a.type === 'mobile-news')
 
@@ -25,8 +25,8 @@ export default async function BestCameraPhonesPage() {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
     mainEntity: [
-      { '@type': 'Question', name: `Which is the best camera phone under ₹25,000?`, acceptedAnswer: { '@type': 'Answer', text: `The Nothing Phone (3a) offers the most natural camera processing for Indian conditions under ₹25,000 in ` + month + ` ` + year + `. Samsung Galaxy A35 5G is the alternative for those who prefer Samsung\'s colour science.` } },
-      { '@type': 'Question', name: `Does megapixels determine camera quality?`, acceptedAnswer: { '@type': 'Answer', text: `No. Sensor size, aperture, OIS, and computational photography software matter far more than megapixel count.` } }
+      { '@type': 'Question', name: `Best phone under ₹15,000 in India in ` + month + ` ` + year + `?`, acceptedAnswer: { '@type': 'Answer', text: `Current top picks: Redmi Note 14 (best camera), Samsung Galaxy A15 5G (best service + updates), Realme Narzo 70 Pro (fastest charging). Check current Flipkart/Amazon pricing as budget phone prices fluctuate frequently.` } },
+      { '@type': 'Question', name: `Should I buy ₹10,000 or save for ₹15,000?`, acceptedAnswer: { '@type': 'Answer', text: `Save for ₹15,000. The price jump delivers: 5G, AMOLED display, more RAM, faster charging, better cameras. The extra ₹5,000 gives significantly better daily experience for a 2–3 year phone.` } }
     ]
   }
 
@@ -37,32 +37,32 @@ export default async function BestCameraPhonesPage() {
         <div className="max-w-4xl mx-auto px-4 py-10">
           <nav className="font-sans text-xs text-muted mb-6 flex items-center gap-2">
             <Link href="/" className="hover:text-[#d4220a]">Home</Link><span>/</span>
-            <span className="text-ink">Best Camera Phones in India — {month} {year} Picks</span>
+            <span className="text-ink">Best Budget Phones India Under ₹15K & ₹20K — {month} {year}</span>
           </nav>
           <div className="mb-8">
             <span className="bg-[#d4220a] text-white font-sans text-[10px] font-bold px-2.5 py-1 uppercase tracking-widest">Updated {month} {year}</span>
-            <h1 className="font-playfair text-3xl md:text-4xl font-black text-ink leading-tight mt-3 mb-4">Best Camera Phones in India — {month} {year} Picks</h1>
-            <p className="font-body text-lg text-[#2a2a2a] leading-relaxed">Indian photography demands harsh sunlight readability, accurate skin tones for weddings, and low-light performance for indoor events. These {month} {year} picks reflect real Indian shooting conditions.</p>
+            <h1 className="font-playfair text-3xl md:text-4xl font-black text-ink leading-tight mt-3 mb-4">Best Budget Phones India Under ₹15K & ₹20K — {month} {year}</h1>
+            <p className="font-body text-lg text-[#2a2a2a] leading-relaxed">India's budget phone market in {month} {year} offers 5G, AMOLED, and 50MP cameras under ₹15,000. Here is what is actually worth buying versus what is marketing.</p>
           </div>
 
           <section className="mb-8">
-            <h2 className="font-playfair text-xl font-bold text-ink mb-4 pb-2 border-b border-border">What Makes a Good Camera for India?</h2>
+            <h2 className="font-playfair text-xl font-bold text-ink mb-4 pb-2 border-b border-border">Budget Phone Priorities</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="bg-white border border-border p-4">
-                <p className="font-sans text-xs font-bold text-ink mb-1">Skin tone accuracy</p>
-                <p className="font-sans text-xs text-muted leading-relaxed">Portrait mode must preserve natural Indian skin tones. Google Pixel leads; Samsung A-series is reliable.</p>
+                <p className="font-sans text-xs font-bold text-ink mb-1">Battery over camera</p>
+                <p className="font-sans text-xs text-muted leading-relaxed">At ₹10K–₹15K, cameras are similar across brands. Battery size and charging speed make a real daily difference.</p>
               </div>
               <div className="bg-white border border-border p-4">
-                <p className="font-sans text-xs font-bold text-ink mb-1">OIS for weddings</p>
-                <p className="font-sans text-xs text-muted leading-relaxed">Optical Image Stabilisation is essential for indoor wedding photography at ₹30K+.</p>
+                <p className="font-sans text-xs font-bold text-ink mb-1">5G future-proofing</p>
+                <p className="font-sans text-xs text-muted leading-relaxed">Spend ₹500–1000 extra for 5G. Budget phones are kept 3+ years — 4G-only will feel outdated.</p>
               </div>
               <div className="bg-white border border-border p-4">
-                <p className="font-sans text-xs font-bold text-ink mb-1">Outdoor HDR</p>
-                <p className="font-sans text-xs text-muted leading-relaxed">Direct Indian summer sun requires strong HDR processing. Check sample shots in daylight.</p>
+                <p className="font-sans text-xs font-bold text-ink mb-1">Software updates</p>
+                <p className="font-sans text-xs text-muted leading-relaxed">Samsung Galaxy M-series gets longer updates than equivalent-priced Chinese phones.</p>
               </div>
               <div className="bg-white border border-border p-4">
-                <p className="font-sans text-xs font-bold text-ink mb-1">Megapixels ≠ quality</p>
-                <p className="font-sans text-xs text-muted leading-relaxed">50MP with large sensor beats 108MP with small sensor. Sensor size + OIS > megapixel count.</p>
+                <p className="font-sans text-xs font-bold text-ink mb-1">Storage minimum 64GB</p>
+                <p className="font-sans text-xs text-muted leading-relaxed">16GB fills up within weeks. 64GB minimum, 128GB preferred for 3-year use.</p>
               </div>
             </div>
           </section>
@@ -151,19 +151,19 @@ export default async function BestCameraPhonesPage() {
             <div className="space-y-4">
 
               <div className="border border-border p-4 bg-white">
-                <h3 className="font-sans text-sm font-bold text-ink mb-2">Which is the best camera phone under ₹25,000?</h3>
-                <p className="font-sans text-sm text-muted leading-relaxed">The Nothing Phone (3a) offers the most natural camera processing for Indian conditions under ₹25,000 in {month} {year}. Samsung Galaxy A35 5G is the alternative for those who prefer Samsung's colour science.</p>
+                <h3 className="font-sans text-sm font-bold text-ink mb-2">Best phone under ₹15,000 in India in {month} {year}?</h3>
+                <p className="font-sans text-sm text-muted leading-relaxed">Current top picks: Redmi Note 14 (best camera), Samsung Galaxy A15 5G (best service + updates), Realme Narzo 70 Pro (fastest charging). Check current Flipkart/Amazon pricing as budget phone prices fluctuate frequently.</p>
               </div>
               <div className="border border-border p-4 bg-white">
-                <h3 className="font-sans text-sm font-bold text-ink mb-2">Does megapixels determine camera quality?</h3>
-                <p className="font-sans text-sm text-muted leading-relaxed">No. Sensor size, aperture, OIS, and computational photography software matter far more than megapixel count.</p>
+                <h3 className="font-sans text-sm font-bold text-ink mb-2">Should I buy ₹10,000 or save for ₹15,000?</h3>
+                <p className="font-sans text-sm text-muted leading-relaxed">Save for ₹15,000. The price jump delivers: 5G, AMOLED display, more RAM, faster charging, better cameras. The extra ₹5,000 gives significantly better daily experience for a 2–3 year phone.</p>
               </div>
             </div>
           </section>
           <section className="mt-8 pt-6 border-t border-border">
             <h2 className="font-playfair text-xl font-bold text-ink mb-4">Related Guides</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <Link href="/best-smartphones-india" className="border border-border p-3 bg-white hover:border-[#d4220a] transition-colors group"><span className="font-sans text-sm font-bold text-ink group-hover:text-[#d4220a]">Best Smartphones India →</span></Link>
+              <Link href="/best-5g-phones-india" className="border border-border p-3 bg-white hover:border-[#d4220a] transition-colors group"><span className="font-sans text-sm font-bold text-ink group-hover:text-[#d4220a]">Best 5G Phones India →</span></Link>
               <Link href="/smartphone-buying-guide-india" className="border border-border p-3 bg-white hover:border-[#d4220a] transition-colors group"><span className="font-sans text-sm font-bold text-ink group-hover:text-[#d4220a]">Smartphone Buying Guide →</span></Link>
             </div>
           </section>

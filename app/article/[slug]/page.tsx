@@ -1,8 +1,5 @@
 // app/article/[slug]/page.tsx
-// FIXED:
-//  - Single FAQPage schema (no more "Duplicate field FAQPage" GSC error)
-//  - Canonical URL is /<slug> (redirected from /article/<slug>)
-//  - AMP link in alternates
+// ── SERVER COMPONENT — full HTML in initial response for crawlers/SEO ──
 import { getAllArticlesAsync } from '@/lib/store'
 import type { Metadata } from 'next'
 import ArticleClient from './ArticleClient'
@@ -30,23 +27,18 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const article = articles.find(a => a.slug === params.slug)
     if (!article) return { title: 'Article Not Found | The Tech Bharat' }
 
+    // Strip '| The Tech Bharat' from seoTitle if present — layout template adds it automatically
     const rawTitle    = (article.seoTitle || article.title).replace(/\s*\|\s*The Tech Bharat\s*$/i, '').trim()
+    const title       = rawTitle
     const description = article.seoDescription || article.summary?.slice(0, 155) || ''
-
-    // CANONICAL is /slug — NOT /article/slug
-    const canonical = `${SITE_URL}/${params.slug}`
+    const canonical   = `${SITE_URL}/${params.slug}`
 
     return {
-      title: rawTitle,
+      title,
       description,
-      alternates: {
-        canonical,
-        // AMP version if you have one
-        // types: { 'application/amphtml': `${SITE_URL}/${params.slug}/amp` }
-      },
+      alternates: { canonical, types: { 'application/amphtml': `${SITE_URL}/${slug}/amp` } },
       openGraph: {
-        title: rawTitle,
-        description,
+        title, description,
         url:       canonical,
         siteName:  'The Tech Bharat',
         type:      'article',
@@ -54,16 +46,18 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         modifiedTime:  (article as any).updatedDate || article.publishDate,
         authors:   [article.author || 'Vijay Yadav'],
         images:    article.featuredImage
-          ? [{ url: article.featuredImage, width: 1200, height: 630, alt: rawTitle }]
-          : [{ url: `${SITE_URL}/og-image.jpg`, width: 1200, height: 630, alt: 'The Tech Bharat' }],
+          ? [{ url: article.featuredImage, width: 1200, height: 630, alt: title }]
+          : [{ url: 'https://thetechbharat.com/og-image.jpg', width: 1200, height: 630, alt: 'The Tech Bharat' }],
       },
       twitter: {
-        card:    'summary_large_image',
-        title:   rawTitle,
+        card:        'summary_large_image',
+        title,
         description,
-        site:    '@thetechbharat',
-        creator: '@thetechbharat',
-        images:  article.featuredImage ? [article.featuredImage] : [`${SITE_URL}/og-image.jpg`],
+        site:        '@thetechbharat',
+        creator:     '@thetechbharat',
+        images:      article.featuredImage
+          ? [article.featuredImage]
+          : ['https://thetechbharat.com/og-image.jpg'],
       },
     }
   } catch {
@@ -95,20 +89,16 @@ export default async function ArticlePage({ params }: PageProps) {
     )
   }
 
-  // CANONICAL URL — /slug (no /article/ prefix)
-  const canonicalUrl = `${SITE_URL}/${slug}`
-
-  // Schema.org NewsArticle
+  // Schema.org JSON-LD — in raw HTML for crawlers
   const schema = {
     '@context': 'https://schema.org',
     '@type': 'NewsArticle',
     headline: article.title,
     description: article.seoDescription || article.summary,
-    image: article.featuredImage ? [article.featuredImage] : [`${SITE_URL}/og-image.jpg`],
+    image: article.featuredImage ? [article.featuredImage] : [],
     datePublished: article.publishDate,
     dateModified: article.updatedDate || article.publishDate,
-    url: canonicalUrl,
-    mainEntityOfPage: { '@type': 'WebPage', '@id': canonicalUrl },
+    url: `${SITE_URL}/${slug}`,
     author: {
       '@type': 'Person',
       name: article.author || 'Vijay Yadav',
@@ -121,6 +111,7 @@ export default async function ArticlePage({ params }: PageProps) {
       name: 'The Tech Bharat',
       logo: { '@type': 'ImageObject', url: `${SITE_URL}/logo.png` },
     },
+    mainEntityOfPage: { '@type': 'WebPage', '@id': `${SITE_URL}/${slug}` },
   }
 
   const breadcrumbSchema = {
@@ -129,76 +120,49 @@ export default async function ArticlePage({ params }: PageProps) {
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
       { '@type': 'ListItem', position: 2, name: article.category || article.type, item: `${SITE_URL}/${article.type}` },
-      { '@type': 'ListItem', position: 3, name: article.title, item: canonicalUrl },
+      { '@type': 'ListItem', position: 3, name: article.title, item: `${SITE_URL}/${slug}` },
     ],
   }
 
-  // FIXED: Single FAQPage schema — no duplicates
-  // Only build FAQ if we have real content, and NEVER if article already has pillar page FAQ
-  const buildFaqSchema = () => {
-    const content = (article as any).content || ''
+  // FAQ schema — built from article bullets for rich result CTR boost
+  // FAQ schema — extract ONLY from article content h3+p pairs
+  // Never build from bullets — avoids duplicate FAQPage from AI-generated content
+  const buildFaqSchema = (): object | null => {
+    const articleContent = (article as any).content || ''
+    // Only extract from a dedicated FAQ section (after an h2 containing "FAQ" or "Question")
+    const faqSectionMatch = articleContent.match(/<h2[^>]*>[^<]*(FAQ|Frequently|Questions)[^<]*<\/h2>([\s\S]*?)(?=<h2|$)/i)
+    const searchIn = faqSectionMatch ? faqSectionMatch[2] : articleContent
 
-    // Try to extract real Q&A pairs from <h3> + <p> in article HTML
-    const faqMatches: { q: string; a: string }[] = []
-    const h3Regex = /<h3[^>]*>(.*?)<\/h3>\s*<p[^>]*>(.*?)<\/p>/g
-    let match
-    while ((match = h3Regex.exec(content)) !== null && faqMatches.length < 4) {
-      const q = match[1].replace(/<[^>]*>/g, '').trim()
-      const a = match[2].replace(/<[^>]*>/g, '').trim()
-      // Strict validation — real questions and answers
-      if (q.length > 15 && a.length > 40 && (q.includes('?') || q.toLowerCase().startsWith('what') || q.toLowerCase().startsWith('how') || q.toLowerCase().startsWith('which') || q.toLowerCase().startsWith('why') || q.toLowerCase().startsWith('is') || q.toLowerCase().startsWith('does'))) {
+    const faqMatches: {q: string, a: string}[] = []
+    // Strict: only h3 immediately followed by p
+    const pairs = [...searchIn.matchAll(/<h3[^>]*>(.*?)<\/h3>\s*<p[^>]*>(.*?)<\/p>/gi)]
+    for (const m of pairs) {
+      if (faqMatches.length >= 4) break
+      const q = m[1].replace(/<[^>]*>/g, '').trim()
+      const a = m[2].replace(/<[^>]*>/g, '').trim()
+      // Quality gate: question must end with ? and be >15 chars, answer >30 chars
+      if (q.endsWith('?') && q.length > 15 && a.length > 30) {
         faqMatches.push({ q, a })
       }
     }
-
-    if (faqMatches.length >= 2) {
-      return {
-        '@context': 'https://schema.org',
-        '@type': 'FAQPage',
-        mainEntity: faqMatches.map(({ q, a }) => ({
-          '@type': 'Question',
-          name: q,
-          acceptedAnswer: { '@type': 'Answer', text: a },
-        })),
-      }
-    }
-
-    // Fallback: bullet-based FAQ — only if bullets are genuinely informative
-    const safeB = Array.isArray((article as any).bullets) ? (article as any).bullets : []
-    const validBullets = safeB
-      .map((b: string) => b.replace(/<[^>]*>/g, '').trim())
-      .filter((b: string) => b.length >= 40) // stricter min length to avoid GSC "Duplicate field" error
-
-    if (validBullets.length < 2) return null
-
-    const questions = [
-      `What are the key highlights of the ${article.brand} device?`,
-      `What is the India pricing and availability?`,
-      `What are the main specifications?`,
-      `Should Indian buyers consider this phone?`,
-    ]
-
+    if (faqMatches.length < 2) return null
     return {
       '@context': 'https://schema.org',
       '@type': 'FAQPage',
-      mainEntity: validBullets.slice(0, 4).map((b: string, i: number) => ({
+      mainEntity: faqMatches.map(({ q, a }) => ({
         '@type': 'Question',
-        name: questions[i] || `Key point ${i + 1} about ${article.title}`,
-        acceptedAnswer: { '@type': 'Answer', text: b },
+        name: q,
+        acceptedAnswer: { '@type': 'Answer', text: a },
       })),
     }
   }
-
   const faqSchema = buildFaqSchema()
 
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
-      {/* FIXED: Only ONE FAQPage schema per page — pillar pages have their own, articles have this one */}
-      {faqSchema && (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
-      )}
+      {faqSchema && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />}
       <ArticleClient article={article} similar={similar} slug={slug} />
     </>
   )

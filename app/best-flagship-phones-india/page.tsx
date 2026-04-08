@@ -1,4 +1,4 @@
-// app/best-camera-phones-india/page.tsx
+// app/best-flagship-phones-india/page.tsx
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { getPillarArticles, formatPillarDate, currentMonthYear } from '@/lib/pillar-utils'
@@ -8,16 +8,16 @@ export const revalidate = 3600
 export async function generateMetadata(): Promise<Metadata> {
   const { month, year } = currentMonthYear()
   return {
-    title: `Best Camera Phones in India — ${month} ${year} Picks | The Tech Bharat`,
-    description: `Best camera phones for India in ${month} ${year} — ranked for Indian conditions: harsh sunlight, weddings, low-light photography. Updated monthly.`,
-    alternates: { canonical: 'https://thetechbharat.com/best-camera-phones-india' },
-    openGraph: { title: `Best Camera Phones in India — ${month} ${year} Picks | The Tech Bharat`, url: 'https://thetechbharat.com/best-camera-phones-india', type: 'article' },
+    title: `Best Flagship Phones in India — ${month} ${year} Premium Picks | The Tech Bharat`,
+    description: `Best flagship smartphones India ${month} ${year}. Premium Android and iPhone picks above ₹70,000 with India-specific buying advice.`,
+    alternates: { canonical: 'https://thetechbharat.com/best-flagship-phones-india' },
+    openGraph: { title: `Best Flagship Phones in India — ${month} ${year} Premium Picks | The Tech Bharat`, url: 'https://thetechbharat.com/best-flagship-phones-india', type: 'article' },
   }
 }
 
-export default async function BestCameraPhonesPage() {
+export default async function BestFlagshipPhonesPage() {
   const { month, year } = currentMonthYear()
-  const articles = await getPillarArticles(['camera', 'photo', 'photography', 'selfie', 'portrait', 'night mode', 'low light', 'megapixel'], [], 15)
+  const articles = await getPillarArticles(['flagship', 'premium', 'ultra', 'pro max', 'high end', 'best android', '₹70000'], [], 15)
   const reviews  = articles.filter(a => a.type === 'review' || a.type === 'compare')
   const news     = articles.filter(a => a.type === 'mobile-news')
 
@@ -25,8 +25,8 @@ export default async function BestCameraPhonesPage() {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
     mainEntity: [
-      { '@type': 'Question', name: `Which is the best camera phone under ₹25,000?`, acceptedAnswer: { '@type': 'Answer', text: `The Nothing Phone (3a) offers the most natural camera processing for Indian conditions under ₹25,000 in ` + month + ` ` + year + `. Samsung Galaxy A35 5G is the alternative for those who prefer Samsung\'s colour science.` } },
-      { '@type': 'Question', name: `Does megapixels determine camera quality?`, acceptedAnswer: { '@type': 'Answer', text: `No. Sensor size, aperture, OIS, and computational photography software matter far more than megapixel count.` } }
+      { '@type': 'Question', name: `Which is the best flagship in India in ` + month + ` ` + year + `?`, acceptedAnswer: { '@type': 'Answer', text: `In ` + month + ` ` + year + `: Samsung Galaxy S25 Ultra (best camera versatility + S Pen), iPhone 16 Pro (best ecosystem + video), Google Pixel 9 Pro (best computational photography). Choice depends on ecosystem commitment.` } },
+      { '@type': 'Question', name: `Is a flagship phone worth buying in India?`, acceptedAnswer: { '@type': 'Answer', text: `Yes if you keep phones 3+ years and camera or ecosystem matters. No if budget is primary concern — OnePlus 13 at ₹65K delivers 80% of flagship experience at 50% of cost.` } }
     ]
   }
 
@@ -37,32 +37,32 @@ export default async function BestCameraPhonesPage() {
         <div className="max-w-4xl mx-auto px-4 py-10">
           <nav className="font-sans text-xs text-muted mb-6 flex items-center gap-2">
             <Link href="/" className="hover:text-[#d4220a]">Home</Link><span>/</span>
-            <span className="text-ink">Best Camera Phones in India — {month} {year} Picks</span>
+            <span className="text-ink">Best Flagship Phones in India — {month} {year} Premium Picks</span>
           </nav>
           <div className="mb-8">
             <span className="bg-[#d4220a] text-white font-sans text-[10px] font-bold px-2.5 py-1 uppercase tracking-widest">Updated {month} {year}</span>
-            <h1 className="font-playfair text-3xl md:text-4xl font-black text-ink leading-tight mt-3 mb-4">Best Camera Phones in India — {month} {year} Picks</h1>
-            <p className="font-body text-lg text-[#2a2a2a] leading-relaxed">Indian photography demands harsh sunlight readability, accurate skin tones for weddings, and low-light performance for indoor events. These {month} {year} picks reflect real Indian shooting conditions.</p>
+            <h1 className="font-playfair text-3xl md:text-4xl font-black text-ink leading-tight mt-3 mb-4">Best Flagship Phones in India — {month} {year} Premium Picks</h1>
+            <p className="font-body text-lg text-[#2a2a2a] leading-relaxed">Above ₹70,000, you are paying for the best cameras, longest software support, and premium build. This {month} {year} guide covers whether that premium is justified for Indian buyers.</p>
           </div>
 
           <section className="mb-8">
-            <h2 className="font-playfair text-xl font-bold text-ink mb-4 pb-2 border-b border-border">What Makes a Good Camera for India?</h2>
+            <h2 className="font-playfair text-xl font-bold text-ink mb-4 pb-2 border-b border-border">Is a Flagship Worth It in India?</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="bg-white border border-border p-4">
-                <p className="font-sans text-xs font-bold text-ink mb-1">Skin tone accuracy</p>
-                <p className="font-sans text-xs text-muted leading-relaxed">Portrait mode must preserve natural Indian skin tones. Google Pixel leads; Samsung A-series is reliable.</p>
+                <p className="font-sans text-xs font-bold text-ink mb-1">7-year updates economics</p>
+                <p className="font-sans text-xs text-muted leading-relaxed">₹1 lakh phone with 7-year updates = ₹14,000/year. ₹25K phone replaced every 2 years = ₹12,500/year — but with worse daily experience.</p>
               </div>
               <div className="bg-white border border-border p-4">
-                <p className="font-sans text-xs font-bold text-ink mb-1">OIS for weddings</p>
-                <p className="font-sans text-xs text-muted leading-relaxed">Optical Image Stabilisation is essential for indoor wedding photography at ₹30K+.</p>
+                <p className="font-sans text-xs font-bold text-ink mb-1">Camera as business tool</p>
+                <p className="font-sans text-xs text-muted leading-relaxed">Flagship cameras replace ₹50K+ DSLR for content creators. Genuine business investment.</p>
               </div>
               <div className="bg-white border border-border p-4">
-                <p className="font-sans text-xs font-bold text-ink mb-1">Outdoor HDR</p>
-                <p className="font-sans text-xs text-muted leading-relaxed">Direct Indian summer sun requires strong HDR processing. Check sample shots in daylight.</p>
+                <p className="font-sans text-xs font-bold text-ink mb-1">Resale value advantage</p>
+                <p className="font-sans text-xs text-muted leading-relaxed">iPhone retains 50–60% value after 2 years. Most Chinese flagships retain 25–35%.</p>
               </div>
               <div className="bg-white border border-border p-4">
-                <p className="font-sans text-xs font-bold text-ink mb-1">Megapixels ≠ quality</p>
-                <p className="font-sans text-xs text-muted leading-relaxed">50MP with large sensor beats 108MP with small sensor. Sensor size + OIS > megapixel count.</p>
+                <p className="font-sans text-xs font-bold text-ink mb-1">Import duty reality</p>
+                <p className="font-sans text-xs text-muted leading-relaxed">Indian flagship prices are 30–40% above US pricing. Factor into total cost comparison.</p>
               </div>
             </div>
           </section>
@@ -151,12 +151,12 @@ export default async function BestCameraPhonesPage() {
             <div className="space-y-4">
 
               <div className="border border-border p-4 bg-white">
-                <h3 className="font-sans text-sm font-bold text-ink mb-2">Which is the best camera phone under ₹25,000?</h3>
-                <p className="font-sans text-sm text-muted leading-relaxed">The Nothing Phone (3a) offers the most natural camera processing for Indian conditions under ₹25,000 in {month} {year}. Samsung Galaxy A35 5G is the alternative for those who prefer Samsung's colour science.</p>
+                <h3 className="font-sans text-sm font-bold text-ink mb-2">Which is the best flagship in India in {month} {year}?</h3>
+                <p className="font-sans text-sm text-muted leading-relaxed">In {month} {year}: Samsung Galaxy S25 Ultra (best camera versatility + S Pen), iPhone 16 Pro (best ecosystem + video), Google Pixel 9 Pro (best computational photography). Choice depends on ecosystem commitment.</p>
               </div>
               <div className="border border-border p-4 bg-white">
-                <h3 className="font-sans text-sm font-bold text-ink mb-2">Does megapixels determine camera quality?</h3>
-                <p className="font-sans text-sm text-muted leading-relaxed">No. Sensor size, aperture, OIS, and computational photography software matter far more than megapixel count.</p>
+                <h3 className="font-sans text-sm font-bold text-ink mb-2">Is a flagship phone worth buying in India?</h3>
+                <p className="font-sans text-sm text-muted leading-relaxed">Yes if you keep phones 3+ years and camera or ecosystem matters. No if budget is primary concern — OnePlus 13 at ₹65K delivers 80% of flagship experience at 50% of cost.</p>
               </div>
             </div>
           </section>
@@ -164,7 +164,7 @@ export default async function BestCameraPhonesPage() {
             <h2 className="font-playfair text-xl font-bold text-ink mb-4">Related Guides</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <Link href="/best-smartphones-india" className="border border-border p-3 bg-white hover:border-[#d4220a] transition-colors group"><span className="font-sans text-sm font-bold text-ink group-hover:text-[#d4220a]">Best Smartphones India →</span></Link>
-              <Link href="/smartphone-buying-guide-india" className="border border-border p-3 bg-white hover:border-[#d4220a] transition-colors group"><span className="font-sans text-sm font-bold text-ink group-hover:text-[#d4220a]">Smartphone Buying Guide →</span></Link>
+              <Link href="/best-camera-phones-india" className="border border-border p-3 bg-white hover:border-[#d4220a] transition-colors group"><span className="font-sans text-sm font-bold text-ink group-hover:text-[#d4220a]">Best Camera Phones India →</span></Link>
             </div>
           </section>
           <div className="mt-8 bg-[#f8f4ef] border-l-4 border-[#d4220a] p-5">

@@ -1,4 +1,4 @@
-// app/best-camera-phones-india/page.tsx
+// app/best-battery-backup-phones-india/page.tsx
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { getPillarArticles, formatPillarDate, currentMonthYear } from '@/lib/pillar-utils'
@@ -8,16 +8,16 @@ export const revalidate = 3600
 export async function generateMetadata(): Promise<Metadata> {
   const { month, year } = currentMonthYear()
   return {
-    title: `Best Camera Phones in India — ${month} ${year} Picks | The Tech Bharat`,
-    description: `Best camera phones for India in ${month} ${year} — ranked for Indian conditions: harsh sunlight, weddings, low-light photography. Updated monthly.`,
-    alternates: { canonical: 'https://thetechbharat.com/best-camera-phones-india' },
-    openGraph: { title: `Best Camera Phones in India — ${month} ${year} Picks | The Tech Bharat`, url: 'https://thetechbharat.com/best-camera-phones-india', type: 'article' },
+    title: `Best Battery Backup Phones in India — ${month} ${year} | The Tech Bharat`,
+    description: `Best battery phones in India ${month} ${year}. Long-lasting picks for heavy Indian users — commuters, gamers, and power-cut areas.`,
+    alternates: { canonical: 'https://thetechbharat.com/best-battery-backup-phones-india' },
+    openGraph: { title: `Best Battery Backup Phones in India — ${month} ${year} | The Tech Bharat`, url: 'https://thetechbharat.com/best-battery-backup-phones-india', type: 'article' },
   }
 }
 
-export default async function BestCameraPhonesPage() {
+export default async function BestBatteryPhonesPage() {
   const { month, year } = currentMonthYear()
-  const articles = await getPillarArticles(['camera', 'photo', 'photography', 'selfie', 'portrait', 'night mode', 'low light', 'megapixel'], [], 15)
+  const articles = await getPillarArticles(['battery', 'charging', 'fast charge', 'mAh', 'battery life', 'endurance'], [], 15)
   const reviews  = articles.filter(a => a.type === 'review' || a.type === 'compare')
   const news     = articles.filter(a => a.type === 'mobile-news')
 
@@ -25,8 +25,8 @@ export default async function BestCameraPhonesPage() {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
     mainEntity: [
-      { '@type': 'Question', name: `Which is the best camera phone under ₹25,000?`, acceptedAnswer: { '@type': 'Answer', text: `The Nothing Phone (3a) offers the most natural camera processing for Indian conditions under ₹25,000 in ` + month + ` ` + year + `. Samsung Galaxy A35 5G is the alternative for those who prefer Samsung\'s colour science.` } },
-      { '@type': 'Question', name: `Does megapixels determine camera quality?`, acceptedAnswer: { '@type': 'Answer', text: `No. Sensor size, aperture, OIS, and computational photography software matter far more than megapixel count.` } }
+      { '@type': 'Question', name: `Which phone has the best battery life in India in ` + year + `?`, acceptedAnswer: { '@type': 'Answer', text: `For ` + month + ` ` + year + `: iQOO Z9x (6000mAh + efficient Snapdragon) and Samsung Galaxy M35 5G consistently deliver 2-day battery life for typical Indian usage patterns.` } },
+      { '@type': 'Question', name: `Does fast charging damage battery?`, acceptedAnswer: { '@type': 'Answer', text: `Modern fast charging systems manage temperature carefully. Risk comes from charging in hot environments (car in summer, direct sunlight) — not wattage. Use the original charger.` } }
     ]
   }
 
@@ -37,32 +37,32 @@ export default async function BestCameraPhonesPage() {
         <div className="max-w-4xl mx-auto px-4 py-10">
           <nav className="font-sans text-xs text-muted mb-6 flex items-center gap-2">
             <Link href="/" className="hover:text-[#d4220a]">Home</Link><span>/</span>
-            <span className="text-ink">Best Camera Phones in India — {month} {year} Picks</span>
+            <span className="text-ink">Best Battery Backup Phones in India — {month} {year}</span>
           </nav>
           <div className="mb-8">
             <span className="bg-[#d4220a] text-white font-sans text-[10px] font-bold px-2.5 py-1 uppercase tracking-widest">Updated {month} {year}</span>
-            <h1 className="font-playfair text-3xl md:text-4xl font-black text-ink leading-tight mt-3 mb-4">Best Camera Phones in India — {month} {year} Picks</h1>
-            <p className="font-body text-lg text-[#2a2a2a] leading-relaxed">Indian photography demands harsh sunlight readability, accurate skin tones for weddings, and low-light performance for indoor events. These {month} {year} picks reflect real Indian shooting conditions.</p>
+            <h1 className="font-playfair text-3xl md:text-4xl font-black text-ink leading-tight mt-3 mb-4">Best Battery Backup Phones in India — {month} {year}</h1>
+            <p className="font-body text-lg text-[#2a2a2a] leading-relaxed">India's demanding usage patterns — long commutes, BGMI sessions, unstable power — require genuine all-day battery. These {month} {year} picks prioritise real-world Indian performance.</p>
           </div>
 
           <section className="mb-8">
-            <h2 className="font-playfair text-xl font-bold text-ink mb-4 pb-2 border-b border-border">What Makes a Good Camera for India?</h2>
+            <h2 className="font-playfair text-xl font-bold text-ink mb-4 pb-2 border-b border-border">Battery Facts for Indian Buyers</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="bg-white border border-border p-4">
-                <p className="font-sans text-xs font-bold text-ink mb-1">Skin tone accuracy</p>
-                <p className="font-sans text-xs text-muted leading-relaxed">Portrait mode must preserve natural Indian skin tones. Google Pixel leads; Samsung A-series is reliable.</p>
+                <p className="font-sans text-xs font-bold text-ink mb-1">5000mAh minimum</p>
+                <p className="font-sans text-xs text-muted leading-relaxed">For heavy Indian usage including streaming and gaming, 5000mAh is the floor.</p>
               </div>
               <div className="bg-white border border-border p-4">
-                <p className="font-sans text-xs font-bold text-ink mb-1">OIS for weddings</p>
-                <p className="font-sans text-xs text-muted leading-relaxed">Optical Image Stabilisation is essential for indoor wedding photography at ₹30K+.</p>
+                <p className="font-sans text-xs font-bold text-ink mb-1">Heat degradation</p>
+                <p className="font-sans text-xs text-muted leading-relaxed">Indian summer heat accelerates battery degradation. Phones with better cooling preserve battery health longer.</p>
               </div>
               <div className="bg-white border border-border p-4">
-                <p className="font-sans text-xs font-bold text-ink mb-1">Outdoor HDR</p>
-                <p className="font-sans text-xs text-muted leading-relaxed">Direct Indian summer sun requires strong HDR processing. Check sample shots in daylight.</p>
+                <p className="font-sans text-xs font-bold text-ink mb-1">Fast charging matters</p>
+                <p className="font-sans text-xs text-muted leading-relaxed">80W charging is more practical for India's commute pattern than a massive battery with slow 18W charging.</p>
               </div>
               <div className="bg-white border border-border p-4">
-                <p className="font-sans text-xs font-bold text-ink mb-1">Megapixels ≠ quality</p>
-                <p className="font-sans text-xs text-muted leading-relaxed">50MP with large sensor beats 108MP with small sensor. Sensor size + OIS > megapixel count.</p>
+                <p className="font-sans text-xs font-bold text-ink mb-1">Check optimised charging</p>
+                <p className="font-sans text-xs text-muted leading-relaxed">Enable optimised charging on Samsung, Pixel, or OnePlus to preserve long-term battery health.</p>
               </div>
             </div>
           </section>
@@ -151,20 +151,20 @@ export default async function BestCameraPhonesPage() {
             <div className="space-y-4">
 
               <div className="border border-border p-4 bg-white">
-                <h3 className="font-sans text-sm font-bold text-ink mb-2">Which is the best camera phone under ₹25,000?</h3>
-                <p className="font-sans text-sm text-muted leading-relaxed">The Nothing Phone (3a) offers the most natural camera processing for Indian conditions under ₹25,000 in {month} {year}. Samsung Galaxy A35 5G is the alternative for those who prefer Samsung's colour science.</p>
+                <h3 className="font-sans text-sm font-bold text-ink mb-2">Which phone has the best battery life in India in {year}?</h3>
+                <p className="font-sans text-sm text-muted leading-relaxed">For {month} {year}: iQOO Z9x (6000mAh + efficient Snapdragon) and Samsung Galaxy M35 5G consistently deliver 2-day battery life for typical Indian usage patterns.</p>
               </div>
               <div className="border border-border p-4 bg-white">
-                <h3 className="font-sans text-sm font-bold text-ink mb-2">Does megapixels determine camera quality?</h3>
-                <p className="font-sans text-sm text-muted leading-relaxed">No. Sensor size, aperture, OIS, and computational photography software matter far more than megapixel count.</p>
+                <h3 className="font-sans text-sm font-bold text-ink mb-2">Does fast charging damage battery?</h3>
+                <p className="font-sans text-sm text-muted leading-relaxed">Modern fast charging systems manage temperature carefully. Risk comes from charging in hot environments (car in summer, direct sunlight) — not wattage. Use the original charger.</p>
               </div>
             </div>
           </section>
           <section className="mt-8 pt-6 border-t border-border">
             <h2 className="font-playfair text-xl font-bold text-ink mb-4">Related Guides</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <Link href="/best-smartphones-india" className="border border-border p-3 bg-white hover:border-[#d4220a] transition-colors group"><span className="font-sans text-sm font-bold text-ink group-hover:text-[#d4220a]">Best Smartphones India →</span></Link>
-              <Link href="/smartphone-buying-guide-india" className="border border-border p-3 bg-white hover:border-[#d4220a] transition-colors group"><span className="font-sans text-sm font-bold text-ink group-hover:text-[#d4220a]">Smartphone Buying Guide →</span></Link>
+              <Link href="/android-battery-health-guide" className="border border-border p-3 bg-white hover:border-[#d4220a] transition-colors group"><span className="font-sans text-sm font-bold text-ink group-hover:text-[#d4220a]">Android Battery Health Guide →</span></Link>
+              <Link href="/best-budget-phones-india" className="border border-border p-3 bg-white hover:border-[#d4220a] transition-colors group"><span className="font-sans text-sm font-bold text-ink group-hover:text-[#d4220a]">Best Budget Phones India →</span></Link>
             </div>
           </section>
           <div className="mt-8 bg-[#f8f4ef] border-l-4 border-[#d4220a] p-5">

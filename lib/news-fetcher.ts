@@ -67,14 +67,46 @@ function detectType(title: string): 'mobile-news' | 'review' | 'compare' {
   return 'mobile-news'
 }
 
+// Titles/content that should NEVER be fetched — AdSense low-value risk
+const LOW_VALUE_PATTERNS = [
+  // Pure leaks/speculation with no confirmed info
+  /\b(leaked?|leaks?|leak suggests?|tipped|tipster)\b/i,
+  // Patent speculation
+  /\bpatent (filed|reveals?|shows?|hints?)\b/i,
+  // Rumour-only content
+  /\b(rumou?r|rumou?red|reportedly|unconfirmed|anonymous source)\b/i,
+  // Concept/render articles
+  /\b(concept|render|concept render|fan.made|unofficial)\b/i,
+  // Pure prediction/forecast with no facts
+  /\b(prediction|forecast|we expect|could launch|might launch|may launch)\b.*\b202[0-9]\b/i,
+  // Clickbait patterns
+  /\b(you won.t believe|shocking|mind.?blowing|game.?changer|revolutionary|disrupts?)\b/i,
+  // Off-topic news accidentally included
+  /\b(cricket|football|bollywood|politics|stock market|crypto|nft|bitcoin|murder|accident|rape|assault)\b/i,
+  // Pure spec dump with no value
+  /\b(full specs (revealed?|leaked?)|specs? sheet|spec list)\b/i,
+]
+
+const REQUIRED_MOBILE_KEYWORDS = [
+  'smartphone','phone','mobile','iphone','android','5g','camera','battery',
+  'flagship','oneplus','samsung','xiaomi','pixel','realme','poco','oppo',
+  'vivo','iqoo','nothing phone','motorola','tablet','laptop',
+]
+
 function isMobileTech(title: string, desc: string): boolean {
   const text = (title + ' ' + desc).toLowerCase()
-  const kw = [
-    'smartphone','phone','mobile','iphone','android','5g','camera','battery',
-    'flagship','midrange','budget phone','oneplus','samsung galaxy','xiaomi',
-    'pixel','realme','poco','oppo','vivo','iqoo','nothing phone','motorola',
-  ]
-  return kw.some(k => text.includes(k))
+  // Must contain at least one mobile tech keyword
+  if (!REQUIRED_MOBILE_KEYWORDS.some(k => text.includes(k))) return false
+  // Must NOT match low-value patterns
+  if (LOW_VALUE_PATTERNS.some(p => p.test(title))) return false
+  return true
+}
+
+function isHighQualityTitle(title: string): boolean {
+  if (!title || title === '[Removed]' || title.length < 20) return false
+  if (LOW_VALUE_PATTERNS.some(p => p.test(title))) return false
+  // Require some substance — at least a brand/product mention
+  return REQUIRED_MOBILE_KEYWORDS.some(k => title.toLowerCase().includes(k))
 }
 
 // ── NEWSAPI ──────────────────────────────────────────────────────
@@ -237,7 +269,25 @@ INTERNAL LINKS MANDATE: Every article must include exactly 2 internal links to o
 <a href="/compare">Compare phones on The Tech Bharat</a>
 OR link to /reviews, /mobile-news, /web-stories as relevant. Place them naturally inside paragraphs — not in a list at the bottom.
 
-UNIQUE VALUE MANDATE: This article MUST offer something the reader cannot get from just reading the press release or spec sheet. Add at least ONE of: (a) your honest opinion on whether it's worth buying, (b) a comparison to a rival at similar price, (c) an India-specific insight about availability/value/5G, (d) a prediction or concern about this product's future. Generic spec summaries fail this test.
+CONTENT QUALITY MANDATE (AdSense Compliance):
+This article MUST offer GENUINE value. Google will reject sites with:
+- Pure leak/rumour articles (no confirmed facts)
+- Spec dumps without analysis
+- Clickbait with no substance
+- Fake review language for unreleased products
+
+REQUIRED: At least TWO of these in every article:
+(a) Honest India-specific buying advice (is it worth the price for Indian users?)
+(b) Direct comparison to a competitor at similar price in India
+(c) Specific India context: Flipkart/Amazon pricing, service centres, 5G band support
+(d) Clear statement of what we know vs what is speculation — never blur these
+(e) Practical verdict: who should buy, who should wait, who should skip
+
+NEVER ACCEPTABLE:
+- Writing as if you tested a phone that isn't released
+- Presenting leaked specs as confirmed facts
+- "Expected to feature" stated as "will feature"
+- Purely negative or competitor-attack framing
 FACTUAL ACCURACY MANDATE: ONLY write about real, confirmed products. DO NOT invent product names, specs, prices, or availability. Stick strictly to facts from the provided source material.
 
 HONEST FRAMING MANDATE (CRITICAL FOR ADSENSE APPROVAL):
@@ -337,7 +387,7 @@ Return ONLY valid JSON. No markdown fences. No text outside the JSON object.
 Escape all internal quotes with backslash.
 
 {
-  "title": "CRITICAL TITLE RULES:\n1. NO clickbait. Titles must be factual and specific.\n2. NO speculative pricing claims stated as fact (use \\'expected\\', \\'rumoured\\', \\'analyst estimates\\')\n3. NO competitor-attack framing like \\'Why Google/Apple Can\\'t Compete\\' — report facts, not attacks\n4. NO pure spec dumps like \\'X Review\\' or \\'Y Launch\\' — make it specific and useful\n5. OK to use questions: \\'Is X Worth ₹50K?\\' · \\'X vs Y: Which Should You Buy?\\'\n6. For leaks/speculation, title must signal it: \\'Galaxy S26: What Leaks Suggest So Far\\' not \\'Galaxy S26 to Launch with X Feature\\'\n7. 55–70 chars\nGOOD examples: \\'Motorola Edge 70 Fusion: 7,000mAh Battery at Expected ₹20K\\' | \\'iPhone 17e First Look: Spec Breakdown and India Price Estimate\\'\nBAD examples: \\'MacBook Neo at $599: Why Google\\'s Android PCs Can\\'t Compete\\' (attack tone) | \\'Motorola Edge 70 India: ₹20K pricing\\' (unconfirmed price stated as fact)",
+  "title": "TITLE RULES — READ CAREFULLY:\n1. CONFIRMED PRODUCT (available in India): Specific, factual, price or key spec in title. Example: \\'Nothing Phone (3a) at ₹25K: Best Mid-Range Design of 2026?\\'\n2. ANNOUNCED (not yet in India): Use \\'Coming to India\\', \\'India Launch Expected\\', \\'India Price Analysis\\'. Example: \\'Samsung Galaxy A56: Everything Indian Buyers Need to Know Before Launch\\'\n3. RUMOURED/LEAKED: NEVER write as confirmed. Write as analysis. Example: \\'What the OnePlus 14 Leaks Actually Tell Us\\'. NO titles like \\'OnePlus 14 Launch Date Revealed\\'\n4. REAL content signals: Include a number, price in ₹, or specific comparison. Makes it specific and trustworthy.\n5. NO clickbait: No \\'shocking\\', \\'mind-blowing\\', \\'you won\\'t believe\\', \\'game-changer\\'.\n6. NO fake reviews: Never imply you tested an unreleased phone.\n7. FORMAT: [Product]: [Specific value/question for Indian buyers] — 55–70 chars\nGOOD: \\'iQOO Z11 5G at ₹14,999: Battery King or One-Trick Pony?\\' | \\'Pixel 9a vs Galaxy A55: Which ₹50K Phone Wins for India?\\'\nBAD: \\'iPhone 19 Leaked Design Will Shock You\\' | \\'Galaxy S26 to Feature Mind-Blowing Camera\\'",
   "brand": "${brand}",
   "type": "${type}",
   "summary": "3 sentences. Sentence 1: most surprising/interesting fact. Sentence 2: India price or context. Sentence 3: what makes this worth reading. Conversational — like you're telling a friend. NO banned phrases.",
@@ -590,7 +640,7 @@ export async function fetchSingleArticle(
   if (fresh.length === 0) {
     if (type === 'compare') {
       const pool = rawArticles
-        .filter(a => a.title && a.title !== '[Removed]' && isMobileTech(a.title, a.description))
+        .filter(a => isHighQualityTitle(a.title) && isMobileTech(a.title, a.description || ''))
         .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
       
       if (pool.length >= 2) {
@@ -610,7 +660,7 @@ export async function fetchSingleArticle(
     }
 
     const fallback = rawArticles
-      .filter(a => a.title && a.title !== '[Removed]' && isMobileTech(a.title, a.description))
+      .filter(a => isHighQualityTitle(a.title) && isMobileTech(a.title, a.description || ''))
       .filter(a => !isDuplicate(a.title, brand(a.title), existingArticles))
 
     if (fallback.length === 0) return null

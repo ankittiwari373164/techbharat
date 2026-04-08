@@ -1,4 +1,4 @@
-// app/best-camera-phones-india/page.tsx
+// app/best-5g-phones-india/page.tsx
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { getPillarArticles, formatPillarDate, currentMonthYear } from '@/lib/pillar-utils'
@@ -8,16 +8,16 @@ export const revalidate = 3600
 export async function generateMetadata(): Promise<Metadata> {
   const { month, year } = currentMonthYear()
   return {
-    title: `Best Camera Phones in India — ${month} ${year} Picks | The Tech Bharat`,
-    description: `Best camera phones for India in ${month} ${year} — ranked for Indian conditions: harsh sunlight, weddings, low-light photography. Updated monthly.`,
-    alternates: { canonical: 'https://thetechbharat.com/best-camera-phones-india' },
-    openGraph: { title: `Best Camera Phones in India — ${month} ${year} Picks | The Tech Bharat`, url: 'https://thetechbharat.com/best-camera-phones-india', type: 'article' },
+    title: `Best 5G Phones in India — ${month} ${year} Band Guide | The Tech Bharat`,
+    description: `Best 5G phones India ${month} ${year} compatible with Jio and Airtel 5G bands. Complete compatibility guide by budget.`,
+    alternates: { canonical: 'https://thetechbharat.com/best-5g-phones-india' },
+    openGraph: { title: `Best 5G Phones in India — ${month} ${year} Band Guide | The Tech Bharat`, url: 'https://thetechbharat.com/best-5g-phones-india', type: 'article' },
   }
 }
 
-export default async function BestCameraPhonesPage() {
+export default async function Best5GPhonesPage() {
   const { month, year } = currentMonthYear()
-  const articles = await getPillarArticles(['camera', 'photo', 'photography', 'selfie', 'portrait', 'night mode', 'low light', 'megapixel'], [], 15)
+  const articles = await getPillarArticles(['5G', '5g phone', '5g network', 'n78', 'jio 5g', 'airtel 5g', '5g band'], [], 15)
   const reviews  = articles.filter(a => a.type === 'review' || a.type === 'compare')
   const news     = articles.filter(a => a.type === 'mobile-news')
 
@@ -25,8 +25,8 @@ export default async function BestCameraPhonesPage() {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
     mainEntity: [
-      { '@type': 'Question', name: `Which is the best camera phone under ₹25,000?`, acceptedAnswer: { '@type': 'Answer', text: `The Nothing Phone (3a) offers the most natural camera processing for Indian conditions under ₹25,000 in ` + month + ` ` + year + `. Samsung Galaxy A35 5G is the alternative for those who prefer Samsung\'s colour science.` } },
-      { '@type': 'Question', name: `Does megapixels determine camera quality?`, acceptedAnswer: { '@type': 'Answer', text: `No. Sensor size, aperture, OIS, and computational photography software matter far more than megapixel count.` } }
+      { '@type': 'Question', name: `Which 5G phones work best in India in ` + month + ` ` + year + `?`, acceptedAnswer: { '@type': 'Answer', text: `Any phone with n78 band support works reliably on Jio and Airtel 5G. Current best value: Redmi Note 14 5G (budget), Nothing Phone (3a) (mid-range), OnePlus 13 (flagship). Always verify n78 on official spec sheet.` } },
+      { '@type': 'Question', name: `Does 5G drain battery faster?`, acceptedAnswer: { '@type': 'Answer', text: `5G uses 10–15% more battery than 4G. Newer chips (Snapdragon 4 Gen 2, Dimensity 7020) have improved efficiency significantly. Most phones use 5G/4G auto mode which manages this intelligently.` } }
     ]
   }
 
@@ -37,32 +37,32 @@ export default async function BestCameraPhonesPage() {
         <div className="max-w-4xl mx-auto px-4 py-10">
           <nav className="font-sans text-xs text-muted mb-6 flex items-center gap-2">
             <Link href="/" className="hover:text-[#d4220a]">Home</Link><span>/</span>
-            <span className="text-ink">Best Camera Phones in India — {month} {year} Picks</span>
+            <span className="text-ink">Best 5G Phones in India — {month} {year} Band Guide</span>
           </nav>
           <div className="mb-8">
             <span className="bg-[#d4220a] text-white font-sans text-[10px] font-bold px-2.5 py-1 uppercase tracking-widest">Updated {month} {year}</span>
-            <h1 className="font-playfair text-3xl md:text-4xl font-black text-ink leading-tight mt-3 mb-4">Best Camera Phones in India — {month} {year} Picks</h1>
-            <p className="font-body text-lg text-[#2a2a2a] leading-relaxed">Indian photography demands harsh sunlight readability, accurate skin tones for weddings, and low-light performance for indoor events. These {month} {year} picks reflect real Indian shooting conditions.</p>
+            <h1 className="font-playfair text-3xl md:text-4xl font-black text-ink leading-tight mt-3 mb-4">Best 5G Phones in India — {month} {year} Band Guide</h1>
+            <p className="font-body text-lg text-[#2a2a2a] leading-relaxed">Not all 5G phones support Indian 5G bands. This {month} {year} guide covers which phones actually work on Jio and Airtel 5G — not just phones that say '5G' on the box.</p>
           </div>
 
           <section className="mb-8">
-            <h2 className="font-playfair text-xl font-bold text-ink mb-4 pb-2 border-b border-border">What Makes a Good Camera for India?</h2>
+            <h2 className="font-playfair text-xl font-bold text-ink mb-4 pb-2 border-b border-border">Indian 5G Bands Explained</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="bg-white border border-border p-4">
-                <p className="font-sans text-xs font-bold text-ink mb-1">Skin tone accuracy</p>
-                <p className="font-sans text-xs text-muted leading-relaxed">Portrait mode must preserve natural Indian skin tones. Google Pixel leads; Samsung A-series is reliable.</p>
+                <p className="font-sans text-xs font-bold text-ink mb-1">n78 (3500MHz) — MUST HAVE</p>
+                <p className="font-sans text-xs text-muted leading-relaxed">Primary Jio and Airtel 5G band. Every 5G phone you buy MUST support n78. Check spec sheet explicitly.</p>
               </div>
               <div className="bg-white border border-border p-4">
-                <p className="font-sans text-xs font-bold text-ink mb-1">OIS for weddings</p>
-                <p className="font-sans text-xs text-muted leading-relaxed">Optical Image Stabilisation is essential for indoor wedding photography at ₹30K+.</p>
+                <p className="font-sans text-xs font-bold text-ink mb-1">n28 (700MHz)</p>
+                <p className="font-sans text-xs text-muted leading-relaxed">Lower frequency, better wall penetration. Jio uses for wider coverage. Good to have.</p>
               </div>
               <div className="bg-white border border-border p-4">
-                <p className="font-sans text-xs font-bold text-ink mb-1">Outdoor HDR</p>
-                <p className="font-sans text-xs text-muted leading-relaxed">Direct Indian summer sun requires strong HDR processing. Check sample shots in daylight.</p>
+                <p className="font-sans text-xs font-bold text-ink mb-1">n40 (2300MHz)</p>
+                <p className="font-sans text-xs text-muted leading-relaxed">Mid-band, faster speeds. More common in flagship and premium mid-range phones.</p>
               </div>
               <div className="bg-white border border-border p-4">
-                <p className="font-sans text-xs font-bold text-ink mb-1">Megapixels ≠ quality</p>
-                <p className="font-sans text-xs text-muted leading-relaxed">50MP with large sensor beats 108MP with small sensor. Sensor size + OIS > megapixel count.</p>
+                <p className="font-sans text-xs font-bold text-ink mb-1">mmWave — not needed yet</p>
+                <p className="font-sans text-xs text-muted leading-relaxed">Ultra-high speed, very short range. Only in select metro spots. Not worth prioritising for Indian buyers.</p>
               </div>
             </div>
           </section>
@@ -151,19 +151,19 @@ export default async function BestCameraPhonesPage() {
             <div className="space-y-4">
 
               <div className="border border-border p-4 bg-white">
-                <h3 className="font-sans text-sm font-bold text-ink mb-2">Which is the best camera phone under ₹25,000?</h3>
-                <p className="font-sans text-sm text-muted leading-relaxed">The Nothing Phone (3a) offers the most natural camera processing for Indian conditions under ₹25,000 in {month} {year}. Samsung Galaxy A35 5G is the alternative for those who prefer Samsung's colour science.</p>
+                <h3 className="font-sans text-sm font-bold text-ink mb-2">Which 5G phones work best in India in {month} {year}?</h3>
+                <p className="font-sans text-sm text-muted leading-relaxed">Any phone with n78 band support works reliably on Jio and Airtel 5G. Current best value: Redmi Note 14 5G (budget), Nothing Phone (3a) (mid-range), OnePlus 13 (flagship). Always verify n78 on official spec sheet.</p>
               </div>
               <div className="border border-border p-4 bg-white">
-                <h3 className="font-sans text-sm font-bold text-ink mb-2">Does megapixels determine camera quality?</h3>
-                <p className="font-sans text-sm text-muted leading-relaxed">No. Sensor size, aperture, OIS, and computational photography software matter far more than megapixel count.</p>
+                <h3 className="font-sans text-sm font-bold text-ink mb-2">Does 5G drain battery faster?</h3>
+                <p className="font-sans text-sm text-muted leading-relaxed">5G uses 10–15% more battery than 4G. Newer chips (Snapdragon 4 Gen 2, Dimensity 7020) have improved efficiency significantly. Most phones use 5G/4G auto mode which manages this intelligently.</p>
               </div>
             </div>
           </section>
           <section className="mt-8 pt-6 border-t border-border">
             <h2 className="font-playfair text-xl font-bold text-ink mb-4">Related Guides</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <Link href="/best-smartphones-india" className="border border-border p-3 bg-white hover:border-[#d4220a] transition-colors group"><span className="font-sans text-sm font-bold text-ink group-hover:text-[#d4220a]">Best Smartphones India →</span></Link>
+              <Link href="/best-budget-phones-india" className="border border-border p-3 bg-white hover:border-[#d4220a] transition-colors group"><span className="font-sans text-sm font-bold text-ink group-hover:text-[#d4220a]">Best Budget Phones India →</span></Link>
               <Link href="/smartphone-buying-guide-india" className="border border-border p-3 bg-white hover:border-[#d4220a] transition-colors group"><span className="font-sans text-sm font-bold text-ink group-hover:text-[#d4220a]">Smartphone Buying Guide →</span></Link>
             </div>
           </section>
