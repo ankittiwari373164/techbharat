@@ -1,219 +1,164 @@
 // app/api/index-url/route.ts
-// Google Indexing API — instant push for new/updated article URLs
-// Called automatically after article publish from fetch-news / scheduler
-// Also callable manually from admin: POST /api/index-url { urls: [...] }
+// Google Indexing API — pushes URLs directly to Google for instant indexing
+// Setup: GCP Service Account with "indexing.googleapis.com" permission
+// Env vars needed: GOOGLE_SA_EMAIL, GOOGLE_SA_PRIVATE_KEY
 //
-// Setup required in .env.local:
-//   GOOGLE_INDEXING_SA_KEY = JSON.stringify(serviceAccountKeyJson)
-//   (Create a service account in GCP with "Indexing API" permission,
-//    add it as owner in Google Search Console)
-//
-// Free quota: 200 URLs/day
+// Usage:
+//   POST /api/index-url  { urls: ["https://thetechbharat.com/slug-1", ...] }
+//   GET  /api/index-url  → bulk index all articles from Redis (max 100)
 
 import { NextRequest, NextResponse } from 'next/server'
 
 const SITE_URL = process.env.SITE_URL || 'https://thetechbharat.com'
+const SA_EMAIL = process.env.GOOGLE_SA_EMAIL || ''
+const SA_KEY   = process.env.GOOGLE_SA_PRIVATE_KEY || ''
 
-// Google OAuth2 token from service account JSON key
-async function getGoogleAccessToken(): Promise<string | null> {
-  const saKeyRaw = process.env.GOOGLE_INDEXING_SA_KEY
-  if (!saKeyRaw) return null
-
-  try {
-    const saKey = JSON.parse(saKeyRaw)
-    const now = Math.floor(Date.now() / 1000)
-    const payload = {
-      iss: saKey.client_email,
-      scope: 'https://www.googleapis.com/auth/indexing',
-      aud: 'https://oauth2.googleapis.com/token',
-      exp: now + 3600,
-      iat: now,
-    }
-
-    // Build JWT manually (no external lib needed)
-    const header = { alg: 'RS256', typ: 'JWT' }
-    const encode = (obj: object) =>
-      Buffer.from(JSON.stringify(obj)).toString('base64url')
-    const signingInput = `${encode(header)}.${encode(payload)}`
-
-    // Sign with RSA private key using Web Crypto
-    const privateKeyPem = saKey.private_key as string
-    const pemBody = privateKeyPem
-      .replace(/-----BEGIN PRIVATE KEY-----/, '')
-      .replace(/-----END PRIVATE KEY-----/, '')
-      .replace(/\s/g, '')
-    const keyBuffer = Buffer.from(pemBody, 'base64')
-
-    const cryptoKey = await crypto.subtle.importKey(
-      'pkcs8',
-      keyBuffer,
-      { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
-      false,
-      ['sign']
-    )
-    const signatureBuffer = await crypto.subtle.sign(
-      'RSASSA-PKCS1-v1_5',
-      cryptoKey,
-      Buffer.from(signingInput)
-    )
-    const signature = Buffer.from(signatureBuffer).toString('base64url')
-    const jwt = `${signingInput}.${signature}`
-
-    // Exchange JWT for access token
-    const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-        assertion: jwt,
-      }),
-    })
-    const tokenData = await tokenRes.json()
-    return tokenData.access_token || null
-  } catch (e) {
-    console.error('[IndexAPI] Token error:', e)
-    return null
+// ── JWT generation (no external deps) ────────────────────────────
+async function makeJWT(): Promise<string> {
+  const now   = Math.floor(Date.now() / 1000)
+  const claim = {
+    iss: SA_EMAIL,
+    scope: 'https://www.googleapis.com/auth/indexing',
+    aud: 'https://oauth2.googleapis.com/token',
+    exp: now + 3600,
+    iat: now,
   }
-}
+  const header  = btoa(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_')
+  const payload = btoa(JSON.stringify(claim)).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_')
+  const unsigned = `${header}.${payload}`
 
-// Push a single URL to Google Indexing API
-async function pushUrl(url: string, token: string, type: 'URL_UPDATED' | 'URL_DELETED' = 'URL_UPDATED') {
-  const res = await fetch(
-    `https://indexing.googleapis.com/v3/urlNotifications:publish`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ url, type }),
-    }
+  // Import private key
+  const pemKey = SA_KEY.replace(/\\n/g, '\n')
+  const keyData = pemKey
+    .replace('-----BEGIN PRIVATE KEY-----','')
+    .replace('-----END PRIVATE KEY-----','')
+    .replace(/\s/g,'')
+  const binaryKey = Uint8Array.from(atob(keyData), c => c.charCodeAt(0))
+
+  const cryptoKey = await crypto.subtle.importKey(
+    'pkcs8', binaryKey.buffer,
+    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+    false, ['sign']
   )
-  const data = await res.json()
-  return { url, status: res.status, ok: res.ok, data }
-}
-
-// Also ping Google sitemap (free, no quota)
-async function pingSitemap() {
-  try {
-    const sitemapUrl = `${SITE_URL}/sitemap.xml`
-    await fetch(
-      `https://www.google.com/ping?sitemap=${encodeURIComponent(sitemapUrl)}`,
-      { method: 'GET' }
-    )
-  } catch { /* non-fatal */ }
-}
-
-export async function POST(req: NextRequest) {
-  // Protect with CRON_SECRET
-  const secret = req.nextUrl.searchParams.get('secret') ||
-    req.headers.get('authorization')?.replace('Bearer ', '')
-  const cronSecret = process.env.CRON_SECRET
-  if (cronSecret && secret !== cronSecret) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  const body = await req.json().catch(() => ({}))
-  const { slugs, urls: rawUrls } = body as { slugs?: string[]; urls?: string[] }
-
-  // Accept either slugs (we add SITE_URL) or full URLs
-  const urls: string[] = []
-  if (slugs?.length) {
-    slugs.forEach(slug => {
-      // Canonical URL = /slug (no /article/ prefix)
-      const clean = slug.replace(/^\/article\//, '/').replace(/^\//, '')
-      urls.push(`${SITE_URL}/${clean}`)
-    })
-  }
-  if (rawUrls?.length) {
-    rawUrls.forEach(u => {
-      // Ensure we use canonical URL (no /article/ prefix)
-      const canonical = u.replace(`${SITE_URL}/article/`, `${SITE_URL}/`)
-      urls.push(canonical)
-    })
-  }
-
-  if (!urls.length) {
-    return NextResponse.json({ error: 'No URLs provided' }, { status: 400 })
-  }
-
-  const token = await getGoogleAccessToken()
-  if (!token) {
-    // Even without SA key, ping sitemap — it's free
-    await pingSitemap()
-    return NextResponse.json({
-      warning: 'No GOOGLE_INDEXING_SA_KEY set — sitemap pinged instead',
-      sitemapPinged: true,
-    })
-  }
-
-  // Push all URLs (max 200/day quota)
-  const results = await Promise.allSettled(
-    urls.slice(0, 200).map(url => pushUrl(url, token))
+  const sig = await crypto.subtle.sign(
+    'RSASSA-PKCS1-v1_5', cryptoKey,
+    new TextEncoder().encode(unsigned)
   )
+  const sigB64 = btoa(String.fromCharCode(...new Uint8Array(sig)))
+    .replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_')
+  return `${unsigned}.${sigB64}`
+}
 
-  // Also ping sitemap
-  await pingSitemap()
-
-  const summary = results.map((r, i) => ({
-    url: urls[i],
-    ok: r.status === 'fulfilled' ? r.value.ok : false,
-    status: r.status === 'fulfilled' ? r.value.status : 'error',
-  }))
-
-  const successCount = summary.filter(s => s.ok).length
-
-  return NextResponse.json({
-    pushed: successCount,
-    total: urls.length,
-    sitemapPinged: true,
-    results: summary,
+async function getAccessToken(): Promise<string> {
+  const jwt = await makeJWT()
+  const res = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${jwt}`,
   })
+  const data = await res.json()
+  if (!data.access_token) throw new Error(`Token error: ${JSON.stringify(data)}`)
+  return data.access_token
 }
 
-// GET: Push all recent articles (admin convenience)
+async function pushUrl(url: string, token: string, type = 'URL_UPDATED'): Promise<string> {
+  const res = await fetch('https://indexing.googleapis.com/v3/urlNotifications:publish', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ url, type }),
+  })
+  const data = await res.json()
+  if (data.error) return `ERROR: ${data.error.message}`
+  return 'OK'
+}
+
+// POST: push specific URLs
+export async function POST(req: NextRequest) {
+  if (!SA_EMAIL || !SA_KEY) {
+    return NextResponse.json({ error: 'GOOGLE_SA_EMAIL or GOOGLE_SA_PRIVATE_KEY not set in env' }, { status: 500 })
+  }
+
+  const { urls } = await req.json()
+  if (!Array.isArray(urls) || urls.length === 0) {
+    return NextResponse.json({ error: 'urls array required' }, { status: 400 })
+  }
+
+  try {
+    const token   = await getAccessToken()
+    const results: Record<string, string> = {}
+    // Google Indexing API: max 100 per day on free quota
+    for (const url of urls.slice(0, 100)) {
+      results[url] = await pushUrl(url, token)
+      await new Promise(r => setTimeout(r, 200)) // 200ms between calls
+    }
+    return NextResponse.json({ pushed: Object.keys(results).length, results })
+  } catch (err) {
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
+  }
+}
+
+// GET: bulk index all articles + pillar pages
 export async function GET(req: NextRequest) {
-  const secret = req.nextUrl.searchParams.get('secret')
-  const cronSecret = process.env.CRON_SECRET
-  if (cronSecret && secret !== cronSecret) {
+  // Simple auth check — only call from scheduler or admin
+  const auth = req.headers.get('x-admin-key') || req.nextUrl.searchParams.get('key')
+  if (auth !== process.env.ADMIN_KEY) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // Get recent 50 articles
-  let slugs: string[] = []
+  if (!SA_EMAIL || !SA_KEY) {
+    return NextResponse.json({ error: 'Google SA credentials not set' }, { status: 500 })
+  }
+
+  // Collect all URLs to index
+  const urls: string[] = []
+
+  // 1. All article pages
   try {
     const { getAllArticlesAsync } = await import('@/lib/store')
-    const articles = await getAllArticlesAsync()
-    slugs = articles.slice(0, 50).map((a: any) => a.slug)
-  } catch {
-    return NextResponse.json({ error: 'Could not fetch articles' }, { status: 500 })
+    const articles = await getAllArticlesAsync() as any[]
+    articles.forEach(a => { if (a.slug) urls.push(`${SITE_URL}/${a.slug}`) })
+  } catch {}
+
+  // 2. Pillar pages
+  const PILLAR_SLUGS = [
+    'best-camera-phones-india', 'best-smartphones-india', 'best-battery-backup-phones-india',
+    'best-gaming-phones-india', 'smartphone-buying-guide-india', 'best-5g-phones-india',
+    'best-budget-phones-india', 'best-flagship-phones-india', 'best-phones-for-students-india',
+    'phone-comparison-guide-india',
+  ]
+  PILLAR_SLUGS.forEach(s => urls.push(`${SITE_URL}/${s}`))
+
+  // 3. Key static pages
+  ['/', '/mobile-news', '/reviews', '/compare', '/web-stories'].forEach(p => urls.push(`${SITE_URL}${p}`))
+
+  // Push in batches (100 per day limit)
+  const toIndex = urls.slice(0, 100)
+  let pushed = 0, errors = 0
+
+  try {
+    const token = await getAccessToken()
+    for (const url of toIndex) {
+      const result = await pushUrl(url, token)
+      if (result === 'OK') pushed++
+      else errors++
+      await new Promise(r => setTimeout(r, 200))
+    }
+  } catch (err) {
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
   }
 
-  const urls = slugs.map(slug => `${SITE_URL}/${slug}`)
-
-  const token = await getGoogleAccessToken()
-  if (!token) {
-    await pingSitemap()
-    return NextResponse.json({
-      warning: 'No GOOGLE_INDEXING_SA_KEY — sitemap pinged',
-      sitemapPinged: true,
-      urlsQueued: urls.length,
-    })
-  }
-
-  const results = await Promise.allSettled(
-    urls.slice(0, 200).map(url => pushUrl(url, token))
-  )
-  await pingSitemap()
-
-  const summary = results.map((r, i) => ({
-    url: urls[i],
-    ok: r.status === 'fulfilled' ? (r.value as any).ok : false,
-  }))
+  // Also ping sitemap
+  try {
+    await fetch(`https://www.google.com/ping?sitemap=${SITE_URL}/sitemap.xml`)
+    await fetch(`https://www.google.com/ping?sitemap=${SITE_URL}/web-stories-sitemap.xml`)
+  } catch {}
 
   return NextResponse.json({
-    pushed: summary.filter(s => s.ok).length,
-    total: urls.length,
+    total: urls.length, pushed, errors, queued: toIndex.length,
     sitemapPinged: true,
+    message: `Pushed ${pushed} URLs to Google Indexing API`,
   })
 }
