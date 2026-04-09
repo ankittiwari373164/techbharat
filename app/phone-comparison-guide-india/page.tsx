@@ -1,30 +1,76 @@
 // app/phone-comparison-guide-india/page.tsx
 import { Metadata } from 'next'
 import Link from 'next/link'
-import { getPillarArticles, formatPillarDate, currentMonthYear } from '@/lib/pillar-utils'
+import { getPillarArticles, formatPillarDate, currentMonthYear, type PillarArticle } from '@/lib/pillar-utils'
 
 export const revalidate = 3600
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { month, year } = currentMonthYear()
-  const title = `Phone Comparison Guide India — ${month} ${year}`
-  return {
-    title: `${title} | The Tech Bharat`,
-    description: `Phone comparison guide India MONTH YEAR. Head-to-head picks at every budget — which phone actually wins for Indian buyers.`.replace('MONTH', month).replace('YEAR', String(year)),
-    alternates: { canonical: 'https://thetechbharat.com/phone-comparison-guide-india' },
-    openGraph: { title, url: 'https://thetechbharat.com/phone-comparison-guide-india', type: 'article' },
+  try {
+    const { month, year } = currentMonthYear()
+    const title = `Phone Comparison Guide India — ${month} ${year}`
+    return {
+      title: `${title} | The Tech Bharat`,
+      description: `Phone comparison guide India ${month} ${year}. Head-to-head picks at every budget — which phone actually wins for Indian buyers.`,
+      alternates: { canonical: 'https://thetechbharat.com/phone-comparison-guide-india' },
+      openGraph: { title, url: 'https://thetechbharat.com/phone-comparison-guide-india', type: 'article' },
+    }
+  } catch (error) {
+    console.error('Error generating metadata:', error)
+    return {
+      title: 'Phone Comparison Guide India | The Tech Bharat',
+      description: 'Phone comparison guide India for Indian buyers.',
+      alternates: { canonical: 'https://thetechbharat.com/phone-comparison-guide-india' },
+    }
   }
 }
 
 export default async function PhoneComparisonGuidePage() {
-  const { month, year } = currentMonthYear()
-  const articles = await getPillarArticles(['vs', 'compare', 'comparison', 'versus', 'difference', 'better', 'which is better', 'head to head'], [], 15)
-  const reviews  = articles.filter(a => a.type === 'review' || a.type === 'compare')
-  const news     = articles.filter(a => a.type === 'mobile-news')
+  let month = 'April'
+  let year = 2026
+  let reviews: PillarArticle[] = []
+  let news: PillarArticle[] = []
+
+  try {
+    // Get current month/year
+    try {
+      const dateInfo = currentMonthYear()
+      month = dateInfo.month
+      year = dateInfo.year
+    } catch (error) {
+      console.error('Error getting current month/year:', error)
+      // Fallback values already set
+    }
+
+    // Fetch articles with error handling
+    try {
+      const articles = await getPillarArticles(
+        ['vs', 'compare', 'comparison', 'versus', 'difference', 'better', 'which is better', 'head to head'],
+        [],
+        15
+      )
+      
+      if (Array.isArray(articles) && articles.length > 0) {
+        reviews = articles.filter(a => a?.type === 'review' || a?.type === 'compare')
+        news = articles.filter(a => a?.type === 'mobile-news')
+      }
+    } catch (error) {
+      console.error('Error fetching pillar articles:', error)
+      // Continue with empty arrays
+    }
+  } catch (error) {
+    console.error('Unexpected error in PhoneComparisonGuidePage:', error)
+  }
 
   const faq = [
-    { q: 'Samsung vs Xiaomi — which is better for India in YEAR?', a: 'Samsung wins on software updates (4-5 years vs Xiaomi 2-3), service network (3000+ centres vs metro-heavy Xiaomi), and resale value. Xiaomi wins on raw specs per rupee. Choose Samsung outside metros or for long-term ownership.' },
-    { q: 'iPhone vs Android — which is better for Indian users?', a: 'Android suits most Indian users: more price options, better 5G band coverage across devices, flexible for UPI and banking apps, easier local repairs. iPhone wins for existing Apple ecosystem users, video creators, and those wanting maximum resale value.' }
+    { 
+      q: `Samsung vs Xiaomi — which is better for India in ${year}?`, 
+      a: 'Samsung wins on software updates (4-5 years vs Xiaomi 2-3), service network (3000+ centres vs metro-heavy Xiaomi), and resale value. Xiaomi wins on raw specs per rupee. Choose Samsung outside metros or for long-term ownership.' 
+    },
+    { 
+      q: 'iPhone vs Android — which is better for Indian users?', 
+      a: 'Android suits most Indian users: more price options, better 5G band coverage across devices, flexible for UPI and banking apps, easier local repairs. iPhone wins for existing Apple ecosystem users, video creators, and those wanting maximum resale value.' 
+    }
   ]
 
   const faqSchema = {
@@ -59,7 +105,7 @@ export default async function PhoneComparisonGuidePage() {
               Phone Comparison Guide India — {month} {year}
             </h1>
             <p className="font-body text-lg text-muted leading-relaxed">
-              Choosing between two phones is harder than choosing from ten. This MONTH YEAR comparison hub covers the real buying dilemmas Indian buyers face at every price point.
+              Choosing between two phones is harder than choosing from ten. This {month} {year} comparison hub covers the real buying dilemmas Indian buyers face at every price point.
             </p>
           </div>
 
@@ -163,7 +209,7 @@ export default async function PhoneComparisonGuidePage() {
             </section>
           )}
 
-          {articles.length === 0 && (
+          {reviews.length === 0 && news.length === 0 && (
             <div className="border border-border p-10 text-center bg-white mb-10">
               <p className="font-sans text-sm text-muted">
                 Loading articles. <Link href="/mobile-news" className="text-[#d4220a] hover:underline">Browse all mobile news →</Link>
