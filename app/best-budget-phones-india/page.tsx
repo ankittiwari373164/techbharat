@@ -7,27 +7,33 @@ export const revalidate = 3600
 
 export async function generateMetadata(): Promise<Metadata> {
   const { month, year } = currentMonthYear()
+  const title = `Best Budget Phones in India Under Rs 15000 and Rs 20000 — ${month} ${year}`
   return {
-    title: `Best Budget Phones India Under ₹15K & ₹20K — ${month} ${year} | The Tech Bharat`,
-    description: `Best budget smartphones India ${month} ${year} under ₹15,000 and ₹20,000. Honest picks with India-specific value analysis.`,
+    title: `${title} | The Tech Bharat`,
+    description: `Best budget smartphones India MONTH YEAR under Rs 15000 and Rs 20000. Honest picks with India-specific value analysis.`.replace('MONTH', month).replace('YEAR', String(year)),
     alternates: { canonical: 'https://thetechbharat.com/best-budget-phones-india' },
-    openGraph: { title: `Best Budget Phones India Under ₹15K & ₹20K — ${month} ${year} | The Tech Bharat`, url: 'https://thetechbharat.com/best-budget-phones-india', type: 'article' },
+    openGraph: { title, url: 'https://thetechbharat.com/best-budget-phones-india', type: 'article' },
   }
 }
 
 export default async function BestBudgetPhonesPage() {
   const { month, year } = currentMonthYear()
-  const articles = await getPillarArticles(['budget', 'under 15000', 'under 20000', 'affordable', 'value for money'], [], 15)
+  const articles = await getPillarArticles(['budget', 'under 15000', 'under 20000', 'affordable', 'value for money', 'cheap phone', 'entry level'], [], 15)
   const reviews  = articles.filter(a => a.type === 'review' || a.type === 'compare')
   const news     = articles.filter(a => a.type === 'mobile-news')
+
+  const faq = [
+    { q: 'Best phone under Rs 15000 in India in MONTH YEAR?', a: 'In MONTH YEAR: Redmi Note 14 (best camera), Samsung Galaxy A15 5G (best service network and updates), Realme Narzo 70 Pro (fastest charging). Check current Flipkart and Amazon pricing as budget phone prices change frequently.' },
+    { q: 'Should I buy at Rs 10000 or save for Rs 15000?', a: 'Save for Rs 15000. The price jump gives you: 5G connectivity, AMOLED display, more RAM, faster charging, and better cameras. The extra Rs 5000 gives significantly better daily experience for a 2-3 year phone.' }
+  ]
 
   const faqSchema = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
     mainEntity: [
-      { '@type': 'Question', name: `Best phone under ₹15,000 in India in ` + month + ` ` + year + `?`, acceptedAnswer: { '@type': 'Answer', text: `Current top picks: Redmi Note 14 (best camera), Samsung Galaxy A15 5G (best service + updates), Realme Narzo 70 Pro (fastest charging). Check current Flipkart/Amazon pricing as budget phone prices fluctuate frequently.` } },
-      { '@type': 'Question', name: `Should I buy ₹10,000 or save for ₹15,000?`, acceptedAnswer: { '@type': 'Answer', text: `Save for ₹15,000. The price jump delivers: 5G, AMOLED display, more RAM, faster charging, better cameras. The extra ₹5,000 gives significantly better daily experience for a 2–3 year phone.` } }
-    ]
+      { '@type': 'Question', name: faq[0].q, acceptedAnswer: { '@type': 'Answer', text: faq[0].a } },
+      { '@type': 'Question', name: faq[1].q, acceptedAnswer: { '@type': 'Answer', text: faq[1].a } },
+    ],
   }
 
   return (
@@ -35,34 +41,48 @@ export default async function BestBudgetPhonesPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <div className="bg-paper min-h-screen">
         <div className="max-w-4xl mx-auto px-4 py-10">
+
           <nav className="font-sans text-xs text-muted mb-6 flex items-center gap-2">
-            <Link href="/" className="hover:text-[#d4220a]">Home</Link><span>/</span>
-            <span className="text-ink">Best Budget Phones India Under ₹15K & ₹20K — {month} {year}</span>
+            <Link href="/" className="hover:text-[#d4220a]">Home</Link>
+            <span>/</span>
+            <span className="text-ink">Best Budget Phones in India Under Rs 15000 and Rs 20000</span>
           </nav>
+
           <div className="mb-8">
-            <span className="bg-[#d4220a] text-white font-sans text-[10px] font-bold px-2.5 py-1 uppercase tracking-widest">Updated {month} {year}</span>
-            <h1 className="font-playfair text-3xl md:text-4xl font-black text-ink leading-tight mt-3 mb-4">Best Budget Phones India Under ₹15K & ₹20K — {month} {year}</h1>
-            <p className="font-body text-lg text-[#2a2a2a] leading-relaxed">India's budget phone market in {month} {year} offers 5G, AMOLED, and 50MP cameras under ₹15,000. Here is what is actually worth buying versus what is marketing.</p>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="bg-[#d4220a] text-white font-sans text-[10px] font-bold px-2.5 py-1 uppercase tracking-widest">
+                Updated {month} {year}
+              </span>
+              <span className="font-sans text-xs text-muted">Vijay Yadav · The Tech Bharat</span>
+            </div>
+            <h1 className="font-playfair text-3xl md:text-4xl font-black text-ink leading-tight mb-4">
+              Best Budget Phones in India Under Rs 15000 and Rs 20000 — {month} {year}
+            </h1>
+            <p className="font-body text-lg text-muted leading-relaxed">
+              In MONTH YEAR, India budget phone market offers 5G, AMOLED, and 50MP cameras under Rs 15000. Here is what is actually worth buying versus what is just marketing.
+            </p>
           </div>
 
           <section className="mb-8">
-            <h2 className="font-playfair text-xl font-bold text-ink mb-4 pb-2 border-b border-border">Budget Phone Priorities</h2>
+            <h2 className="font-playfair text-xl font-bold text-ink mb-4 pb-2 border-b border-border">
+              What to Prioritise When Buying Budget Phones
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="bg-white border border-border p-4">
                 <p className="font-sans text-xs font-bold text-ink mb-1">Battery over camera</p>
-                <p className="font-sans text-xs text-muted leading-relaxed">At ₹10K–₹15K, cameras are similar across brands. Battery size and charging speed make a real daily difference.</p>
+                <p className="font-sans text-xs text-muted leading-relaxed">At Rs 10K-15K, cameras are similar across brands. Battery size and charging speed make a real daily difference in Indian usage.</p>
               </div>
               <div className="bg-white border border-border p-4">
                 <p className="font-sans text-xs font-bold text-ink mb-1">5G future-proofing</p>
-                <p className="font-sans text-xs text-muted leading-relaxed">Spend ₹500–1000 extra for 5G. Budget phones are kept 3+ years — 4G-only will feel outdated.</p>
+                <p className="font-sans text-xs text-muted leading-relaxed">Spend Rs 500-1000 extra to get 5G support. Budget phones are kept for 3+ years — 4G-only will feel outdated quickly.</p>
               </div>
               <div className="bg-white border border-border p-4">
-                <p className="font-sans text-xs font-bold text-ink mb-1">Software updates</p>
-                <p className="font-sans text-xs text-muted leading-relaxed">Samsung Galaxy M-series gets longer updates than equivalent-priced Chinese phones.</p>
+                <p className="font-sans text-xs font-bold text-ink mb-1">Software updates matter</p>
+                <p className="font-sans text-xs text-muted leading-relaxed">Samsung Galaxy M-series gets longer updates than equivalent-priced Chinese phones. Important for 3-year ownership.</p>
               </div>
               <div className="bg-white border border-border p-4">
-                <p className="font-sans text-xs font-bold text-ink mb-1">Storage minimum 64GB</p>
-                <p className="font-sans text-xs text-muted leading-relaxed">16GB fills up within weeks. 64GB minimum, 128GB preferred for 3-year use.</p>
+                <p className="font-sans text-xs font-bold text-ink mb-1">Storage: 64GB minimum</p>
+                <p className="font-sans text-xs text-muted leading-relaxed">16GB fills up in weeks with apps and photos. 64GB minimum, 128GB preferred for comfortable 3-year use.</p>
               </div>
             </div>
           </section>
@@ -71,31 +91,32 @@ export default async function BestBudgetPhonesPage() {
             <section className="mb-10">
               <div className="flex items-center gap-3 mb-5">
                 <div className="w-6 h-0.5 bg-[#d4220a]" />
-                <h2 className="font-playfair text-2xl font-bold text-ink">Latest Reviews & Analysis</h2>
+                <h2 className="font-playfair text-2xl font-bold text-ink">Reviews & Analysis</h2>
                 <span className="font-sans text-xs text-muted bg-gray-100 px-2 py-0.5 rounded">{reviews.length}</span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {reviews.map(article => (
-                  <Link key={article.slug} href={`/${article.slug}`}
-                    className="bg-white border border-border hover:border-[#d4220a] transition-colors group block">
-                    {article.featuredImage && !article.featuredImage.startsWith('/phone-images/') && (
-                      <div className="relative overflow-hidden" style={{ paddingBottom: '56.25%' }}>
-                        <img src={article.featuredImage} alt={article.title} width={400} height={225} loading="lazy"
+                {reviews.map(a => (
+                  <Link key={a.slug} href={`/${a.slug}`} className="bg-white border border-border hover:border-[#d4220a] transition-colors group block">
+                    {a.featuredImage && !a.featuredImage.startsWith('/phone-images/') && (
+                      <div className="relative overflow-hidden" style={{ paddingBottom:'56.25%' }}>
+                        <img src={a.featuredImage} alt={a.title} width={400} height={225} loading="lazy"
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
-                          style={{ position:'absolute', inset:0, width:'100%', height:'100%' }}
+                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }}
                           onError={e=>{(e.target as HTMLImageElement).src='https://thetechbharat.com/og-image.jpg'}} />
-                        <span className="absolute top-2 left-2 bg-[#d4220a] text-white font-sans text-[9px] font-bold px-2 py-0.5 uppercase tracking-wider z-10">{article.type === 'review' ? 'Review' : 'Compare'}</span>
+                        <span className="absolute top-2 left-2 bg-[#d4220a] text-white font-sans text-[9px] font-bold px-2 py-0.5 uppercase z-10">
+                          {a.type==='review'?'Review':'Compare'}
+                        </span>
                       </div>
                     )}
                     <div className="p-3">
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <span className="font-sans text-[10px] font-bold text-[#d4220a] uppercase tracking-wide">{article.brand}</span>
-                        <span className="font-sans text-[10px] text-muted ml-auto">{formatPillarDate(article.publishDate)}</span>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-sans text-[10px] font-bold text-[#d4220a] uppercase">{a.brand}</span>
+                        <span className="font-sans text-[10px] text-muted ml-auto">{formatPillarDate(a.publishDate)}</span>
                       </div>
-                      <h3 className="font-sans text-sm font-bold text-ink leading-snug group-hover:text-[#d4220a] transition-colors line-clamp-2 mb-1">{article.title}</h3>
-                      <p className="font-sans text-xs text-muted line-clamp-2">{article.summary}</p>
+                      <h3 className="font-sans text-sm font-bold text-ink group-hover:text-[#d4220a] line-clamp-2 mb-1">{a.title}</h3>
+                      <p className="font-sans text-xs text-muted line-clamp-2">{a.summary}</p>
                       <div className="mt-2 flex justify-between">
-                        <span className="font-sans text-[10px] text-muted">{article.readTime} min read</span>
+                        <span className="font-sans text-[10px] text-muted">{a.readTime} min read</span>
                         <span className="font-sans text-xs font-semibold text-[#d4220a]">Read →</span>
                       </div>
                     </div>
@@ -104,6 +125,7 @@ export default async function BestBudgetPhonesPage() {
               </div>
             </section>
           )}
+
           {news.length > 0 && (
             <section className="mb-10">
               <div className="flex items-center gap-3 mb-5">
@@ -112,27 +134,26 @@ export default async function BestBudgetPhonesPage() {
                 <span className="font-sans text-xs text-muted bg-gray-100 px-2 py-0.5 rounded">{news.length}</span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {news.map(article => (
-                  <Link key={article.slug} href={`/${article.slug}`}
-                    className="bg-white border border-border hover:border-[#d4220a] transition-colors group block">
-                    {article.featuredImage && !article.featuredImage.startsWith('/phone-images/') && (
-                      <div className="relative overflow-hidden" style={{ paddingBottom: '56.25%' }}>
-                        <img src={article.featuredImage} alt={article.title} width={400} height={225} loading="lazy"
+                {news.map(a => (
+                  <Link key={a.slug} href={`/${a.slug}`} className="bg-white border border-border hover:border-[#d4220a] transition-colors group block">
+                    {a.featuredImage && !a.featuredImage.startsWith('/phone-images/') && (
+                      <div className="relative overflow-hidden" style={{ paddingBottom:'56.25%' }}>
+                        <img src={a.featuredImage} alt={a.title} width={400} height={225} loading="lazy"
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
-                          style={{ position:'absolute', inset:0, width:'100%', height:'100%' }}
+                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }}
                           onError={e=>{(e.target as HTMLImageElement).src='https://thetechbharat.com/og-image.jpg'}} />
-                        <span className="absolute top-2 left-2 bg-[#1a3a5c] text-white font-sans text-[9px] font-bold px-2 py-0.5 uppercase tracking-wider z-10">News</span>
+                        <span className="absolute top-2 left-2 bg-[#1a3a5c] text-white font-sans text-[9px] font-bold px-2 py-0.5 uppercase z-10">News</span>
                       </div>
                     )}
                     <div className="p-3">
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <span className="font-sans text-[10px] font-bold text-[#d4220a] uppercase tracking-wide">{article.brand}</span>
-                        <span className="font-sans text-[10px] text-muted ml-auto">{formatPillarDate(article.publishDate)}</span>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-sans text-[10px] font-bold text-[#1a3a5c] uppercase">{a.brand}</span>
+                        <span className="font-sans text-[10px] text-muted ml-auto">{formatPillarDate(a.publishDate)}</span>
                       </div>
-                      <h3 className="font-sans text-sm font-bold text-ink leading-snug group-hover:text-[#d4220a] transition-colors line-clamp-2 mb-1">{article.title}</h3>
-                      <p className="font-sans text-xs text-muted line-clamp-2">{article.summary}</p>
+                      <h3 className="font-sans text-sm font-bold text-ink group-hover:text-[#d4220a] line-clamp-2 mb-1">{a.title}</h3>
+                      <p className="font-sans text-xs text-muted line-clamp-2">{a.summary}</p>
                       <div className="mt-2 flex justify-between">
-                        <span className="font-sans text-[10px] text-muted">{article.readTime} min read</span>
+                        <span className="font-sans text-[10px] text-muted">{a.readTime} min read</span>
                         <span className="font-sans text-xs font-semibold text-[#d4220a]">Read →</span>
                       </div>
                     </div>
@@ -141,36 +162,50 @@ export default async function BestBudgetPhonesPage() {
               </div>
             </section>
           )}
+
           {articles.length === 0 && (
             <div className="border border-border p-10 text-center bg-white mb-10">
-              <p className="font-sans text-sm text-muted">Loading articles. <Link href="/mobile-news" className="text-[#d4220a] hover:underline">Browse all mobile news →</Link></p>
+              <p className="font-sans text-sm text-muted">
+                Loading articles. <Link href="/mobile-news" className="text-[#d4220a] hover:underline">Browse all mobile news →</Link>
+              </p>
             </div>
           )}
-          <section className="mb-10">
-            <h2 className="font-playfair text-2xl font-bold text-ink mb-5 pb-2 border-b border-border">Frequently Asked Questions</h2>
-            <div className="space-y-4">
 
+          <section className="mb-10">
+            <h2 className="font-playfair text-2xl font-bold text-ink mb-5 pb-2 border-b border-border">
+              Frequently Asked Questions
+            </h2>
+            <div className="space-y-4">
               <div className="border border-border p-4 bg-white">
-                <h3 className="font-sans text-sm font-bold text-ink mb-2">Best phone under ₹15,000 in India in {month} {year}?</h3>
-                <p className="font-sans text-sm text-muted leading-relaxed">Current top picks: Redmi Note 14 (best camera), Samsung Galaxy A15 5G (best service + updates), Realme Narzo 70 Pro (fastest charging). Check current Flipkart/Amazon pricing as budget phone prices fluctuate frequently.</p>
+                <h3 className="font-sans text-sm font-bold text-ink mb-2">{faq[0].q}</h3>
+                <p className="font-sans text-sm text-muted leading-relaxed">{faq[0].a}</p>
               </div>
               <div className="border border-border p-4 bg-white">
-                <h3 className="font-sans text-sm font-bold text-ink mb-2">Should I buy ₹10,000 or save for ₹15,000?</h3>
-                <p className="font-sans text-sm text-muted leading-relaxed">Save for ₹15,000. The price jump delivers: 5G, AMOLED display, more RAM, faster charging, better cameras. The extra ₹5,000 gives significantly better daily experience for a 2–3 year phone.</p>
+                <h3 className="font-sans text-sm font-bold text-ink mb-2">{faq[1].q}</h3>
+                <p className="font-sans text-sm text-muted leading-relaxed">{faq[1].a}</p>
               </div>
             </div>
           </section>
+
           <section className="mt-8 pt-6 border-t border-border">
             <h2 className="font-playfair text-xl font-bold text-ink mb-4">Related Guides</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <Link href="/best-5g-phones-india" className="border border-border p-3 bg-white hover:border-[#d4220a] transition-colors group"><span className="font-sans text-sm font-bold text-ink group-hover:text-[#d4220a]">Best 5G Phones India →</span></Link>
-              <Link href="/smartphone-buying-guide-india" className="border border-border p-3 bg-white hover:border-[#d4220a] transition-colors group"><span className="font-sans text-sm font-bold text-ink group-hover:text-[#d4220a]">Smartphone Buying Guide →</span></Link>
+              <Link href="/best-5g-phones-india" className="border border-border p-3 bg-white hover:border-[#d4220a] transition-colors group">
+                <span className="font-sans text-sm font-bold text-ink group-hover:text-[#d4220a]">Best 5G Phones India →</span>
+              </Link>
+              <Link href="/smartphone-buying-guide-india" className="border border-border p-3 bg-white hover:border-[#d4220a] transition-colors group">
+                <span className="font-sans text-sm font-bold text-ink group-hover:text-[#d4220a]">Smartphone Buying Guide →</span>
+              </Link>
             </div>
           </section>
+
           <div className="mt-8 bg-[#f8f4ef] border-l-4 border-[#d4220a] p-5">
             <p className="font-sans text-xs font-bold text-[#d4220a] uppercase tracking-wider mb-2">Editorial Note</p>
-            <p className="font-sans text-sm text-muted">Articles fetched live. Guide updated for {month} {year}. No paid placements. By Vijay Yadav, The Tech Bharat.</p>
+            <p className="font-sans text-sm text-muted">
+              Articles fetched live from The Tech Bharat. Guide updated for {month} {year}. No paid placements. By Vijay Yadav.
+            </p>
           </div>
+
         </div>
       </div>
     </>

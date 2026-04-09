@@ -7,27 +7,33 @@ export const revalidate = 3600
 
 export async function generateMetadata(): Promise<Metadata> {
   const { month, year } = currentMonthYear()
+  const title = `Best 5G Phones in India — ${month} ${year}`
   return {
-    title: `Best 5G Phones in India — ${month} ${year} Band Guide | The Tech Bharat`,
-    description: `Best 5G phones India ${month} ${year} compatible with Jio and Airtel 5G bands. Complete compatibility guide by budget.`,
+    title: `${title} | The Tech Bharat`,
+    description: `Best 5G phones India MONTH YEAR compatible with Jio and Airtel 5G bands. Complete band guide and picks by budget.`.replace('MONTH', month).replace('YEAR', String(year)),
     alternates: { canonical: 'https://thetechbharat.com/best-5g-phones-india' },
-    openGraph: { title: `Best 5G Phones in India — ${month} ${year} Band Guide | The Tech Bharat`, url: 'https://thetechbharat.com/best-5g-phones-india', type: 'article' },
+    openGraph: { title, url: 'https://thetechbharat.com/best-5g-phones-india', type: 'article' },
   }
 }
 
 export default async function Best5GPhonesPage() {
   const { month, year } = currentMonthYear()
-  const articles = await getPillarArticles(['5G', '5g phone', '5g network', 'n78', 'jio 5g', 'airtel 5g', '5g band'], [], 15)
+  const articles = await getPillarArticles(['5G', '5g phone', '5g network', 'n78', 'jio 5g', 'airtel 5g', '5g band', '5g india'], [], 15)
   const reviews  = articles.filter(a => a.type === 'review' || a.type === 'compare')
   const news     = articles.filter(a => a.type === 'mobile-news')
+
+  const faq = [
+    { q: 'Which 5G phones work best in India in MONTH YEAR?', a: 'Any phone with n78 band support works reliably on Jio and Airtel 5G. Best picks in MONTH YEAR: Redmi Note 14 5G (budget), Nothing Phone (3a) (mid-range), OnePlus 13 (flagship). Always verify n78 on the official spec sheet.' },
+    { q: 'Does 5G drain battery faster?', a: '5G uses about 10-15% more battery than 4G. Newer chipsets like Snapdragon 4 Gen 2 and Dimensity 7020 have improved efficiency significantly. Most phones use 5G and 4G auto mode which manages this intelligently.' }
+  ]
 
   const faqSchema = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
     mainEntity: [
-      { '@type': 'Question', name: `Which 5G phones work best in India in ` + month + ` ` + year + `?`, acceptedAnswer: { '@type': 'Answer', text: `Any phone with n78 band support works reliably on Jio and Airtel 5G. Current best value: Redmi Note 14 5G (budget), Nothing Phone (3a) (mid-range), OnePlus 13 (flagship). Always verify n78 on official spec sheet.` } },
-      { '@type': 'Question', name: `Does 5G drain battery faster?`, acceptedAnswer: { '@type': 'Answer', text: `5G uses 10–15% more battery than 4G. Newer chips (Snapdragon 4 Gen 2, Dimensity 7020) have improved efficiency significantly. Most phones use 5G/4G auto mode which manages this intelligently.` } }
-    ]
+      { '@type': 'Question', name: faq[0].q, acceptedAnswer: { '@type': 'Answer', text: faq[0].a } },
+      { '@type': 'Question', name: faq[1].q, acceptedAnswer: { '@type': 'Answer', text: faq[1].a } },
+    ],
   }
 
   return (
@@ -35,34 +41,48 @@ export default async function Best5GPhonesPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <div className="bg-paper min-h-screen">
         <div className="max-w-4xl mx-auto px-4 py-10">
+
           <nav className="font-sans text-xs text-muted mb-6 flex items-center gap-2">
-            <Link href="/" className="hover:text-[#d4220a]">Home</Link><span>/</span>
-            <span className="text-ink">Best 5G Phones in India — {month} {year} Band Guide</span>
+            <Link href="/" className="hover:text-[#d4220a]">Home</Link>
+            <span>/</span>
+            <span className="text-ink">Best 5G Phones in India</span>
           </nav>
+
           <div className="mb-8">
-            <span className="bg-[#d4220a] text-white font-sans text-[10px] font-bold px-2.5 py-1 uppercase tracking-widest">Updated {month} {year}</span>
-            <h1 className="font-playfair text-3xl md:text-4xl font-black text-ink leading-tight mt-3 mb-4">Best 5G Phones in India — {month} {year} Band Guide</h1>
-            <p className="font-body text-lg text-[#2a2a2a] leading-relaxed">Not all 5G phones support Indian 5G bands. This {month} {year} guide covers which phones actually work on Jio and Airtel 5G — not just phones that say '5G' on the box.</p>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="bg-[#d4220a] text-white font-sans text-[10px] font-bold px-2.5 py-1 uppercase tracking-widest">
+                Updated {month} {year}
+              </span>
+              <span className="font-sans text-xs text-muted">Vijay Yadav · The Tech Bharat</span>
+            </div>
+            <h1 className="font-playfair text-3xl md:text-4xl font-black text-ink leading-tight mb-4">
+              Best 5G Phones in India — {month} {year}
+            </h1>
+            <p className="font-body text-lg text-muted leading-relaxed">
+              Not all 5G phones work on Indian networks. This MONTH YEAR guide covers which phones actually support Jio and Airtel 5G — not just phones with 5G written on the box.
+            </p>
           </div>
 
           <section className="mb-8">
-            <h2 className="font-playfair text-xl font-bold text-ink mb-4 pb-2 border-b border-border">Indian 5G Bands Explained</h2>
+            <h2 className="font-playfair text-xl font-bold text-ink mb-4 pb-2 border-b border-border">
+              Indian 5G Band Guide — What You Must Know
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="bg-white border border-border p-4">
                 <p className="font-sans text-xs font-bold text-ink mb-1">n78 (3500MHz) — MUST HAVE</p>
-                <p className="font-sans text-xs text-muted leading-relaxed">Primary Jio and Airtel 5G band. Every 5G phone you buy MUST support n78. Check spec sheet explicitly.</p>
+                <p className="font-sans text-xs text-muted leading-relaxed">The primary Jio and Airtel 5G band. Every 5G phone you buy in India must support n78. Check the official spec sheet explicitly.</p>
               </div>
               <div className="bg-white border border-border p-4">
-                <p className="font-sans text-xs font-bold text-ink mb-1">n28 (700MHz)</p>
-                <p className="font-sans text-xs text-muted leading-relaxed">Lower frequency, better wall penetration. Jio uses for wider coverage. Good to have.</p>
+                <p className="font-sans text-xs font-bold text-ink mb-1">n28 (700MHz) — useful</p>
+                <p className="font-sans text-xs text-muted leading-relaxed">Lower frequency with better wall penetration. Jio uses it for wider coverage. Good to have but not critical.</p>
               </div>
               <div className="bg-white border border-border p-4">
-                <p className="font-sans text-xs font-bold text-ink mb-1">n40 (2300MHz)</p>
-                <p className="font-sans text-xs text-muted leading-relaxed">Mid-band, faster speeds. More common in flagship and premium mid-range phones.</p>
+                <p className="font-sans text-xs font-bold text-ink mb-1">n40 (2300MHz) — premium</p>
+                <p className="font-sans text-xs text-muted leading-relaxed">Mid-band with faster speeds. More common in flagship and premium mid-range phones.</p>
               </div>
               <div className="bg-white border border-border p-4">
                 <p className="font-sans text-xs font-bold text-ink mb-1">mmWave — not needed yet</p>
-                <p className="font-sans text-xs text-muted leading-relaxed">Ultra-high speed, very short range. Only in select metro spots. Not worth prioritising for Indian buyers.</p>
+                <p className="font-sans text-xs text-muted leading-relaxed">Ultra-high speed, very short range. Only in select metro spots. Not worth prioritising for Indian buyers in YEAR.</p>
               </div>
             </div>
           </section>
@@ -71,31 +91,32 @@ export default async function Best5GPhonesPage() {
             <section className="mb-10">
               <div className="flex items-center gap-3 mb-5">
                 <div className="w-6 h-0.5 bg-[#d4220a]" />
-                <h2 className="font-playfair text-2xl font-bold text-ink">Latest Reviews & Analysis</h2>
+                <h2 className="font-playfair text-2xl font-bold text-ink">Reviews & Analysis</h2>
                 <span className="font-sans text-xs text-muted bg-gray-100 px-2 py-0.5 rounded">{reviews.length}</span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {reviews.map(article => (
-                  <Link key={article.slug} href={`/${article.slug}`}
-                    className="bg-white border border-border hover:border-[#d4220a] transition-colors group block">
-                    {article.featuredImage && !article.featuredImage.startsWith('/phone-images/') && (
-                      <div className="relative overflow-hidden" style={{ paddingBottom: '56.25%' }}>
-                        <img src={article.featuredImage} alt={article.title} width={400} height={225} loading="lazy"
+                {reviews.map(a => (
+                  <Link key={a.slug} href={`/${a.slug}`} className="bg-white border border-border hover:border-[#d4220a] transition-colors group block">
+                    {a.featuredImage && !a.featuredImage.startsWith('/phone-images/') && (
+                      <div className="relative overflow-hidden" style={{ paddingBottom:'56.25%' }}>
+                        <img src={a.featuredImage} alt={a.title} width={400} height={225} loading="lazy"
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
-                          style={{ position:'absolute', inset:0, width:'100%', height:'100%' }}
+                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }}
                           onError={e=>{(e.target as HTMLImageElement).src='https://thetechbharat.com/og-image.jpg'}} />
-                        <span className="absolute top-2 left-2 bg-[#d4220a] text-white font-sans text-[9px] font-bold px-2 py-0.5 uppercase tracking-wider z-10">{article.type === 'review' ? 'Review' : 'Compare'}</span>
+                        <span className="absolute top-2 left-2 bg-[#d4220a] text-white font-sans text-[9px] font-bold px-2 py-0.5 uppercase z-10">
+                          {a.type==='review'?'Review':'Compare'}
+                        </span>
                       </div>
                     )}
                     <div className="p-3">
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <span className="font-sans text-[10px] font-bold text-[#d4220a] uppercase tracking-wide">{article.brand}</span>
-                        <span className="font-sans text-[10px] text-muted ml-auto">{formatPillarDate(article.publishDate)}</span>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-sans text-[10px] font-bold text-[#d4220a] uppercase">{a.brand}</span>
+                        <span className="font-sans text-[10px] text-muted ml-auto">{formatPillarDate(a.publishDate)}</span>
                       </div>
-                      <h3 className="font-sans text-sm font-bold text-ink leading-snug group-hover:text-[#d4220a] transition-colors line-clamp-2 mb-1">{article.title}</h3>
-                      <p className="font-sans text-xs text-muted line-clamp-2">{article.summary}</p>
+                      <h3 className="font-sans text-sm font-bold text-ink group-hover:text-[#d4220a] line-clamp-2 mb-1">{a.title}</h3>
+                      <p className="font-sans text-xs text-muted line-clamp-2">{a.summary}</p>
                       <div className="mt-2 flex justify-between">
-                        <span className="font-sans text-[10px] text-muted">{article.readTime} min read</span>
+                        <span className="font-sans text-[10px] text-muted">{a.readTime} min read</span>
                         <span className="font-sans text-xs font-semibold text-[#d4220a]">Read →</span>
                       </div>
                     </div>
@@ -104,6 +125,7 @@ export default async function Best5GPhonesPage() {
               </div>
             </section>
           )}
+
           {news.length > 0 && (
             <section className="mb-10">
               <div className="flex items-center gap-3 mb-5">
@@ -112,27 +134,26 @@ export default async function Best5GPhonesPage() {
                 <span className="font-sans text-xs text-muted bg-gray-100 px-2 py-0.5 rounded">{news.length}</span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {news.map(article => (
-                  <Link key={article.slug} href={`/${article.slug}`}
-                    className="bg-white border border-border hover:border-[#d4220a] transition-colors group block">
-                    {article.featuredImage && !article.featuredImage.startsWith('/phone-images/') && (
-                      <div className="relative overflow-hidden" style={{ paddingBottom: '56.25%' }}>
-                        <img src={article.featuredImage} alt={article.title} width={400} height={225} loading="lazy"
+                {news.map(a => (
+                  <Link key={a.slug} href={`/${a.slug}`} className="bg-white border border-border hover:border-[#d4220a] transition-colors group block">
+                    {a.featuredImage && !a.featuredImage.startsWith('/phone-images/') && (
+                      <div className="relative overflow-hidden" style={{ paddingBottom:'56.25%' }}>
+                        <img src={a.featuredImage} alt={a.title} width={400} height={225} loading="lazy"
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
-                          style={{ position:'absolute', inset:0, width:'100%', height:'100%' }}
+                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }}
                           onError={e=>{(e.target as HTMLImageElement).src='https://thetechbharat.com/og-image.jpg'}} />
-                        <span className="absolute top-2 left-2 bg-[#1a3a5c] text-white font-sans text-[9px] font-bold px-2 py-0.5 uppercase tracking-wider z-10">News</span>
+                        <span className="absolute top-2 left-2 bg-[#1a3a5c] text-white font-sans text-[9px] font-bold px-2 py-0.5 uppercase z-10">News</span>
                       </div>
                     )}
                     <div className="p-3">
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <span className="font-sans text-[10px] font-bold text-[#d4220a] uppercase tracking-wide">{article.brand}</span>
-                        <span className="font-sans text-[10px] text-muted ml-auto">{formatPillarDate(article.publishDate)}</span>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-sans text-[10px] font-bold text-[#1a3a5c] uppercase">{a.brand}</span>
+                        <span className="font-sans text-[10px] text-muted ml-auto">{formatPillarDate(a.publishDate)}</span>
                       </div>
-                      <h3 className="font-sans text-sm font-bold text-ink leading-snug group-hover:text-[#d4220a] transition-colors line-clamp-2 mb-1">{article.title}</h3>
-                      <p className="font-sans text-xs text-muted line-clamp-2">{article.summary}</p>
+                      <h3 className="font-sans text-sm font-bold text-ink group-hover:text-[#d4220a] line-clamp-2 mb-1">{a.title}</h3>
+                      <p className="font-sans text-xs text-muted line-clamp-2">{a.summary}</p>
                       <div className="mt-2 flex justify-between">
-                        <span className="font-sans text-[10px] text-muted">{article.readTime} min read</span>
+                        <span className="font-sans text-[10px] text-muted">{a.readTime} min read</span>
                         <span className="font-sans text-xs font-semibold text-[#d4220a]">Read →</span>
                       </div>
                     </div>
@@ -141,36 +162,50 @@ export default async function Best5GPhonesPage() {
               </div>
             </section>
           )}
+
           {articles.length === 0 && (
             <div className="border border-border p-10 text-center bg-white mb-10">
-              <p className="font-sans text-sm text-muted">Loading articles. <Link href="/mobile-news" className="text-[#d4220a] hover:underline">Browse all mobile news →</Link></p>
+              <p className="font-sans text-sm text-muted">
+                Loading articles. <Link href="/mobile-news" className="text-[#d4220a] hover:underline">Browse all mobile news →</Link>
+              </p>
             </div>
           )}
-          <section className="mb-10">
-            <h2 className="font-playfair text-2xl font-bold text-ink mb-5 pb-2 border-b border-border">Frequently Asked Questions</h2>
-            <div className="space-y-4">
 
+          <section className="mb-10">
+            <h2 className="font-playfair text-2xl font-bold text-ink mb-5 pb-2 border-b border-border">
+              Frequently Asked Questions
+            </h2>
+            <div className="space-y-4">
               <div className="border border-border p-4 bg-white">
-                <h3 className="font-sans text-sm font-bold text-ink mb-2">Which 5G phones work best in India in {month} {year}?</h3>
-                <p className="font-sans text-sm text-muted leading-relaxed">Any phone with n78 band support works reliably on Jio and Airtel 5G. Current best value: Redmi Note 14 5G (budget), Nothing Phone (3a) (mid-range), OnePlus 13 (flagship). Always verify n78 on official spec sheet.</p>
+                <h3 className="font-sans text-sm font-bold text-ink mb-2">{faq[0].q}</h3>
+                <p className="font-sans text-sm text-muted leading-relaxed">{faq[0].a}</p>
               </div>
               <div className="border border-border p-4 bg-white">
-                <h3 className="font-sans text-sm font-bold text-ink mb-2">Does 5G drain battery faster?</h3>
-                <p className="font-sans text-sm text-muted leading-relaxed">5G uses 10–15% more battery than 4G. Newer chips (Snapdragon 4 Gen 2, Dimensity 7020) have improved efficiency significantly. Most phones use 5G/4G auto mode which manages this intelligently.</p>
+                <h3 className="font-sans text-sm font-bold text-ink mb-2">{faq[1].q}</h3>
+                <p className="font-sans text-sm text-muted leading-relaxed">{faq[1].a}</p>
               </div>
             </div>
           </section>
+
           <section className="mt-8 pt-6 border-t border-border">
             <h2 className="font-playfair text-xl font-bold text-ink mb-4">Related Guides</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <Link href="/best-budget-phones-india" className="border border-border p-3 bg-white hover:border-[#d4220a] transition-colors group"><span className="font-sans text-sm font-bold text-ink group-hover:text-[#d4220a]">Best Budget Phones India →</span></Link>
-              <Link href="/smartphone-buying-guide-india" className="border border-border p-3 bg-white hover:border-[#d4220a] transition-colors group"><span className="font-sans text-sm font-bold text-ink group-hover:text-[#d4220a]">Smartphone Buying Guide →</span></Link>
+              <Link href="/best-budget-phones-india" className="border border-border p-3 bg-white hover:border-[#d4220a] transition-colors group">
+                <span className="font-sans text-sm font-bold text-ink group-hover:text-[#d4220a]">Best Budget Phones India →</span>
+              </Link>
+              <Link href="/smartphone-buying-guide-india" className="border border-border p-3 bg-white hover:border-[#d4220a] transition-colors group">
+                <span className="font-sans text-sm font-bold text-ink group-hover:text-[#d4220a]">Smartphone Buying Guide →</span>
+              </Link>
             </div>
           </section>
+
           <div className="mt-8 bg-[#f8f4ef] border-l-4 border-[#d4220a] p-5">
             <p className="font-sans text-xs font-bold text-[#d4220a] uppercase tracking-wider mb-2">Editorial Note</p>
-            <p className="font-sans text-sm text-muted">Articles fetched live. Guide updated for {month} {year}. No paid placements. By Vijay Yadav, The Tech Bharat.</p>
+            <p className="font-sans text-sm text-muted">
+              Articles fetched live from The Tech Bharat. Guide updated for {month} {year}. No paid placements. By Vijay Yadav.
+            </p>
           </div>
+
         </div>
       </div>
     </>
