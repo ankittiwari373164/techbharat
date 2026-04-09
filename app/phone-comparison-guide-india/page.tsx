@@ -1,75 +1,90 @@
 // app/phone-comparison-guide-india/page.tsx
 import { Metadata } from 'next'
 import Link from 'next/link'
-import { getPillarArticles, formatPillarDate, currentMonthYear, type PillarArticle } from '@/lib/pillar-utils'
+
+// Safe imports with error handling
+let getPillarArticles: any = () => Promise.resolve([])
+let formatPillarDate: any = (date: string) => 'Recently'
+let currentMonthYear: any = () => ({ month: 'April', year: 2026 })
+
+try {
+  const utils = require('@/lib/pillar-utils')
+  getPillarArticles = utils.getPillarArticles || (() => Promise.resolve([]))
+  formatPillarDate = utils.formatPillarDate || ((date: string) => 'Recently')
+  currentMonthYear = utils.currentMonthYear || (() => ({ month: 'April', year: 2026 }))
+} catch (error) {
+  console.warn('Failed to import pillar-utils, using fallbacks:', error)
+}
 
 export const revalidate = 3600
 
 export async function generateMetadata(): Promise<Metadata> {
+  let month = 'April'
+  let year = 2026
+
   try {
-    const { month, year } = currentMonthYear()
-    const title = `Phone Comparison Guide India — ${month} ${year}`
-    return {
-      title: `${title} | The Tech Bharat`,
-      description: `Phone comparison guide India ${month} ${year}. Head-to-head picks at every budget — which phone actually wins for Indian buyers.`,
-      alternates: { canonical: 'https://thetechbharat.com/phone-comparison-guide-india' },
-      openGraph: { title, url: 'https://thetechbharat.com/phone-comparison-guide-india', type: 'article' },
-    }
+    const dateInfo = currentMonthYear()
+    if (dateInfo?.month) month = dateInfo.month
+    if (dateInfo?.year) year = dateInfo.year
   } catch (error) {
-    console.error('Error generating metadata:', error)
-    return {
-      title: 'Phone Comparison Guide India | The Tech Bharat',
-      description: 'Phone comparison guide India for Indian buyers.',
-      alternates: { canonical: 'https://thetechbharat.com/phone-comparison-guide-india' },
-    }
+    console.error('Error getting current month/year for metadata:', error)
+  }
+
+  const title = `Phone Comparison Guide India — ${month} ${year}`
+  return {
+    title: `${title} | The Tech Bharat`,
+    description: `Phone comparison guide India ${month} ${year}. Head-to-head picks at every budget — which phone actually wins for Indian buyers.`,
+    alternates: { canonical: 'https://thetechbharat.com/phone-comparison-guide-india' },
+    openGraph: { title, url: 'https://thetechbharat.com/phone-comparison-guide-india', type: 'article' },
   }
 }
 
 export default async function PhoneComparisonGuidePage() {
   let month = 'April'
   let year = 2026
-  let reviews: PillarArticle[] = []
-  let news: PillarArticle[] = []
+  let reviews: any[] = []
+  let news: any[] = []
 
   try {
-    // Get current month/year
+    // Get current month/year safely
     try {
       const dateInfo = currentMonthYear()
-      month = dateInfo.month
-      year = dateInfo.year
+      if (dateInfo?.month) month = dateInfo.month
+      if (dateInfo?.year) year = dateInfo.year
     } catch (error) {
       console.error('Error getting current month/year:', error)
-      // Fallback values already set
     }
 
-    // Fetch articles with error handling
+    // Fetch articles with comprehensive error handling
     try {
-      const articles = await getPillarArticles(
-        ['vs', 'compare', 'comparison', 'versus', 'difference', 'better', 'which is better', 'head to head'],
-        [],
-        15
-      )
-      
+      const articles = await Promise.race([
+        getPillarArticles(
+          ['vs', 'compare', 'comparison', 'versus', 'difference', 'better', 'which is better', 'head to head'],
+          [],
+          15
+        ),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
+      ])
+
       if (Array.isArray(articles) && articles.length > 0) {
-        reviews = articles.filter(a => a?.type === 'review' || a?.type === 'compare')
-        news = articles.filter(a => a?.type === 'mobile-news')
+        reviews = articles.filter(a => a && (a.type === 'review' || a.type === 'compare'))
+        news = articles.filter(a => a && a.type === 'mobile-news')
       }
     } catch (error) {
       console.error('Error fetching pillar articles:', error)
-      // Continue with empty arrays
     }
   } catch (error) {
     console.error('Unexpected error in PhoneComparisonGuidePage:', error)
   }
 
   const faq = [
-    { 
-      q: `Samsung vs Xiaomi — which is better for India in ${year}?`, 
-      a: 'Samsung wins on software updates (4-5 years vs Xiaomi 2-3), service network (3000+ centres vs metro-heavy Xiaomi), and resale value. Xiaomi wins on raw specs per rupee. Choose Samsung outside metros or for long-term ownership.' 
+    {
+      q: `Samsung vs Xiaomi — which is better for India in ${year}?`,
+      a: 'Samsung wins on software updates (4-5 years vs Xiaomi 2-3), service network (3000+ centres vs metro-heavy Xiaomi), and resale value. Xiaomi wins on raw specs per rupee. Choose Samsung outside metros or for long-term ownership.'
     },
-    { 
-      q: 'iPhone vs Android — which is better for Indian users?', 
-      a: 'Android suits most Indian users: more price options, better 5G band coverage across devices, flexible for UPI and banking apps, easier local repairs. iPhone wins for existing Apple ecosystem users, video creators, and those wanting maximum resale value.' 
+    {
+      q: 'iPhone vs Android — which is better for Indian users?',
+      a: 'Android suits most Indian users: more price options, better 5G band coverage across devices, flexible for UPI and banking apps, easier local repairs. iPhone wins for existing Apple ecosystem users, video creators, and those wanting maximum resale value.'
     }
   ]
 
@@ -141,33 +156,36 @@ export default async function PhoneComparisonGuidePage() {
                 <span className="font-sans text-xs text-muted bg-gray-100 px-2 py-0.5 rounded">{reviews.length}</span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {reviews.map(a => (
-                  <Link key={a.slug} href={`/${a.slug}`} className="bg-white border border-border hover:border-[#d4220a] transition-colors group block">
-                    {a.featuredImage && !a.featuredImage.startsWith('/phone-images/') && (
-                      <div className="relative overflow-hidden" style={{ paddingBottom:'56.25%' }}>
-                        <img src={a.featuredImage} alt={a.title} width={400} height={225} loading="lazy"
-                          className="object-cover group-hover:scale-105 transition-transform duration-500"
-                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }}
-                          onError={e=>{(e.target as HTMLImageElement).src='https://thetechbharat.com/og-image.jpg'}} />
-                        <span className="absolute top-2 left-2 bg-[#d4220a] text-white font-sans text-[9px] font-bold px-2 py-0.5 uppercase z-10">
-                          {a.type==='review'?'Review':'Compare'}
-                        </span>
+                {reviews.map((a: any) => {
+                  if (!a || !a.slug) return null
+                  return (
+                    <Link key={a.slug} href={`/${a.slug}`} className="bg-white border border-border hover:border-[#d4220a] transition-colors group block">
+                      {a.featuredImage && !a.featuredImage.startsWith('/phone-images/') && (
+                        <div className="relative overflow-hidden" style={{ paddingBottom: '56.25%' }}>
+                          <img src={a.featuredImage} alt={a.title || 'Article'} width={400} height={225} loading="lazy"
+                            className="object-cover group-hover:scale-105 transition-transform duration-500"
+                            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+                            onError={e => { (e.target as HTMLImageElement).src = 'https://thetechbharat.com/og-image.jpg' }} />
+                          <span className="absolute top-2 left-2 bg-[#d4220a] text-white font-sans text-[9px] font-bold px-2 py-0.5 uppercase z-10">
+                            {a.type === 'review' ? 'Review' : 'Compare'}
+                          </span>
+                        </div>
+                      )}
+                      <div className="p-3">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-sans text-[10px] font-bold text-[#d4220a] uppercase">{a.brand || 'News'}</span>
+                          <span className="font-sans text-[10px] text-muted ml-auto">{a.publishDate ? formatPillarDate(a.publishDate) : 'Recently'}</span>
+                        </div>
+                        <h3 className="font-sans text-sm font-bold text-ink group-hover:text-[#d4220a] line-clamp-2 mb-1">{a.title || 'Article'}</h3>
+                        <p className="font-sans text-xs text-muted line-clamp-2">{a.summary || ''}</p>
+                        <div className="mt-2 flex justify-between">
+                          <span className="font-sans text-[10px] text-muted">{a.readTime || 5} min read</span>
+                          <span className="font-sans text-xs font-semibold text-[#d4220a]">Read →</span>
+                        </div>
                       </div>
-                    )}
-                    <div className="p-3">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-sans text-[10px] font-bold text-[#d4220a] uppercase">{a.brand}</span>
-                        <span className="font-sans text-[10px] text-muted ml-auto">{formatPillarDate(a.publishDate)}</span>
-                      </div>
-                      <h3 className="font-sans text-sm font-bold text-ink group-hover:text-[#d4220a] line-clamp-2 mb-1">{a.title}</h3>
-                      <p className="font-sans text-xs text-muted line-clamp-2">{a.summary}</p>
-                      <div className="mt-2 flex justify-between">
-                        <span className="font-sans text-[10px] text-muted">{a.readTime} min read</span>
-                        <span className="font-sans text-xs font-semibold text-[#d4220a]">Read →</span>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
+                    </Link>
+                  )
+                })}
               </div>
             </section>
           )}
@@ -180,31 +198,34 @@ export default async function PhoneComparisonGuidePage() {
                 <span className="font-sans text-xs text-muted bg-gray-100 px-2 py-0.5 rounded">{news.length}</span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {news.map(a => (
-                  <Link key={a.slug} href={`/${a.slug}`} className="bg-white border border-border hover:border-[#d4220a] transition-colors group block">
-                    {a.featuredImage && !a.featuredImage.startsWith('/phone-images/') && (
-                      <div className="relative overflow-hidden" style={{ paddingBottom:'56.25%' }}>
-                        <img src={a.featuredImage} alt={a.title} width={400} height={225} loading="lazy"
-                          className="object-cover group-hover:scale-105 transition-transform duration-500"
-                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }}
-                          onError={e=>{(e.target as HTMLImageElement).src='https://thetechbharat.com/og-image.jpg'}} />
-                        <span className="absolute top-2 left-2 bg-[#1a3a5c] text-white font-sans text-[9px] font-bold px-2 py-0.5 uppercase z-10">News</span>
+                {news.map((a: any) => {
+                  if (!a || !a.slug) return null
+                  return (
+                    <Link key={a.slug} href={`/${a.slug}`} className="bg-white border border-border hover:border-[#d4220a] transition-colors group block">
+                      {a.featuredImage && !a.featuredImage.startsWith('/phone-images/') && (
+                        <div className="relative overflow-hidden" style={{ paddingBottom: '56.25%' }}>
+                          <img src={a.featuredImage} alt={a.title || 'News'} width={400} height={225} loading="lazy"
+                            className="object-cover group-hover:scale-105 transition-transform duration-500"
+                            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+                            onError={e => { (e.target as HTMLImageElement).src = 'https://thetechbharat.com/og-image.jpg' }} />
+                          <span className="absolute top-2 left-2 bg-[#1a3a5c] text-white font-sans text-[9px] font-bold px-2 py-0.5 uppercase z-10">News</span>
+                        </div>
+                      )}
+                      <div className="p-3">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-sans text-[10px] font-bold text-[#1a3a5c] uppercase">{a.brand || 'News'}</span>
+                          <span className="font-sans text-[10px] text-muted ml-auto">{a.publishDate ? formatPillarDate(a.publishDate) : 'Recently'}</span>
+                        </div>
+                        <h3 className="font-sans text-sm font-bold text-ink group-hover:text-[#d4220a] line-clamp-2 mb-1">{a.title || 'Article'}</h3>
+                        <p className="font-sans text-xs text-muted line-clamp-2">{a.summary || ''}</p>
+                        <div className="mt-2 flex justify-between">
+                          <span className="font-sans text-[10px] text-muted">{a.readTime || 5} min read</span>
+                          <span className="font-sans text-xs font-semibold text-[#d4220a]">Read →</span>
+                        </div>
                       </div>
-                    )}
-                    <div className="p-3">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-sans text-[10px] font-bold text-[#1a3a5c] uppercase">{a.brand}</span>
-                        <span className="font-sans text-[10px] text-muted ml-auto">{formatPillarDate(a.publishDate)}</span>
-                      </div>
-                      <h3 className="font-sans text-sm font-bold text-ink group-hover:text-[#d4220a] line-clamp-2 mb-1">{a.title}</h3>
-                      <p className="font-sans text-xs text-muted line-clamp-2">{a.summary}</p>
-                      <div className="mt-2 flex justify-between">
-                        <span className="font-sans text-[10px] text-muted">{a.readTime} min read</span>
-                        <span className="font-sans text-xs font-semibold text-[#d4220a]">Read →</span>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
+                    </Link>
+                  )
+                })}
               </div>
             </section>
           )}
