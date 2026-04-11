@@ -20,13 +20,19 @@ function getInternalLinkMap(): [RegExp, string, string][] { return [
   [/\bPoco\b/g, '/mobile-news?brand=Poco', 'Latest Poco news'],
   [/\bRedmi\b/g, '/mobile-news?brand=Xiaomi', 'Latest Xiaomi Redmi news'],
   [/\bGoogle Pixel\b/g, '/mobile-news', 'Latest mobile news'],
-  // ── Pillar pages — high-value evergreen internal links ───────────────────
+  // ── Brand pillar pages — brand-specific evergreen links ─────────────────
+  [/\b(best Samsung|Samsung galaxy guide|Samsung buying guide)\b/gi, '/best-samsung-phones-india', 'Best Samsung Smartphones India'],
+  [/\b(best iPhone|iPhone buying guide|which iPhone|Apple phone guide)\b/gi, '/best-apple-iphone-india', 'Best iPhones in India'],
+  [/\b(best OnePlus|OnePlus buying guide|which OnePlus)\b/gi, '/best-oneplus-phones-india', 'Best OnePlus Phones India'],
+  // ── Generic pillar pages — topic evergreen links ──────────────────────────
   [/\b(buying guide|how to choose a (smartphone|phone)|which phone to buy)\b/gi, '/smartphone-buying-guide-india', 'Smartphone Buying Guide India'],
   [/\b(best (smartphone|phone)s? (in India|for India|under ₹))\b/gi, '/best-smartphones-india', 'Best Smartphones India'],
   [/\b(best camera phone|camera phone ranking|camera comparison)s?\b/gi, '/best-camera-phones-india', 'Best Camera Phones India'],
   [/\b(battery (health|life|degradation|drain)|charging habit|fast charging (myth|damage|safe))s?\b/gi, '/android-battery-health-guide', 'Android Battery Health Guide India'],
   [/\b(gaming phone|BGMI phone|mobile gaming|best phone for (gaming|BGMI))s?\b/gi, '/best-gaming-phones-india', 'Best Gaming Phones India'],
   [/\b(phone comparison|compare phone|vs\. which is better)\b/gi, '/phone-comparison-guide-india', 'Phone Comparison Guide India'],
+  [/\b(budget phone under|best phone under ₹)\b/gi, '/best-budget-phones-india', 'Best Budget Phones India'],
+  [/\b(5G phone|best 5G|5G band|n78)\b/gi, '/best-5g-phones-india', 'Best 5G Phones India'],
   // ── Content sections ─────────────────────────────────────────────────────
   [/\b(phone review|hands-on|first look|specs breakdown)s?\b/gi, '/reviews', 'Phone reviews India'],
   [/\b(compare|head-to-head|versus)\b/gi, '/compare', 'Compare phones India'],

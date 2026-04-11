@@ -261,13 +261,34 @@ function buildUserPrompt(raw: RawArticle, brand: string, type: string): string {
 
   const today = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
 
-  return `Write a MINIMUM 1500-word article (count every word — do not stop before 1500). This article will be reviewed by Google AdSense. Short articles fail AdSense review. Write for The Tech Bharat about this topic.
+  return `Write a MINIMUM 1800-word article (count every word — do not stop before 1800). 
+MANDATORY CONTENT ELEMENTS (AdSense high-value signals):
+- HTML comparison/specs table with minimum 8 rows
+- Pros and Cons table (honest, not marketing)
+- "Who Should Buy" and "Who Should Skip" section
+- At least 2 brand-specific India context points (Flipkart price, service centres, 5G bands)
+- Personal opinion paragraph with "I think" or "My take is"
+Short articles below 1000 words will be rejected by AdSense as thin content. This article will be reviewed by Google AdSense. Short articles fail AdSense review. Write for The Tech Bharat about this topic.
 
 TODAY'S DATE: ${today} — All dates, timelines, and references must be consistent with this date. Never mention years before ${new Date().getFullYear()}.
-INTERNAL LINKS MANDATE: Every article must include exactly 2 internal links to other sections of thetechbharat.com using this format:
-<a href="/mobile-news?brand=BRAND">More BRAND news on The Tech Bharat</a>
-<a href="/compare">Compare phones on The Tech Bharat</a>
-OR link to /reviews, /mobile-news, /web-stories as relevant. Place them naturally inside paragraphs — not in a list at the bottom.
+INTERNAL LINKS MANDATE (CRITICAL FOR SEO + ADSENSE):
+Every article MUST include exactly 3-4 internal links, placed naturally inside paragraphs. Rules:
+
+1. BRAND PILLAR LINK (mandatory): Link to the brand-specific pillar page:
+   - Samsung articles → <a href="/best-smartphones-india">Best Samsung Smartphones in India 2026</a>
+   - Apple/iPhone articles → <a href="/best-flagship-phones-india">Best Flagship Phones in India</a>  
+   - Budget phone articles → <a href="/best-budget-phones-india">Best Budget Phones in India</a>
+   - Camera articles → <a href="/best-camera-phones-india">Best Camera Phones in India</a>
+   - Gaming articles → <a href="/best-gaming-phones-india">Best Gaming Phones in India</a>
+   - 5G articles → <a href="/best-5g-phones-india">Best 5G Phones in India</a>
+
+2. BUYING GUIDE LINK (mandatory): <a href="/smartphone-buying-guide-india">Smartphone Buying Guide India 2026</a>
+
+3. BRAND NEWS LINK: <a href="/mobile-news?brand=BRAND">More BRAND news on The Tech Bharat</a>
+
+4. RELATED ARTICLE (if applicable): <a href="/compare">Phone Comparison Hub</a>
+
+RULES: Links must appear INSIDE paragraphs, not in a separate list. Use natural anchor text. Never dump all links at the bottom.
 
 CONTENT QUALITY MANDATE (AdSense Compliance):
 This article MUST offer GENUINE value. Google will reject sites with:
