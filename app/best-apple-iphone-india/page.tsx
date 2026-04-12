@@ -9,7 +9,7 @@ export const revalidate = 3600
 
 export async function generateMetadata(): Promise<Metadata> {
   const { month, year } = currentMonthYear()
-  const title = `Best iPhones in India — {month} {year}`
+  const title = `Best iPhones in India — ${month} ${year}`
   return {
     title: `${title} | The Tech Bharat`,
     description: `Best iPhones in India MONTH YEAR — iPhone 16 series ranked for Indian buyers. Which iPhone to buy, India pricing, and honest value analysis.`.replace('MONTH', month).replace('YEAR', String(year)),
