@@ -3,49 +3,56 @@ import { useState } from 'react'
 import Link from 'next/link'
 import type { Article } from '@/lib/store'
 import ArticleCard from '@/components/ArticleCard'
+import PillarNav from '@/components/PillarNav'
 
 // ── AUTO INTERNAL LINKER ──────────────────────────────────────────
-function getInternalLinkMap(): [RegExp, string, string][] { return [
-  // ── Brand pages ──────────────────────────────────────────────────────────
-  [/\bSamsung\b/g, '/mobile-news?brand=Samsung', 'Latest Samsung news'],
-  [/\b(Apple|iPhone)\b/g, '/mobile-news?brand=Apple', 'Latest Apple iPhone news'],
-  [/\bXiaomi\b/g, '/mobile-news?brand=Xiaomi', 'Latest Xiaomi news'],
-  [/\bOnePlus\b/g, '/mobile-news?brand=OnePlus', 'Latest OnePlus news'],
-  [/\bNothing\b/g, '/mobile-news?brand=Nothing', 'Latest Nothing Phone news'],
-  [/\bMotorola\b/g, '/mobile-news?brand=Motorola', 'Latest Motorola news'],
-  [/\bRealme\b/g, '/mobile-news?brand=Realme', 'Latest Realme news'],
-  [/\bVivo\b/g, '/mobile-news?brand=Vivo', 'Latest Vivo news'],
-  [/\bOPPO\b/g, '/mobile-news?brand=OPPO', 'Latest OPPO news'],
-  [/\biQOO\b/g, '/mobile-news?brand=iQOO', 'Latest iQOO news'],
-  [/\bPoco\b/g, '/mobile-news?brand=Poco', 'Latest Poco news'],
-  [/\bRedmi\b/g, '/mobile-news?brand=Xiaomi', 'Latest Xiaomi Redmi news'],
-  [/\bGoogle Pixel\b/g, '/mobile-news', 'Latest mobile news'],
-  // ── Brand pillar pages — brand-specific evergreen links ─────────────────
-  [/\b(best Samsung|Samsung galaxy guide|Samsung buying guide)\b/gi, '/best-samsung-phones-india', 'Best Samsung Smartphones India'],
-  [/\b(best iPhone|iPhone buying guide|which iPhone|Apple phone guide)\b/gi, '/best-apple-iphone-india', 'Best iPhones in India'],
-  [/\b(best OnePlus|OnePlus buying guide|which OnePlus)\b/gi, '/best-oneplus-phones-india', 'Best OnePlus Phones India'],
-  // ── Generic pillar pages — topic evergreen links ──────────────────────────
-  [/\b(buying guide|how to choose a (smartphone|phone)|which phone to buy)\b/gi, '/smartphone-buying-guide-india', 'Smartphone Buying Guide India'],
-  [/\b(best (smartphone|phone)s? (in India|for India|under ₹))\b/gi, '/best-smartphones-india', 'Best Smartphones India'],
-  [/\b(best camera phone|camera phone ranking|camera comparison)s?\b/gi, '/best-camera-phones-india', 'Best Camera Phones India'],
-  [/\b(battery (health|life|degradation|drain)|charging habit|fast charging (myth|damage|safe))s?\b/gi, '/android-battery-health-guide', 'Android Battery Health Guide India'],
-  [/\b(gaming phone|BGMI phone|mobile gaming|best phone for (gaming|BGMI))s?\b/gi, '/best-gaming-phones-india', 'Best Gaming Phones India'],
-  [/\b(phone comparison|compare phone|vs\. which is better)\b/gi, '/phone-comparison-guide-india', 'Phone Comparison Guide India'],
-  [/\b(budget phone under|best phone under ₹)\b/gi, '/best-budget-phones-india', 'Best Budget Phones India'],
-  [/\b(5G phone|best 5G|5G band|n78)\b/gi, '/best-5g-phones-india', 'Best 5G Phones India'],
-  // ── Content sections ─────────────────────────────────────────────────────
-  [/\b(phone review|hands-on|first look|specs breakdown)s?\b/gi, '/reviews', 'Phone reviews India'],
-  [/\b(compare|head-to-head|versus)\b/gi, '/compare', 'Compare phones India'],
-  [/\b5G (phone|smartphone|band|support|network)s?\b/gi, '/mobile-news', 'Latest 5G phones India'],
-  [/\b(budget phone|affordable phone|mid-range phone)s?\b/gi, '/mobile-news', 'Budget phones India'],
-  [/\b(flagship phone|premium smartphone|flagship smartphone)s?\b/gi, '/mobile-news', 'Flagship phones India'],
-  [/\b(foldable phone|foldable smartphone)s?\b/gi, '/mobile-news', 'Foldable phones India'],
-  [/\b(Flipkart|Amazon India)\b/g, '/mobile-news', 'Best phone deals India'],
-  [/\b(Jio|Airtel)\b/g, '/mobile-news', 'Latest 5G news India'],
-  [/\b(web stor(?:y|ies))\b/gi, '/web-stories', 'Web Stories'],
-]}
+function getInternalLinkMap(articleBrand?: string): [RegExp, string, string][] {
+  // Brand-specific pillar links — injected FIRST so they take priority
+  const brandPillarLinks: [RegExp, string, string][] = []
 
-function addInternalLinks(html: string, _currentSlug: string): string {
+  const brand = (articleBrand || '').toLowerCase()
+
+  if (brand === 'samsung') {
+    brandPillarLinks.push([/\b(Samsung|Galaxy)\b/g, '/best-samsung-phones-india', 'Best Samsung Smartphones India 2026'])
+  } else if (brand === 'apple' || brand === 'iphone') {
+    brandPillarLinks.push([/\b(Apple|iPhone|iOS)\b/g, '/best-apple-iphone-india', 'Best iPhones in India 2026'])
+  } else if (brand === 'oneplus') {
+    brandPillarLinks.push([/\b(OnePlus|OxygenOS|Nord)\b/g, '/best-oneplus-phones-india', 'Best OnePlus Phones India 2026'])
+  }
+
+  return [
+    ...brandPillarLinks,
+    // ── Brand news links (non-brand-pillar brands) ─────────────────────────
+    [/\bXiaomi\b/g,       '/mobile-news?brand=Xiaomi',   'Latest Xiaomi news'],
+    [/\bRealme\b/g,       '/mobile-news?brand=Realme',   'Latest Realme news'],
+    [/\bVivo\b/g,         '/mobile-news?brand=Vivo',     'Latest Vivo news'],
+    [/\bOPPO\b/g,         '/mobile-news?brand=OPPO',     'Latest OPPO news'],
+    [/\biQOO\b/g,         '/mobile-news?brand=iQOO',     'Latest iQOO news'],
+    [/\bPoco\b/g,         '/mobile-news?brand=Poco',     'Latest Poco news'],
+    [/\bRedmi\b/g,        '/mobile-news?brand=Xiaomi',   'Latest Redmi news'],
+    [/\bMotorola\b/g,     '/mobile-news?brand=Motorola', 'Latest Motorola news'],
+    [/\bNothing\b/g,      '/mobile-news?brand=Nothing',  'Latest Nothing Phone news'],
+    // ── Pillar page topic links ────────────────────────────────────────────
+    [/\b(buying guide|how to choose a (smartphone|phone)|which phone to buy)\b/gi, '/smartphone-buying-guide-india', 'Smartphone Buying Guide India 2026'],
+    [/\b(best (smartphones?|phones?) (in India|for India))\b/gi,                   '/best-smartphones-india',        'Best Smartphones India 2026'],
+    [/\b(best camera phone|top camera phone|photography phone)s?\b/gi,             '/best-camera-phones-india',      'Best Camera Phones India 2026'],
+    [/\b(gaming phone|BGMI phone|best phone for gaming)s?\b/gi,                    '/best-gaming-phones-india',      'Best Gaming Phones India 2026'],
+    [/\b(battery backup|long battery|best battery phone)s?\b/gi,                   '/best-battery-backup-phones-india','Best Battery Phones India 2026'],
+    [/\b(best 5G phone|top 5G smartphone)s?\b/gi,                                  '/best-5g-phones-india',          'Best 5G Phones India 2026'],
+    [/\b(flagship phone|premium smartphone|best flagship)s?\b/gi,                  '/best-flagship-phones-india',    'Best Flagship Phones India 2026'],
+    [/\b(budget phone under|best phone under ₹)\b/gi,                             '/best-budget-phones-india',      'Best Budget Phones India 2026'],
+    [/\b(phone comparison|compare phone)s?\b/gi,                                   '/phone-comparison-guide-india',  'Phone Comparison Guide India'],
+    [/\b(battery health|battery degradation|charging habit)s?\b/gi,                '/android-battery-health-guide',  'Android Battery Health Guide'],
+    // ── Content section links ─────────────────────────────────────────────
+    [/\b(phone review|hands-on|first look)s?\b/gi, '/reviews',     'Phone reviews India'],
+    [/\b(compare|head-to-head|versus)\b/gi,        '/compare',     'Compare phones India'],
+    [/\b(Flipkart|Amazon India)\b/g,               '/mobile-news', 'Best phone deals India'],
+    [/\b(Jio|Airtel)\b/g,                          '/mobile-news', 'Latest 5G news India'],
+    [/\b(web stor(?:y|ies))\b/gi,                  '/web-stories', 'Web Stories'],
+  ]
+}
+
+function addInternalLinks(html: string, _currentSlug: string, articleBrand?: string): string {
   if (!html || typeof html !== 'string') return ''
   const parts = html.split(/(<[^>]+>)/g)
   const linked = new Set<string>()
@@ -58,7 +65,7 @@ function addInternalLinks(html: string, _currentSlug: string): string {
     if (insideAnchor) return part
 
     let text = part
-    for (const [regex, url, title] of getInternalLinkMap()) {
+    for (const [regex, url, title] of getInternalLinkMap(articleBrand)) {
       if (linked.has(url)) continue
       regex.lastIndex = 0
       const newText = text.replace(regex, (match) => {
@@ -282,7 +289,8 @@ export default function ArticleClient({ article, similar, slug }: ArticleClientP
                   (liveArticle.content || '')
                     .replace(/<h1(\s[^>]*)?>/gi, '<h2$1>')
                     .replace(/<\/h1>/gi, '</h2>'),
-                  slug
+                  slug,
+                  liveArticle.brand
                 ) }}
               />
 
@@ -306,8 +314,14 @@ export default function ArticleClient({ article, similar, slug }: ArticleClientP
               )}
             </div>
 
+            {/* Pillar Page Navigation Strip */}
+            <div className="mt-8">
+              <p className="font-sans text-xs font-bold text-[#d4220a] uppercase tracking-wider mb-3">Browse All Guides</p>
+              <PillarNav variant="compact" />
+            </div>
+
             {/* Internal Navigation Links */}
-            <div className="mt-8 p-4 bg-[#f8f4ef] border-l-4 border-[#d4220a]">
+            <div className="mt-4 p-4 bg-[#f8f4ef] border-l-4 border-[#d4220a]">
               <p className="font-sans text-xs font-bold text-[#d4220a] uppercase tracking-wider mb-3">Explore More on The Tech Bharat</p>
               <div className="flex flex-wrap gap-2">
                 <a href="/mobile-news" className="font-sans text-xs text-ink border border-border bg-white px-3 py-1.5 hover:border-[#d4220a] hover:text-[#d4220a] transition-colors">📱 Mobile News</a>

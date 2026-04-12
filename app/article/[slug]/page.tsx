@@ -74,9 +74,24 @@ export default async function ArticlePage({ params }: PageProps) {
     const articles = await getAllArticlesAsync() as any[]
     article = articles.find((a: any) => a.slug === slug) || null
     if (article) {
+      const articleBrand = article.brand || ''
+      // BRAND-ONLY similar articles: Samsung article → only Samsung, Apple → only Apple
+      // No cross-brand pollution. No duplicates (slug deduplication).
+      const seen = new Set([slug])
       similar = articles
-        .filter((a: any) => a.slug !== slug && (a.brand === article.brand || a.type === article.type))
+        .filter((a: any) => {
+          if (seen.has(a.slug)) return false
+          if (!a.slug || !a.title) return false
+          // Must match brand exactly (case-insensitive)
+          if (articleBrand && articleBrand !== 'Mobile') {
+            return (a.brand || '').toLowerCase() === articleBrand.toLowerCase()
+          }
+          // For generic 'Mobile' brand: fallback to same type
+          return a.type === article.type
+        })
+        .sort((a: any, b: any) => new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime())
         .slice(0, 4)
+        .map((a: any) => { seen.add(a.slug); return a })
     }
   } catch { /* handled below */ }
 

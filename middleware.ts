@@ -9,37 +9,43 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { NextRequest, NextResponse } from 'next/server'
 
-// Known top-level pages — these must NOT be treated as article slugs
+// ── ALL known top-level pages — must NOT be treated as article slugs ─────────
+// Add every app/[slug]/page.tsx here so middleware never rewrites them to /article/
 const TOP_LEVEL_ROUTES = new Set([
-  // Core nav pages
+  // Core nav
   'mobile-news', 'reviews', 'compare', 'web-stories',
-  // Static pages
+  // Trust/info pages
   'about', 'contact', 'privacy-policy', 'disclaimer', 'terms',
   'editorial-policy', 'corrections-policy', 'author',
   // System
-  'admin', 'api', '_next', 'sitemap.xml', 'robots.txt',
-  // Evergreen pillar pages
-  'smartphone-buying-guide-india',
+  'admin', 'api', '_next', 'sitemap.xml', 'robots.txt', 'favicon.ico',
+
+  // ── BRAND PILLAR PAGES ────────────────────────────────────────────────────
+  'best-samsung-phones-india',
+  'best-apple-iphone-india',
+  'best-oneplus-phones-india',
+
+  // ── GENERIC PILLAR PAGES ──────────────────────────────────────────────────
   'best-smartphones-india',
+  'best-budget-phones-india',
   'best-camera-phones-india',
-  'best-battery-backup-phones-india',
-  'android-battery-health-guide',
   'best-gaming-phones-india',
-  'phone-comparison-guide-india',
+  'best-battery-backup-phones-india',
+  'best-5g-phones-india',
+  'best-flagship-phones-india',
   'best-phones-for-students-india',
-  'best-phones-for-working-professionals',
-  'iphone-buying-guide-india',
-  'used-refurbished-phone-buying-guide-india',
-  'guides',
+  'smartphone-buying-guide-india',
+  'phone-comparison-guide-india',
+  'android-battery-health-guide',
 ])
 
 function isArticleSlug(pathname: string): boolean {
   const parts = pathname.split('/').filter(Boolean)
   if (parts.length !== 1) return false          // must be /slug only, not /a/b
   const segment = parts[0]
-  if (TOP_LEVEL_ROUTES.has(segment)) return false
-  if (segment.includes('.')) return false        // skip files
-  return /^[a-z0-9][a-z0-9-]{2,}$/.test(segment)
+  if (TOP_LEVEL_ROUTES.has(segment)) return false  // known page → skip
+  if (segment.includes('.')) return false           // skip files (.ico, .png…)
+  return /^[a-z0-9][a-z0-9-]{2,}$/.test(segment)  // looks like a slug
 }
 
 export function middleware(req: NextRequest) {
@@ -68,9 +74,7 @@ export function middleware(req: NextRequest) {
 
   // ── 3. Protect admin routes ──────────────────────────────────────────────
   const isAdminPage = pathname.startsWith('/admin') && !pathname.startsWith('/admin/login')
-  const isAdminApi  = pathname.startsWith('/api/admin')
-    && !pathname.startsWith('/api/admin/login')
-    && !pathname.startsWith('/api/admin/uploaded-image') // public — serves images to all users
+  const isAdminApi  = pathname.startsWith('/api/admin') && !pathname.startsWith('/api/admin/login')
 
   if (isAdminPage || isAdminApi) {
     const cookie = req.cookies.get('__tb_admin')?.value || ''
@@ -103,10 +107,7 @@ export function middleware(req: NextRequest) {
           'x-forwarded-for': req.headers.get('x-forwarded-for') || '',
           'referer':         req.headers.get('referer') || '',
         },
-        body: JSON.stringify({
-          path:     pathname,
-          referrer: req.headers.get('referer') || '',
-        }),
+        body: JSON.stringify({ path: pathname, referrer: req.headers.get('referer') || '' }),
       }).catch(() => {})
     }
   }
