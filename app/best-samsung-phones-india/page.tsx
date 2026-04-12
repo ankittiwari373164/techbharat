@@ -145,7 +145,7 @@ export default async function BestSamsungPhonesPage() {
                       <div className="relative overflow-hidden" style={{ paddingBottom:'56.25%' }}>
                         <img src={a.featuredImage} alt={a.title} width={400} height={225} loading="lazy"
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
-                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }}} />
+                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }} />
                         <span className="absolute top-2 left-2 bg-[#d4220a] text-white font-sans text-[9px] font-bold px-2 py-0.5 uppercase z-10">
                           {a.type === 'review' ? 'Review' : a.type === 'compare' ? 'Compare' : 'News'}
                         </span>
@@ -182,7 +182,7 @@ export default async function BestSamsungPhonesPage() {
                     {a.featuredImage && (
                       <div className="flex-shrink-0 w-20 h-14 overflow-hidden">
                         <img src={a.featuredImage} alt={a.title} width={80} height={56}
-                          className="w-full h-full object-cover"} />
+                          className="w-full h-full object-cover" />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">

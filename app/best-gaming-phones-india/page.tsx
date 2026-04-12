@@ -2,6 +2,7 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { getPillarArticles, formatPillarDate, currentMonthYear } from '@/lib/pillar-utils'
+import PillarNav from '@/components/PillarNav'
 
 export const revalidate = 3600
 
@@ -10,7 +11,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const title = `Best Gaming Phones in India — ${month} ${year}`
   return {
     title: `${title} | The Tech Bharat`,
-    description: `Best gaming phones India MONTH YEAR ranked by sustained BGMI performance, thermal management, and display quality.`.replace('MONTH', month).replace('YEAR', String(year)),
+    description: `Best gaming phones India {month} {year} ranked by sustained BGMI performance, thermal management, and display quality.`.replace('MONTH', month).replace('YEAR', String(year)),
     alternates: { canonical: 'https://thetechbharat.com/best-gaming-phones-india' },
     openGraph: { title, url: 'https://thetechbharat.com/best-gaming-phones-india', type: 'article' },
   }
@@ -23,7 +24,7 @@ export default async function BestGamingPhonesPage() {
   const news     = articles.filter(a => a.type === 'mobile-news')
 
   const faq = [
-    { q: 'Which phone is best for BGMI under Rs 25000 in MONTH YEAR?', a: 'In MONTH YEAR: Poco X6 Pro (Dimensity 8300) offers the best sustained 90fps under Rs 25000. Step up to iQOO Neo 10 at Rs 34999 for shoulder triggers and better thermal management.' },
+    { q: 'Which phone is best for BGMI under Rs 25000 in {month} {year}?', a: 'In {month} {year}: Poco X6 Pro (Dimensity 8300) offers the best sustained 90fps under Rs 25000. Step up to iQOO Neo 10 at Rs 34999 for shoulder triggers and better thermal management.' },
     { q: 'Why does my phone heat up during BGMI in summer?', a: 'Chipset thermal output combined with Indian summer ambient heat causes performance throttling. Gaming mode in settings, removing the case while playing, and phones with vapour chamber cooling manage this significantly better.' }
   ]
 
@@ -38,6 +39,7 @@ export default async function BestGamingPhonesPage() {
 
   return (
     <>
+      <PillarNav currentHref="/best-gaming-phones-india" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <div className="bg-paper min-h-screen">
         <div className="max-w-4xl mx-auto px-4 py-10">
@@ -59,7 +61,7 @@ export default async function BestGamingPhonesPage() {
               Best Gaming Phones in India — {month} {year}
             </h1>
             <p className="font-body text-lg text-muted leading-relaxed">
-              BGMI, COD Mobile, Genshin Impact — India is a massive mobile gaming market. These MONTH YEAR rankings focus on sustained 90fps performance under Indian summer conditions, not peak benchmark scores.
+              BGMI, COD Mobile, Genshin Impact — India is a massive mobile gaming market. These {month} {year} rankings focus on sustained 90fps performance under Indian summer conditions, not peak benchmark scores.
             </p>
           </div>
 
@@ -101,8 +103,7 @@ export default async function BestGamingPhonesPage() {
                       <div className="relative overflow-hidden" style={{ paddingBottom:'56.25%' }}>
                         <img src={a.featuredImage} alt={a.title} width={400} height={225} loading="lazy"
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
-                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }}
-                          onError={e=>{(e.target as HTMLImageElement).src='https://thetechbharat.com/og-image.jpg'}} />
+                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }} />
                         <span className="absolute top-2 left-2 bg-[#d4220a] text-white font-sans text-[9px] font-bold px-2 py-0.5 uppercase z-10">
                           {a.type==='review'?'Review':'Compare'}
                         </span>
@@ -140,8 +141,7 @@ export default async function BestGamingPhonesPage() {
                       <div className="relative overflow-hidden" style={{ paddingBottom:'56.25%' }}>
                         <img src={a.featuredImage} alt={a.title} width={400} height={225} loading="lazy"
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
-                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }}
-                          onError={e=>{(e.target as HTMLImageElement).src='https://thetechbharat.com/og-image.jpg'}} />
+                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }} />
                         <span className="absolute top-2 left-2 bg-[#1a3a5c] text-white font-sans text-[9px] font-bold px-2 py-0.5 uppercase z-10">News</span>
                       </div>
                     )}

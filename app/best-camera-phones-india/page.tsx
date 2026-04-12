@@ -2,6 +2,7 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { getPillarArticles, formatPillarDate, currentMonthYear } from '@/lib/pillar-utils'
+import PillarNav from '@/components/PillarNav'
 
 export const revalidate = 3600
 
@@ -10,7 +11,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const title = `Best Camera Phones in India — ${month} ${year}`
   return {
     title: `${title} | The Tech Bharat`,
-    description: `Best camera phones in India in MONTH YEAR — ranked for Indian conditions: weddings, low light, harsh sunlight. Updated monthly.`.replace('MONTH', month).replace('YEAR', String(year)),
+    description: `Best camera phones in India in {month} {year} — ranked for Indian conditions: weddings, low light, harsh sunlight. Updated monthly.`.replace('MONTH', month).replace('YEAR', String(year)),
     alternates: { canonical: 'https://thetechbharat.com/best-camera-phones-india' },
     openGraph: { title, url: 'https://thetechbharat.com/best-camera-phones-india', type: 'article' },
   }
@@ -23,7 +24,7 @@ export default async function BestCameraPhonesPage() {
   const news     = articles.filter(a => a.type === 'mobile-news')
 
   const faq = [
-    { q: 'Which is the best camera phone under Rs 25000 in India?', a: 'In MONTH YEAR, the Nothing Phone (3a) offers the most natural camera processing for Indian conditions under Rs 25000. Samsung Galaxy A35 5G is reliable for consistent skin tone accuracy at weddings.' },
+    { q: 'Which is the best camera phone under Rs 25000 in India?', a: 'In {month} {year}, the Nothing Phone (3a) offers the most natural camera processing for Indian conditions under Rs 25000. Samsung Galaxy A35 5G is reliable for consistent skin tone accuracy at weddings.' },
     { q: 'Does megapixel count determine camera quality?', a: 'No. Sensor size, aperture, OIS, and software processing matter far more. A 50MP phone with a large sensor consistently outperforms a 108MP phone with poor processing in real-world shots.' }
   ]
 
@@ -38,6 +39,7 @@ export default async function BestCameraPhonesPage() {
 
   return (
     <>
+      <PillarNav currentHref="/best-camera-phones-india" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <div className="bg-paper min-h-screen">
         <div className="max-w-4xl mx-auto px-4 py-10">
@@ -101,8 +103,7 @@ export default async function BestCameraPhonesPage() {
                       <div className="relative overflow-hidden" style={{ paddingBottom:'56.25%' }}>
                         <img src={a.featuredImage} alt={a.title} width={400} height={225} loading="lazy"
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
-                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }}
-                          onError={e=>{(e.target as HTMLImageElement).src='https://thetechbharat.com/og-image.jpg'}} />
+                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }} />
                         <span className="absolute top-2 left-2 bg-[#d4220a] text-white font-sans text-[9px] font-bold px-2 py-0.5 uppercase z-10">
                           {a.type==='review'?'Review':'Compare'}
                         </span>
@@ -140,8 +141,7 @@ export default async function BestCameraPhonesPage() {
                       <div className="relative overflow-hidden" style={{ paddingBottom:'56.25%' }}>
                         <img src={a.featuredImage} alt={a.title} width={400} height={225} loading="lazy"
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
-                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }}
-                          onError={e=>{(e.target as HTMLImageElement).src='https://thetechbharat.com/og-image.jpg'}} />
+                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }} />
                         <span className="absolute top-2 left-2 bg-[#1a3a5c] text-white font-sans text-[9px] font-bold px-2 py-0.5 uppercase z-10">News</span>
                       </div>
                     )}

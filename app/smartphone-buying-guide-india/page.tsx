@@ -2,6 +2,7 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { getPillarArticles, formatPillarDate, currentMonthYear } from '@/lib/pillar-utils'
+import PillarNav from '@/components/PillarNav'
 
 export const revalidate = 3600
 
@@ -10,7 +11,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const title = `Smartphone Buying Guide India — ${month} ${year}`
   return {
     title: `${title} | The Tech Bharat`,
-    description: `Complete smartphone buying guide for India MONTH YEAR. What specs matter, what to ignore, honest India-specific advice.`.replace('MONTH', month).replace('YEAR', String(year)),
+    description: `Complete smartphone buying guide for India {month} {year}. What specs matter, what to ignore, honest India-specific advice.`.replace('MONTH', month).replace('YEAR', String(year)),
     alternates: { canonical: 'https://thetechbharat.com/smartphone-buying-guide-india' },
     openGraph: { title, url: 'https://thetechbharat.com/smartphone-buying-guide-india', type: 'article' },
   }
@@ -38,6 +39,7 @@ export default async function SmartphoneBuyingGuidePage() {
 
   return (
     <>
+      <PillarNav currentHref="/smartphone-buying-guide-india" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <div className="bg-paper min-h-screen">
         <div className="max-w-4xl mx-auto px-4 py-10">
@@ -59,7 +61,7 @@ export default async function SmartphoneBuyingGuidePage() {
               Smartphone Buying Guide India — {month} {year}
             </h1>
             <p className="font-body text-lg text-muted leading-relaxed">
-              Every month new phones launch with bigger numbers and bolder claims. This MONTH YEAR guide cuts through marketing with honest India-specific advice on what actually matters for Indian buyers.
+              Every month new phones launch with bigger numbers and bolder claims. This {month} {year} guide cuts through marketing with honest India-specific advice on what actually matters for Indian buyers.
             </p>
           </div>
 
@@ -101,8 +103,7 @@ export default async function SmartphoneBuyingGuidePage() {
                       <div className="relative overflow-hidden" style={{ paddingBottom:'56.25%' }}>
                         <img src={a.featuredImage} alt={a.title} width={400} height={225} loading="lazy"
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
-                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }}
-                          onError={e=>{(e.target as HTMLImageElement).src='https://thetechbharat.com/og-image.jpg'}} />
+                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }} />
                         <span className="absolute top-2 left-2 bg-[#d4220a] text-white font-sans text-[9px] font-bold px-2 py-0.5 uppercase z-10">
                           {a.type==='review'?'Review':'Compare'}
                         </span>
@@ -140,8 +141,7 @@ export default async function SmartphoneBuyingGuidePage() {
                       <div className="relative overflow-hidden" style={{ paddingBottom:'56.25%' }}>
                         <img src={a.featuredImage} alt={a.title} width={400} height={225} loading="lazy"
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
-                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }}
-                          onError={e=>{(e.target as HTMLImageElement).src='https://thetechbharat.com/og-image.jpg'}} />
+                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }} />
                         <span className="absolute top-2 left-2 bg-[#1a3a5c] text-white font-sans text-[9px] font-bold px-2 py-0.5 uppercase z-10">News</span>
                       </div>
                     )}

@@ -3,15 +3,16 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { getPillarArticles, formatPillarDate, currentMonthYear } from '@/lib/pillar-utils'
+import PillarNav from '@/components/PillarNav'
 
 export const revalidate = 3600
 
 export async function generateMetadata(): Promise<Metadata> {
   const { month, year } = currentMonthYear()
-  const title = `Best OnePlus Smartphones in India — {month} {year}`
+  const title = `Best OnePlus Smartphones in India — ${month} ${year}`
   return {
     title: `${title} | The Tech Bharat`,
-    description: `Best OnePlus phones in India MONTH YEAR — OnePlus 13, Nord, and budget picks ranked for Indian buyers with honest performance analysis.`.replace('MONTH', month).replace('YEAR', String(year)),
+    description: `Best OnePlus phones in India {month} {year} — OnePlus 13, Nord, and budget picks ranked for Indian buyers with honest performance analysis.`.replace('MONTH', month).replace('YEAR', String(year)),
     alternates: { canonical: 'https://thetechbharat.com/best-oneplus-phones-india' },
     openGraph: { title, url: 'https://thetechbharat.com/best-oneplus-phones-india', type: 'article' },
   }
@@ -31,7 +32,7 @@ export default async function BestOnePlusPhonesPage() {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
     mainEntity: [
-      { '@type': 'Question', name: "Which OnePlus phone should I buy in India in MONTH YEAR?", acceptedAnswer: { '@type': 'Answer', text: "In MONTH YEAR: OnePlus 13 (Rs 69,999) for flagship buyers who want charging speed over Samsung. OnePlus 13R (Rs 44,999) for the best mid-range OnePlus value. Nord CE 4 (Rs 24,999) for 100W charging under Rs 25,000. Nord CE 4 Lite (Rs 19,999) for tight budgets." } },
+      { '@type': 'Question', name: "Which OnePlus phone should I buy in India in {month} {year}?", acceptedAnswer: { '@type': 'Answer', text: "In {month} {year}: OnePlus 13 (Rs 69,999) for flagship buyers who want charging speed over Samsung. OnePlus 13R (Rs 44,999) for the best mid-range OnePlus value. Nord CE 4 (Rs 24,999) for 100W charging under Rs 25,000. Nord CE 4 Lite (Rs 19,999) for tight budgets." } },
       { '@type': 'Question', name: "Is OnePlus better than Samsung in India?", acceptedAnswer: { '@type': 'Answer', text: "OnePlus wins on: charging speed (industry-leading), performance per rupee, software cleanliness. Samsung wins on: service network in smaller cities, software update longevity (5-7 years vs OnePlus 3-4), camera consistency, and resale value. Neither is objectively better — it depends on what matters most to you." } },
       { '@type': 'Question', name: "Does OnePlus have good service centres in India?", acceptedAnswer: { '@type': 'Answer', text: "OnePlus service has improved significantly since 2022. 200+ dedicated centres and 3,000+ partner service points now. Still not as comprehensive as Samsung (3,000+ dedicated centres) in small cities. For buyers in tier-2 and tier-3 cities, Samsung remains safer for warranty service access." } },
       { '@type': 'Question', name: "Is OnePlus a Chinese company — should I buy it?", acceptedAnswer: { '@type': 'Answer', text: "OnePlus is owned by BBK Electronics (China), same parent as Realme, Vivo, and OPPO. This is the same situation as Xiaomi, which is widely purchased in India. OnePlus phones are manufactured in India (OPPO India facility) and comply with all Indian regulations including CERT-In requirements." } }
@@ -40,6 +41,7 @@ export default async function BestOnePlusPhonesPage() {
 
   return (
     <>
+      <PillarNav currentHref="/best-oneplus-phones-india" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <div className="bg-paper min-h-screen">
         <div className="max-w-4xl mx-auto px-4 py-10">
@@ -69,7 +71,7 @@ export default async function BestOnePlusPhonesPage() {
               Full OnePlus lineup for India ranked by value, performance and software quality — from OnePlus Nord CE to flagship OnePlus 13.
             </p>
             <p className="font-body text-lg text-[#2a2a2a] leading-relaxed">
-              OnePlus built its reputation on flagship performance at mid-range prices. In MONTH YEAR, that promise still largely holds — but the brand has expanded significantly from its "never settle" roots into mid-range and budget territory with the Nord lineup. This guide tells you exactly which OnePlus phone makes sense for Indian buyers.
+              OnePlus built its reputation on flagship performance at mid-range prices. In {month} {year}, that promise still largely holds — but the brand has expanded significantly from its "never settle" roots into mid-range and budget territory with the Nord lineup. This guide tells you exactly which OnePlus phone makes sense for Indian buyers.
             </p>
           </div>
 
@@ -108,7 +110,7 @@ export default async function BestOnePlusPhonesPage() {
           <p className="font-body text-base text-[#2a2a2a] leading-relaxed mb-4">The honest answer: OxygenOS 15 (based on ColorOS 15) is a capable, polished Android skin. It is no longer the near-stock Android experience that made OnePlus famous in 2017-2019. But it is significantly cleaner than Xiaomi's MIUI or Realme UI, and comes with meaningful features for Indian users including Smart Calls and Zen Mode.</p>
           <p className="font-body text-base text-[#2a2a2a] leading-relaxed mb-4">OnePlus's biggest strength for Indian buyers remains charging speed. No other mainstream brand consistently delivers 80-100W charging across their lineup at mid-range prices. In a country where many users charge during office lunch breaks or 30-minute commutes, this is a genuine lifestyle advantage.</p>
           <h3 className="font-playfair text-lg font-bold text-ink mt-6 mb-3">OnePlus 13 — Flagship That Punches Above Its Price</h3>
-          <p className="font-body text-base text-[#2a2a2a] leading-relaxed mb-4">The OnePlus 13 at Rs 69,999 is the best OnePlus you can buy in MONTH YEAR. Snapdragon 8 Elite chip, Hasselblad-tuned triple 50MP camera system, 100W wired and 50W wireless charging, and 4-year OS update promise make it a compelling alternative to Samsung Galaxy S25 at Rs 80,000. Missing versus Samsung: S Pen option, longer update support, wider service network.</p>
+          <p className="font-body text-base text-[#2a2a2a] leading-relaxed mb-4">The OnePlus 13 at Rs 69,999 is the best OnePlus you can buy in {month} {year}. Snapdragon 8 Elite chip, Hasselblad-tuned triple 50MP camera system, 100W wired and 50W wireless charging, and 4-year OS update promise make it a compelling alternative to Samsung Galaxy S25 at Rs 80,000. Missing versus Samsung: S Pen option, longer update support, wider service network.</p>
           <h3 className="font-playfair text-lg font-bold text-ink mt-6 mb-3">Nord 4 — The Sweet Spot of the Range</h3>
           <p className="font-body text-base text-[#2a2a2a] leading-relaxed mb-4">Nord 4 at Rs 34,999 hits the sweet spot where OnePlus's charging advantage is most impactful versus the competition. 100W charging on a Snapdragon 7+ Gen 3 phone at this price competes directly with Samsung Galaxy A55 5G. The OnePlus wins on charging speed; Samsung wins on camera and updates.</p>
           <h2 className="font-playfair text-2xl font-bold text-ink mt-10 mb-4 pb-2 border-b-2 border-[#d4220a]">OnePlus Charging Speed — What 80W and 100W Actually Mean</h2>
@@ -135,8 +137,7 @@ export default async function BestOnePlusPhonesPage() {
                       <div className="relative overflow-hidden" style={{ paddingBottom:'56.25%' }}>
                         <img src={a.featuredImage} alt={a.title} width={400} height={225} loading="lazy"
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
-                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }}
-                          onError={e=>{(e.target as HTMLImageElement).src='https://thetechbharat.com/og-image.jpg'}} />
+                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }} />
                         <span className="absolute top-2 left-2 bg-[#d4220a] text-white font-sans text-[9px] font-bold px-2 py-0.5 uppercase z-10">
                           {a.type === 'review' ? 'Review' : a.type === 'compare' ? 'Compare' : 'News'}
                         </span>
@@ -173,8 +174,7 @@ export default async function BestOnePlusPhonesPage() {
                     {a.featuredImage && (
                       <div className="flex-shrink-0 w-20 h-14 overflow-hidden">
                         <img src={a.featuredImage} alt={a.title} width={80} height={56}
-                          className="w-full h-full object-cover"
-                          onError={e=>{(e.target as HTMLImageElement).src='https://thetechbharat.com/og-image.jpg'}} />
+                          className="w-full h-full object-cover" />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
@@ -227,9 +227,9 @@ export default async function BestOnePlusPhonesPage() {
             </h2>
             <div className="space-y-4" itemScope itemType="https://schema.org/FAQPage">
               <div className="border border-border p-4 bg-white" itemScope itemType="https://schema.org/Question">
-                <h3 className="font-sans text-sm font-bold text-ink mb-2" itemProp="name">Which OnePlus phone should I buy in India in MONTH YEAR?</h3>
+                <h3 className="font-sans text-sm font-bold text-ink mb-2" itemProp="name">Which OnePlus phone should I buy in India in {month} {year}?</h3>
                 <div itemScope itemType="https://schema.org/Answer">
-                  <p className="font-sans text-sm text-muted leading-relaxed" itemProp="text">In MONTH YEAR: OnePlus 13 (Rs 69,999) for flagship buyers who want charging speed over Samsung. OnePlus 13R (Rs 44,999) for the best mid-range OnePlus value. Nord CE 4 (Rs 24,999) for 100W charging under Rs 25,000. Nord CE 4 Lite (Rs 19,999) for tight budgets.</p>
+                  <p className="font-sans text-sm text-muted leading-relaxed" itemProp="text">In {month} {year}: OnePlus 13 (Rs 69,999) for flagship buyers who want charging speed over Samsung. OnePlus 13R (Rs 44,999) for the best mid-range OnePlus value. Nord CE 4 (Rs 24,999) for 100W charging under Rs 25,000. Nord CE 4 Lite (Rs 19,999) for tight budgets.</p>
                 </div>
               </div>
               <div className="border border-border p-4 bg-white" itemScope itemType="https://schema.org/Question">

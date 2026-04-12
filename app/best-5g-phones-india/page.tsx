@@ -2,6 +2,7 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { getPillarArticles, formatPillarDate, currentMonthYear } from '@/lib/pillar-utils'
+import PillarNav from '@/components/PillarNav'
 
 export const revalidate = 3600
 
@@ -10,7 +11,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const title = `Best 5G Phones in India — ${month} ${year}`
   return {
     title: `${title} | The Tech Bharat`,
-    description: `Best 5G phones India MONTH YEAR compatible with Jio and Airtel 5G bands. Complete band guide and picks by budget.`.replace('MONTH', month).replace('YEAR', String(year)),
+    description: `Best 5G phones India {month} {year} compatible with Jio and Airtel 5G bands. Complete band guide and picks by budget.`.replace('MONTH', month).replace('YEAR', String(year)),
     alternates: { canonical: 'https://thetechbharat.com/best-5g-phones-india' },
     openGraph: { title, url: 'https://thetechbharat.com/best-5g-phones-india', type: 'article' },
   }
@@ -23,7 +24,7 @@ export default async function Best5GPhonesPage() {
   const news     = articles.filter(a => a.type === 'mobile-news')
 
   const faq = [
-    { q: 'Which 5G phones work best in India in MONTH YEAR?', a: 'Any phone with n78 band support works reliably on Jio and Airtel 5G. Best picks in MONTH YEAR: Redmi Note 14 5G (budget), Nothing Phone (3a) (mid-range), OnePlus 13 (flagship). Always verify n78 on the official spec sheet.' },
+    { q: 'Which 5G phones work best in India in {month} {year}?', a: 'Any phone with n78 band support works reliably on Jio and Airtel 5G. Best picks in {month} {year}: Redmi Note 14 5G (budget), Nothing Phone (3a) (mid-range), OnePlus 13 (flagship). Always verify n78 on the official spec sheet.' },
     { q: 'Does 5G drain battery faster?', a: '5G uses about 10-15% more battery than 4G. Newer chipsets like Snapdragon 4 Gen 2 and Dimensity 7020 have improved efficiency significantly. Most phones use 5G and 4G auto mode which manages this intelligently.' }
   ]
 
@@ -38,6 +39,7 @@ export default async function Best5GPhonesPage() {
 
   return (
     <>
+      <PillarNav currentHref="/best-5g-phones-india" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <div className="bg-paper min-h-screen">
         <div className="max-w-4xl mx-auto px-4 py-10">
@@ -59,7 +61,7 @@ export default async function Best5GPhonesPage() {
               Best 5G Phones in India — {month} {year}
             </h1>
             <p className="font-body text-lg text-muted leading-relaxed">
-              Not all 5G phones work on Indian networks. This MONTH YEAR guide covers which phones actually support Jio and Airtel 5G — not just phones with 5G written on the box.
+              Not all 5G phones work on Indian networks. This {month} {year} guide covers which phones actually support Jio and Airtel 5G — not just phones with 5G written on the box.
             </p>
           </div>
 
@@ -101,8 +103,7 @@ export default async function Best5GPhonesPage() {
                       <div className="relative overflow-hidden" style={{ paddingBottom:'56.25%' }}>
                         <img src={a.featuredImage} alt={a.title} width={400} height={225} loading="lazy"
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
-                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }}
-                          onError={e=>{(e.target as HTMLImageElement).src='https://thetechbharat.com/og-image.jpg'}} />
+                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }} />
                         <span className="absolute top-2 left-2 bg-[#d4220a] text-white font-sans text-[9px] font-bold px-2 py-0.5 uppercase z-10">
                           {a.type==='review'?'Review':'Compare'}
                         </span>
@@ -140,8 +141,7 @@ export default async function Best5GPhonesPage() {
                       <div className="relative overflow-hidden" style={{ paddingBottom:'56.25%' }}>
                         <img src={a.featuredImage} alt={a.title} width={400} height={225} loading="lazy"
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
-                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }}
-                          onError={e=>{(e.target as HTMLImageElement).src='https://thetechbharat.com/og-image.jpg'}} />
+                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }} />
                         <span className="absolute top-2 left-2 bg-[#1a3a5c] text-white font-sans text-[9px] font-bold px-2 py-0.5 uppercase z-10">News</span>
                       </div>
                     )}

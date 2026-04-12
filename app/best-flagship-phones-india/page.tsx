@@ -2,6 +2,7 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { getPillarArticles, formatPillarDate, currentMonthYear } from '@/lib/pillar-utils'
+import PillarNav from '@/components/PillarNav'
 
 export const revalidate = 3600
 
@@ -10,7 +11,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const title = `Best Flagship Phones in India — ${month} ${year}`
   return {
     title: `${title} | The Tech Bharat`,
-    description: `Best flagship smartphones India MONTH YEAR. Premium Android and iPhone picks above Rs 70000 with honest India buying advice.`.replace('MONTH', month).replace('YEAR', String(year)),
+    description: `Best flagship smartphones India {month} {year}. Premium Android and iPhone picks above Rs 70000 with honest India buying advice.`.replace('MONTH', month).replace('YEAR', String(year)),
     alternates: { canonical: 'https://thetechbharat.com/best-flagship-phones-india' },
     openGraph: { title, url: 'https://thetechbharat.com/best-flagship-phones-india', type: 'article' },
   }
@@ -23,7 +24,7 @@ export default async function BestFlagshipPhonesPage() {
   const news     = articles.filter(a => a.type === 'mobile-news')
 
   const faq = [
-    { q: 'Which is the best flagship phone in India in MONTH YEAR?', a: 'In MONTH YEAR: Samsung Galaxy S25 Ultra (best camera and S Pen), iPhone 16 Pro (best ecosystem and video quality), Google Pixel 9 Pro (best computational photography). Choice depends on which ecosystem fits your life.' },
+    { q: 'Which is the best flagship phone in India in {month} {year}?', a: 'In {month} {year}: Samsung Galaxy S25 Ultra (best camera and S Pen), iPhone 16 Pro (best ecosystem and video quality), Google Pixel 9 Pro (best computational photography). Choice depends on which ecosystem fits your life.' },
     { q: 'Is a flagship phone worth buying in India?', a: 'Yes if you keep phones for 3+ years and camera quality or ecosystem matters to you. No if budget is primary — OnePlus 13 at Rs 65K delivers 80% of flagship experience at 50% of the cost.' }
   ]
 
@@ -38,6 +39,7 @@ export default async function BestFlagshipPhonesPage() {
 
   return (
     <>
+      <PillarNav currentHref="/best-flagship-phones-india" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <div className="bg-paper min-h-screen">
         <div className="max-w-4xl mx-auto px-4 py-10">
@@ -59,7 +61,7 @@ export default async function BestFlagshipPhonesPage() {
               Best Flagship Phones in India — {month} {year}
             </h1>
             <p className="font-body text-lg text-muted leading-relaxed">
-              Above Rs 70000, you pay for the best cameras, longest software support, and premium materials. This MONTH YEAR guide covers whether that premium is justified for Indian buyers.
+              Above Rs 70000, you pay for the best cameras, longest software support, and premium materials. This {month} {year} guide covers whether that premium is justified for Indian buyers.
             </p>
           </div>
 
@@ -101,8 +103,7 @@ export default async function BestFlagshipPhonesPage() {
                       <div className="relative overflow-hidden" style={{ paddingBottom:'56.25%' }}>
                         <img src={a.featuredImage} alt={a.title} width={400} height={225} loading="lazy"
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
-                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }}
-                          onError={e=>{(e.target as HTMLImageElement).src='https://thetechbharat.com/og-image.jpg'}} />
+                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }} />
                         <span className="absolute top-2 left-2 bg-[#d4220a] text-white font-sans text-[9px] font-bold px-2 py-0.5 uppercase z-10">
                           {a.type==='review'?'Review':'Compare'}
                         </span>
@@ -140,8 +141,7 @@ export default async function BestFlagshipPhonesPage() {
                       <div className="relative overflow-hidden" style={{ paddingBottom:'56.25%' }}>
                         <img src={a.featuredImage} alt={a.title} width={400} height={225} loading="lazy"
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
-                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }}
-                          onError={e=>{(e.target as HTMLImageElement).src='https://thetechbharat.com/og-image.jpg'}} />
+                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }} />
                         <span className="absolute top-2 left-2 bg-[#1a3a5c] text-white font-sans text-[9px] font-bold px-2 py-0.5 uppercase z-10">News</span>
                       </div>
                     )}

@@ -2,6 +2,7 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { getPillarArticles, formatPillarDate, currentMonthYear } from '@/lib/pillar-utils'
+import PillarNav from '@/components/PillarNav'
 
 export const revalidate = 3600
 
@@ -10,7 +11,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const title = `Best Phones for Students in India — ${month} ${year}`
   return {
     title: `${title} | The Tech Bharat`,
-    description: `Best smartphones for Indian students MONTH YEAR. Budget picks with good battery, camera, and durability for college life.`.replace('MONTH', month).replace('YEAR', String(year)),
+    description: `Best smartphones for Indian students {month} {year}. Budget picks with good battery, camera, and durability for college life.`.replace('MONTH', month).replace('YEAR', String(year)),
     alternates: { canonical: 'https://thetechbharat.com/best-phones-for-students-india' },
     openGraph: { title, url: 'https://thetechbharat.com/best-phones-for-students-india', type: 'article' },
   }
@@ -23,7 +24,7 @@ export default async function BestPhonesForStudentsPage() {
   const news     = articles.filter(a => a.type === 'mobile-news')
 
   const faq = [
-    { q: 'Best phone for college students under Rs 15000 in MONTH YEAR?', a: 'In MONTH YEAR: Samsung Galaxy M15 5G (reliable service network outside metros), Redmi Note 14 (best camera for assignment photos), Nothing Phone (3a) at Rs 25K if budget allows for cleanest software experience.' },
+    { q: 'Best phone for college students under Rs 15000 in {month} {year}?', a: 'In {month} {year}: Samsung Galaxy M15 5G (reliable service network outside metros), Redmi Note 14 (best camera for assignment photos), Nothing Phone (3a) at Rs 25K if budget allows for cleanest software experience.' },
     { q: 'Should students buy iPhones?', a: 'Only if the family already uses Apple ecosystem or the student is entering design or creative fields where Mac compatibility matters. Otherwise Android at Rs 15K-25K delivers better value for typical student needs.' }
   ]
 
@@ -38,6 +39,7 @@ export default async function BestPhonesForStudentsPage() {
 
   return (
     <>
+      <PillarNav currentHref="/best-phones-for-students-india" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <div className="bg-paper min-h-screen">
         <div className="max-w-4xl mx-auto px-4 py-10">
@@ -59,7 +61,7 @@ export default async function BestPhonesForStudentsPage() {
               Best Phones for Students in India — {month} {year}
             </h1>
             <p className="font-body text-lg text-muted leading-relaxed">
-              Students need a phone for lectures, notes, WhatsApp, YouTube, and occasional BGMI — on a budget. These MONTH YEAR picks balance all those needs without compromising on essentials.
+              Students need a phone for lectures, notes, WhatsApp, YouTube, and occasional BGMI — on a budget. These {month} {year} picks balance all those needs without compromising on essentials.
             </p>
           </div>
 
@@ -101,8 +103,7 @@ export default async function BestPhonesForStudentsPage() {
                       <div className="relative overflow-hidden" style={{ paddingBottom:'56.25%' }}>
                         <img src={a.featuredImage} alt={a.title} width={400} height={225} loading="lazy"
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
-                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }}
-                          onError={e=>{(e.target as HTMLImageElement).src='https://thetechbharat.com/og-image.jpg'}} />
+                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }} />
                         <span className="absolute top-2 left-2 bg-[#d4220a] text-white font-sans text-[9px] font-bold px-2 py-0.5 uppercase z-10">
                           {a.type==='review'?'Review':'Compare'}
                         </span>
@@ -140,8 +141,7 @@ export default async function BestPhonesForStudentsPage() {
                       <div className="relative overflow-hidden" style={{ paddingBottom:'56.25%' }}>
                         <img src={a.featuredImage} alt={a.title} width={400} height={225} loading="lazy"
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
-                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }}
-                          onError={e=>{(e.target as HTMLImageElement).src='https://thetechbharat.com/og-image.jpg'}} />
+                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }} />
                         <span className="absolute top-2 left-2 bg-[#1a3a5c] text-white font-sans text-[9px] font-bold px-2 py-0.5 uppercase z-10">News</span>
                       </div>
                     )}

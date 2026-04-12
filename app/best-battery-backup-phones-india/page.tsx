@@ -2,6 +2,7 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { getPillarArticles, formatPillarDate, currentMonthYear } from '@/lib/pillar-utils'
+import PillarNav from '@/components/PillarNav'
 
 export const revalidate = 3600
 
@@ -10,7 +11,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const title = `Best Battery Backup Phones in India — ${month} ${year}`
   return {
     title: `${title} | The Tech Bharat`,
-    description: `Best battery phones in India MONTH YEAR. Long-lasting picks for heavy Indian users — commuters, gamers, and power-cut areas.`.replace('MONTH', month).replace('YEAR', String(year)),
+    description: `Best battery phones in India {month} {year}. Long-lasting picks for heavy Indian users — commuters, gamers, and power-cut areas.`.replace('MONTH', month).replace('YEAR', String(year)),
     alternates: { canonical: 'https://thetechbharat.com/best-battery-backup-phones-india' },
     openGraph: { title, url: 'https://thetechbharat.com/best-battery-backup-phones-india', type: 'article' },
   }
@@ -23,7 +24,7 @@ export default async function BestBatteryPhonesPage() {
   const news     = articles.filter(a => a.type === 'mobile-news')
 
   const faq = [
-    { q: 'Which phone has the best battery life in India in YEAR?', a: 'For MONTH YEAR: iQOO Z9x (6000mAh with efficient Snapdragon) and Samsung Galaxy M35 5G consistently deliver 2-day battery life for typical Indian usage including streaming and social media.' },
+    { q: 'Which phone has the best battery life in India in YEAR?', a: 'For {month} {year}: iQOO Z9x (6000mAh with efficient Snapdragon) and Samsung Galaxy M35 5G consistently deliver 2-day battery life for typical Indian usage including streaming and social media.' },
     { q: 'Does fast charging damage battery?', a: 'Modern fast charging manages temperature carefully. The real risk is charging in hot environments like a car in Indian summer or direct sunlight — not the wattage itself. Always use the original charger.' }
   ]
 
@@ -38,6 +39,7 @@ export default async function BestBatteryPhonesPage() {
 
   return (
     <>
+      <PillarNav currentHref="/best-battery-backup-phones-india" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <div className="bg-paper min-h-screen">
         <div className="max-w-4xl mx-auto px-4 py-10">
@@ -59,7 +61,7 @@ export default async function BestBatteryPhonesPage() {
               Best Battery Backup Phones in India — {month} {year}
             </h1>
             <p className="font-body text-lg text-muted leading-relaxed">
-              Long commutes, BGMI gaming sessions, and unstable power supply make battery life critical for Indian users. These MONTH YEAR picks prioritise real-world Indian battery performance.
+              Long commutes, BGMI gaming sessions, and unstable power supply make battery life critical for Indian users. These {month} {year} picks prioritise real-world Indian battery performance.
             </p>
           </div>
 
@@ -101,8 +103,7 @@ export default async function BestBatteryPhonesPage() {
                       <div className="relative overflow-hidden" style={{ paddingBottom:'56.25%' }}>
                         <img src={a.featuredImage} alt={a.title} width={400} height={225} loading="lazy"
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
-                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }}
-                          onError={e=>{(e.target as HTMLImageElement).src='https://thetechbharat.com/og-image.jpg'}} />
+                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }} />
                         <span className="absolute top-2 left-2 bg-[#d4220a] text-white font-sans text-[9px] font-bold px-2 py-0.5 uppercase z-10">
                           {a.type==='review'?'Review':'Compare'}
                         </span>
@@ -140,8 +141,7 @@ export default async function BestBatteryPhonesPage() {
                       <div className="relative overflow-hidden" style={{ paddingBottom:'56.25%' }}>
                         <img src={a.featuredImage} alt={a.title} width={400} height={225} loading="lazy"
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
-                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }}
-                          onError={e=>{(e.target as HTMLImageElement).src='https://thetechbharat.com/og-image.jpg'}} />
+                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }} />
                         <span className="absolute top-2 left-2 bg-[#1a3a5c] text-white font-sans text-[9px] font-bold px-2 py-0.5 uppercase z-10">News</span>
                       </div>
                     )}
