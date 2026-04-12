@@ -12,7 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const title = `Best Samsung Smartphones in India — ${month} ${year}`
   return {
     title: `${title} | The Tech Bharat`,
-    description: `Best Samsung smartphones in India MONTH YEAR — Galaxy S, A, M and F series ranked for Indian buyers. Camera, battery, 5G and value comparison.`.replace('MONTH', month).replace('YEAR', String(year)),
+    description: `Best Samsung smartphones in India {month} {year} — Galaxy S, A, M and F series ranked for Indian buyers. Camera, battery, 5G and value comparison.`.replace('MONTH', month).replace('YEAR', String(year)),
     alternates: { canonical: 'https://thetechbharat.com/best-samsung-phones-india' },
     openGraph: { title, url: 'https://thetechbharat.com/best-samsung-phones-india', type: 'article' },
   }
@@ -32,16 +32,16 @@ export default async function BestSamsungPhonesPage() {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
     mainEntity: [
-      { '@type': 'Question', name: "Which is the best Samsung phone in India in MONTH YEAR?", acceptedAnswer: { '@type': 'Answer', text: "For most Indian buyers in MONTH YEAR: Galaxy A55 5G at Rs 39,999 is the best all-around Samsung. For power users: Galaxy S25 at Rs 79,999. For budget: Galaxy M15 5G at Rs 13,999. For the ultimate experience: Galaxy S25 Ultra at Rs 1,34,999 with S Pen." } },
+      { '@type': 'Question', name: "Which is the best Samsung phone in India in {month} {year}?", acceptedAnswer: { '@type': 'Answer', text: "For most Indian buyers in {month} {year}: Galaxy A55 5G at Rs 39,999 is the best all-around Samsung. For power users: Galaxy S25 at Rs 79,999. For budget: Galaxy M15 5G at Rs 13,999. For the ultimate experience: Galaxy S25 Ultra at Rs 1,34,999 with S Pen." } },
       { '@type': 'Question', name: "How long do Samsung phones get software updates in India?", acceptedAnswer: { '@type': 'Answer', text: "Galaxy S series: 7 years OS updates + 7 years security patches. Galaxy A series: 5 years OS + 5 years security. Galaxy M and F series: 4 years OS + 4 years security. This is the industry-leading commitment in Android." } },
       { '@type': 'Question', name: "Is Samsung better than Xiaomi for Indian buyers?", acceptedAnswer: { '@type': 'Answer', text: "Depends on priorities. Samsung wins: service network, software updates, camera consistency, resale value. Xiaomi wins: specs per rupee, faster charging, MIUI features. For buyers outside metros or those keeping phones 3+ years: Samsung is the better long-term choice." } },
-      { '@type': 'Question', name: "Which Samsung phone should I buy under Rs 20,000?", acceptedAnswer: { '@type': 'Answer', text: "Galaxy M35 5G (Rs 20,999) is the best Samsung under Rs 20,000 in MONTH YEAR — 6000mAh battery, AMOLED display, and n78 5G support. If budget is strict at Rs 14,000: Galaxy M15 5G covers 5G basics with Samsung reliability." } }
+      { '@type': 'Question', name: "Which Samsung phone should I buy under Rs 20,000?", acceptedAnswer: { '@type': 'Answer', text: "Galaxy M35 5G (Rs 20,999) is the best Samsung under Rs 20,000 in {month} {year} — 6000mAh battery, AMOLED display, and n78 5G support. If budget is strict at Rs 14,000: Galaxy M15 5G covers 5G basics with Samsung reliability." } }
     ],
   }
 
   return (
     <>
-      <PillarNav />
+      <PillarNav currentHref="/best-samsung-phones-india" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <div className="bg-paper min-h-screen">
         <div className="max-w-4xl mx-auto px-4 py-10">
@@ -71,7 +71,7 @@ export default async function BestSamsungPhonesPage() {
               Complete Samsung Galaxy lineup ranked for Indian buyers — from budget Galaxy M to flagship Galaxy S25 Ultra.
             </p>
             <p className="font-body text-lg text-[#2a2a2a] leading-relaxed">
-              Samsung dominates the Indian smartphone market with the widest range of any brand — from Rs 8,000 Galaxy F series to the Rs 1,35,000 Galaxy S25 Ultra. This guide covers every tier for Indian buyers in MONTH YEAR, with honest analysis of where Samsung delivers value and where it falls short.
+              Samsung dominates the Indian smartphone market with the widest range of any brand — from Rs 8,000 Galaxy F series to the Rs 1,35,000 Galaxy S25 Ultra. This guide covers every tier for Indian buyers in {month} {year}, with honest analysis of where Samsung delivers value and where it falls short.
             </p>
           </div>
 
@@ -110,10 +110,10 @@ export default async function BestSamsungPhonesPage() {
 
           <h2 className="font-playfair text-2xl font-bold text-ink mt-10 mb-4 pb-2 border-b-2 border-[#d4220a]">Samsung in India — The Honest Overview</h2>
           <p className="font-body text-base text-[#2a2a2a] leading-relaxed mb-4">Samsung has been the number one smartphone brand in India by value for over a decade. Their advantage is not just in specifications — it is in trust. With over 3,000 authorised service centres across India including tier-2 and tier-3 cities, Samsung provides repair access that no Chinese brand can match outside metros.</p>
-          <p className="font-body text-base text-[#2a2a2a] leading-relaxed mb-4">In MONTH YEAR, Samsung offers 5 to 7 years of software updates across their entire lineup — a commitment that directly translates to resale value and long-term ownership costs. A Galaxy A55 5G bought today at Rs 39,999 will receive security patches until 2030. That changes the real cost calculation significantly.</p>
+          <p className="font-body text-base text-[#2a2a2a] leading-relaxed mb-4">In {month} {year}, Samsung offers 5 to 7 years of software updates across their entire lineup — a commitment that directly translates to resale value and long-term ownership costs. A Galaxy A55 5G bought today at Rs 39,999 will receive security patches until 2030. That changes the real cost calculation significantly.</p>
           <p className="font-body text-base text-[#2a2a2a] leading-relaxed mb-4">The honest critique: Samsung charges a premium for the brand name. An iQOO or Poco phone at the same price often delivers better raw performance numbers. But Samsung consistently wins on camera colour science, software polish, and most importantly — peace of mind for the average Indian buyer.</p>
           <h3 className="font-playfair text-lg font-bold text-ink mt-6 mb-3">Samsung Galaxy S Series — Flagship for Power Users</h3>
-          <p className="font-body text-base text-[#2a2a2a] leading-relaxed mb-4">The Galaxy S25 series represents Samsung's best in MONTH YEAR. The Ultra variant at Rs 1,34,999 brings a built-in S Pen — something no competitor offers at any price. The 200MP main camera with 50x optical-quality zoom is genuinely impressive for content creators and travel photographers.</p>
+          <p className="font-body text-base text-[#2a2a2a] leading-relaxed mb-4">The Galaxy S25 series represents Samsung's best in {month} {year}. The Ultra variant at Rs 1,34,999 brings a built-in S Pen — something no competitor offers at any price. The 200MP main camera with 50x optical-quality zoom is genuinely impressive for content creators and travel photographers.</p>
           <h3 className="font-playfair text-lg font-bold text-ink mt-6 mb-3">Samsung Galaxy A Series — The Sweet Spot for India</h3>
           <p className="font-body text-base text-[#2a2a2a] leading-relaxed mb-4">The Galaxy A55 5G and A35 5G sit in the Rs 30,000 to Rs 40,000 range where most Indian buyers who care about quality land. Both feature OIS, AMOLED displays, and 5-year OS update commitments. The A55 is the better choice for most; the A35 saves Rs 9,000 with minimal compromise.</p>
           <h3 className="font-playfair text-lg font-bold text-ink mt-6 mb-3">Samsung Galaxy M Series — Battery Kings Under Rs 25,000</h3>
@@ -145,8 +145,7 @@ export default async function BestSamsungPhonesPage() {
                       <div className="relative overflow-hidden" style={{ paddingBottom:'56.25%' }}>
                         <img src={a.featuredImage} alt={a.title} width={400} height={225} loading="lazy"
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
-                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }}
-                          onError={e=>{(e.target as HTMLImageElement).src='https://thetechbharat.com/og-image.jpg'}} />
+                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }}} />
                         <span className="absolute top-2 left-2 bg-[#d4220a] text-white font-sans text-[9px] font-bold px-2 py-0.5 uppercase z-10">
                           {a.type === 'review' ? 'Review' : a.type === 'compare' ? 'Compare' : 'News'}
                         </span>
@@ -183,8 +182,7 @@ export default async function BestSamsungPhonesPage() {
                     {a.featuredImage && (
                       <div className="flex-shrink-0 w-20 h-14 overflow-hidden">
                         <img src={a.featuredImage} alt={a.title} width={80} height={56}
-                          className="w-full h-full object-cover"
-                          onError={e=>{(e.target as HTMLImageElement).src='https://thetechbharat.com/og-image.jpg'}} />
+                          className="w-full h-full object-cover"} />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
@@ -237,9 +235,9 @@ export default async function BestSamsungPhonesPage() {
             </h2>
             <div className="space-y-4" itemScope itemType="https://schema.org/FAQPage">
               <div className="border border-border p-4 bg-white" itemScope itemType="https://schema.org/Question">
-                <h3 className="font-sans text-sm font-bold text-ink mb-2" itemProp="name">Which is the best Samsung phone in India in MONTH YEAR?</h3>
+                <h3 className="font-sans text-sm font-bold text-ink mb-2" itemProp="name">Which is the best Samsung phone in India in {month} {year}?</h3>
                 <div itemScope itemType="https://schema.org/Answer">
-                  <p className="font-sans text-sm text-muted leading-relaxed" itemProp="text">For most Indian buyers in MONTH YEAR: Galaxy A55 5G at Rs 39,999 is the best all-around Samsung. For power users: Galaxy S25 at Rs 79,999. For budget: Galaxy M15 5G at Rs 13,999. For the ultimate experience: Galaxy S25 Ultra at Rs 1,34,999 with S Pen.</p>
+                  <p className="font-sans text-sm text-muted leading-relaxed" itemProp="text">For most Indian buyers in {month} {year}: Galaxy A55 5G at Rs 39,999 is the best all-around Samsung. For power users: Galaxy S25 at Rs 79,999. For budget: Galaxy M15 5G at Rs 13,999. For the ultimate experience: Galaxy S25 Ultra at Rs 1,34,999 with S Pen.</p>
                 </div>
               </div>
               <div className="border border-border p-4 bg-white" itemScope itemType="https://schema.org/Question">
@@ -257,7 +255,7 @@ export default async function BestSamsungPhonesPage() {
               <div className="border border-border p-4 bg-white" itemScope itemType="https://schema.org/Question">
                 <h3 className="font-sans text-sm font-bold text-ink mb-2" itemProp="name">Which Samsung phone should I buy under Rs 20,000?</h3>
                 <div itemScope itemType="https://schema.org/Answer">
-                  <p className="font-sans text-sm text-muted leading-relaxed" itemProp="text">Galaxy M35 5G (Rs 20,999) is the best Samsung under Rs 20,000 in MONTH YEAR — 6000mAh battery, AMOLED display, and n78 5G support. If budget is strict at Rs 14,000: Galaxy M15 5G covers 5G basics with Samsung reliability.</p>
+                  <p className="font-sans text-sm text-muted leading-relaxed" itemProp="text">Galaxy M35 5G (Rs 20,999) is the best Samsung under Rs 20,000 in {month} {year} — 6000mAh battery, AMOLED display, and n78 5G support. If budget is strict at Rs 14,000: Galaxy M15 5G covers 5G basics with Samsung reliability.</p>
                 </div>
               </div>
             </div>

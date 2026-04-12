@@ -12,7 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const title = `Best iPhones in India — ${month} ${year}`
   return {
     title: `${title} | The Tech Bharat`,
-    description: `Best iPhones in India MONTH YEAR — iPhone 16 series ranked for Indian buyers. Which iPhone to buy, India pricing, and honest value analysis.`.replace('MONTH', month).replace('YEAR', String(year)),
+    description: `Best iPhones in India {month} {year} — iPhone 16 series ranked for Indian buyers. Which iPhone to buy, India pricing, and honest value analysis.`.replace('MONTH', month).replace('YEAR', String(year)),
     alternates: { canonical: 'https://thetechbharat.com/best-apple-iphone-india' },
     openGraph: { title, url: 'https://thetechbharat.com/best-apple-iphone-india', type: 'article' },
   }
@@ -32,7 +32,7 @@ export default async function BestApplePhonesPage() {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
     mainEntity: [
-      { '@type': 'Question', name: "Which iPhone should I buy in India in MONTH YEAR?", acceptedAnswer: { '@type': 'Answer', text: "Best buy for most Indian users in MONTH YEAR: iPhone 16 at Rs 79,900 if new, iPhone 15 at Rs 44,900 if budget-conscious. For power users and camera enthusiasts: iPhone 16 Pro at Rs 1,19,900 with 5x zoom and ProRes video. Only buy iPhone 16 Pro Max if you specifically need the larger screen." } },
+      { '@type': 'Question', name: "Which iPhone should I buy in India in {month} {year}?", acceptedAnswer: { '@type': 'Answer', text: "Best buy for most Indian users in {month} {year}: iPhone 16 at Rs 79,900 if new, iPhone 15 at Rs 44,900 if budget-conscious. For power users and camera enthusiasts: iPhone 16 Pro at Rs 1,19,900 with 5x zoom and ProRes video. Only buy iPhone 16 Pro Max if you specifically need the larger screen." } },
       { '@type': 'Question', name: "Is buying an iPhone in India more expensive than abroad?", acceptedAnswer: { '@type': 'Answer', text: "Yes, typically 15-25% more expensive than USA pricing due to import duties and GST. However, iPhones are now assembled in India (iPhone 16 series) which has reduced the gap compared to previous years. The resale value advantage in India partially compensates over a 3-year ownership cycle." } },
       { '@type': 'Question', name: "How many years does Apple support iPhones with updates?", acceptedAnswer: { '@type': 'Answer', text: "Apple guarantees at least 7 years of software updates for all iPhone 16 models (2024-2031). iPhone 15 is guaranteed through 2029 minimum. iPhone 14 through 2027. This industry-leading support cycle is a genuine competitive advantage versus most Android brands." } },
       { '@type': 'Question', name: "Is iPhone 16 worth buying over Android at the same price?", acceptedAnswer: { '@type': 'Answer', text: "At Rs 79,900, the iPhone 16 competes against Samsung Galaxy S24, OnePlus 12R, and Google Pixel 9. For camera: Pixel 9 wins on computational photography, iPhone 16 wins on video. For performance: all are excellent. For long-term value: iPhone wins on resale and update support. Choose based on ecosystem preference." } }
@@ -41,7 +41,7 @@ export default async function BestApplePhonesPage() {
 
   return (
     <>
-      <PillarNav />
+      <PillarNav currentHref="/best-apple-iphone-india" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <div className="bg-paper min-h-screen">
         <div className="max-w-4xl mx-auto px-4 py-10">
@@ -71,7 +71,7 @@ export default async function BestApplePhonesPage() {
               Complete iPhone lineup ranked for Indian buyers — from iPhone 15 to iPhone 16 Pro Max, with India pricing and honest value verdict.
             </p>
             <p className="font-body text-lg text-[#2a2a2a] leading-relaxed">
-              Apple's iPhone lineup in India in MONTH YEAR spans from Rs 44,900 (iPhone 15) to Rs 1,59,900 (iPhone 16 Pro Max). The import duty situation, resale value advantage, and iOS ecosystem make iPhone buying decisions in India uniquely complex. This guide cuts through the noise.
+              Apple's iPhone lineup in India in {month} {year} spans from Rs 44,900 (iPhone 15) to Rs 1,59,900 (iPhone 16 Pro Max). The import duty situation, resale value advantage, and iOS ecosystem make iPhone buying decisions in India uniquely complex. This guide cuts through the noise.
             </p>
           </div>
 
@@ -114,7 +114,7 @@ export default async function BestApplePhonesPage() {
           <h3 className="font-playfair text-lg font-bold text-ink mt-6 mb-3">iPhone 16 — The Mainstream Sweet Spot</h3>
           <p className="font-body text-base text-[#2a2a2a] leading-relaxed mb-4">iPhone 16 at Rs 79,900 brings A18 chip, 48MP camera, and Action button at the most accessible tier of the current lineup. Missing: 5x zoom (only 2x), ProMotion 120Hz display, and titanium build. Worth the Rs 40,000 gap versus Pro? For most users: no. For budget-conscious Apple buyers: yes.</p>
           <h3 className="font-playfair text-lg font-bold text-ink mt-6 mb-3">iPhone 15 — The Best Value Apple Buy in India</h3>
-          <p className="font-body text-base text-[#2a2a2a] leading-relaxed mb-4">The iPhone 15 at Rs 44,900 (on sale/refurbished) remains an exceptional value in MONTH YEAR. A16 Bionic chip, 48MP camera, Dynamic Island, USB-C — it covers everything most Indian users need and gets iOS updates until at least 2029. For first-time iPhone buyers, this is often the smartest entry point.</p>
+          <p className="font-body text-base text-[#2a2a2a] leading-relaxed mb-4">The iPhone 15 at Rs 44,900 (on sale/refurbished) remains an exceptional value in {month} {year}. A16 Bionic chip, 48MP camera, Dynamic Island, USB-C — it covers everything most Indian users need and gets iOS updates until at least 2029. For first-time iPhone buyers, this is often the smartest entry point.</p>
           <h2 className="font-playfair text-2xl font-bold text-ink mt-10 mb-4 pb-2 border-b-2 border-[#d4220a]">iPhone vs Android in India — The Honest Verdict</h2>
           <p className="font-body text-base text-[#2a2a2a] leading-relaxed mb-4">iPhone wins over Android for: long-term software support (7 years), resale value (50-60% after 2 years), video quality (ProRes, Cinematic mode), ecosystem integration with Mac/iPad/AirPods, and privacy features. These are genuine advantages, not just marketing.</p>
           <p className="font-body text-base text-[#2a2a2a] leading-relaxed mb-4">Android wins over iPhone for: price flexibility across budgets, 5G band versatility, USB flexibility and file management, customisation, repair accessibility outside metros, and individual apps (particularly Indian banking apps which occasionally have iOS compatibility issues). For Indian-specific use cases, Android often wins on practical grounds.</p>
@@ -139,8 +139,7 @@ export default async function BestApplePhonesPage() {
                       <div className="relative overflow-hidden" style={{ paddingBottom:'56.25%' }}>
                         <img src={a.featuredImage} alt={a.title} width={400} height={225} loading="lazy"
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
-                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }}
-                          onError={e=>{(e.target as HTMLImageElement).src='https://thetechbharat.com/og-image.jpg'}} />
+                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }}} />
                         <span className="absolute top-2 left-2 bg-[#d4220a] text-white font-sans text-[9px] font-bold px-2 py-0.5 uppercase z-10">
                           {a.type === 'review' ? 'Review' : a.type === 'compare' ? 'Compare' : 'News'}
                         </span>
@@ -177,8 +176,7 @@ export default async function BestApplePhonesPage() {
                     {a.featuredImage && (
                       <div className="flex-shrink-0 w-20 h-14 overflow-hidden">
                         <img src={a.featuredImage} alt={a.title} width={80} height={56}
-                          className="w-full h-full object-cover"
-                          onError={e=>{(e.target as HTMLImageElement).src='https://thetechbharat.com/og-image.jpg'}} />
+                          className="w-full h-full object-cover"} />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
@@ -231,9 +229,9 @@ export default async function BestApplePhonesPage() {
             </h2>
             <div className="space-y-4" itemScope itemType="https://schema.org/FAQPage">
               <div className="border border-border p-4 bg-white" itemScope itemType="https://schema.org/Question">
-                <h3 className="font-sans text-sm font-bold text-ink mb-2" itemProp="name">Which iPhone should I buy in India in MONTH YEAR?</h3>
+                <h3 className="font-sans text-sm font-bold text-ink mb-2" itemProp="name">Which iPhone should I buy in India in {month} {year}?</h3>
                 <div itemScope itemType="https://schema.org/Answer">
-                  <p className="font-sans text-sm text-muted leading-relaxed" itemProp="text">Best buy for most Indian users in MONTH YEAR: iPhone 16 at Rs 79,900 if new, iPhone 15 at Rs 44,900 if budget-conscious. For power users and camera enthusiasts: iPhone 16 Pro at Rs 1,19,900 with 5x zoom and ProRes video. Only buy iPhone 16 Pro Max if you specifically need the larger screen.</p>
+                  <p className="font-sans text-sm text-muted leading-relaxed" itemProp="text">Best buy for most Indian users in {month} {year}: iPhone 16 at Rs 79,900 if new, iPhone 15 at Rs 44,900 if budget-conscious. For power users and camera enthusiasts: iPhone 16 Pro at Rs 1,19,900 with 5x zoom and ProRes video. Only buy iPhone 16 Pro Max if you specifically need the larger screen.</p>
                 </div>
               </div>
               <div className="border border-border p-4 bg-white" itemScope itemType="https://schema.org/Question">

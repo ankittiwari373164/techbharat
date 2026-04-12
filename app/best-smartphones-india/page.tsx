@@ -11,7 +11,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const title = `Best Smartphones in India — ${month} ${year}`
   return {
     title: `${title} | The Tech Bharat`,
-    description: `Best smartphones in India MONTH YEAR — honest picks at every budget from Rs 10K to Rs 1L+. Updated with latest launches.`.replace('MONTH', month).replace('YEAR', String(year)),
+    description: `Best smartphones in India {month} {year} — honest picks at every budget from Rs 10K to Rs 1L+. Updated with latest launches.`.replace('MONTH', month).replace('YEAR', String(year)),
     alternates: { canonical: 'https://thetechbharat.com/best-smartphones-india' },
     openGraph: { title, url: 'https://thetechbharat.com/best-smartphones-india', type: 'article' },
   }
@@ -24,7 +24,7 @@ export default async function BestSmartphonesIndiaPage() {
   const news     = articles.filter(a => a.type === 'mobile-news')
 
   const faq = [
-    { q: 'Which is the best phone in India in MONTH YEAR?', a: 'In MONTH YEAR: under Rs 15K — Redmi Note 14 5G; Rs 15K-30K — Nothing Phone (3a); Rs 30K-55K — Google Pixel 9a; Rs 55K+ — Samsung Galaxy S25 series. Always verify current pricing on Flipkart or Amazon before buying.' },
+    { q: 'Which is the best phone in India in {month} {year}?', a: 'In {month} {year}: under Rs 15K — Redmi Note 14 5G; Rs 15K-30K — Nothing Phone (3a); Rs 30K-55K — Google Pixel 9a; Rs 55K+ — Samsung Galaxy S25 series. Always verify current pricing on Flipkart or Amazon before buying.' },
     { q: 'Is 5G worth buying in India in YEAR?', a: 'Yes, for any phone above Rs 12000 in YEAR. 5G is now standard at this price. Critical check: verify n78 band support for Jio and Airtel 5G in your city before purchasing.' }
   ]
 
@@ -39,7 +39,7 @@ export default async function BestSmartphonesIndiaPage() {
 
   return (
     <>
-      <PillarNav />
+      <PillarNav currentHref="/best-smartphones-india" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <div className="bg-paper min-h-screen">
         <div className="max-w-4xl mx-auto px-4 py-10">
@@ -61,7 +61,7 @@ export default async function BestSmartphonesIndiaPage() {
               Best Smartphones in India — {month} {year}
             </h1>
             <p className="font-body text-lg text-muted leading-relaxed">
-              Every month India sees new launches and price drops. This guide reflects actual India availability and current Flipkart and Amazon pricing for MONTH YEAR.
+              Every month India sees new launches and price drops. This guide reflects actual India availability and current Flipkart and Amazon pricing for {month} {year}.
             </p>
           </div>
 
@@ -103,8 +103,7 @@ export default async function BestSmartphonesIndiaPage() {
                       <div className="relative overflow-hidden" style={{ paddingBottom:'56.25%' }}>
                         <img src={a.featuredImage} alt={a.title} width={400} height={225} loading="lazy"
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
-                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }}
-                          onError={e=>{(e.target as HTMLImageElement).src='https://thetechbharat.com/og-image.jpg'}} />
+                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }}} />
                         <span className="absolute top-2 left-2 bg-[#d4220a] text-white font-sans text-[9px] font-bold px-2 py-0.5 uppercase z-10">
                           {a.type==='review'?'Review':'Compare'}
                         </span>
@@ -142,8 +141,7 @@ export default async function BestSmartphonesIndiaPage() {
                       <div className="relative overflow-hidden" style={{ paddingBottom:'56.25%' }}>
                         <img src={a.featuredImage} alt={a.title} width={400} height={225} loading="lazy"
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
-                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }}
-                          onError={e=>{(e.target as HTMLImageElement).src='https://thetechbharat.com/og-image.jpg'}} />
+                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }}} />
                         <span className="absolute top-2 left-2 bg-[#1a3a5c] text-white font-sans text-[9px] font-bold px-2 py-0.5 uppercase z-10">News</span>
                       </div>
                     )}

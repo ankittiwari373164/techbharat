@@ -12,7 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const title = `Best Budget Phones in India Under Rs 15000 and Rs 20000 — ${month} ${year}`
   return {
     title: `${title} | The Tech Bharat`,
-    description: `Best budget smartphones India MONTH YEAR under Rs 15000 and Rs 20000. Honest comparison with specs table, pros/cons, and India-specific buying advice.`.replace('MONTH', month).replace('YEAR', String(year)),
+    description: `Best budget smartphones India {month} {year} under Rs 15000 and Rs 20000. Honest comparison with specs table, pros/cons, and India-specific buying advice.`.replace('MONTH', month).replace('YEAR', String(year)),
     alternates: { canonical: 'https://thetechbharat.com/best-budget-phones-india' },
     openGraph: { title, url: 'https://thetechbharat.com/best-budget-phones-india', type: 'article' },
   }
@@ -32,16 +32,16 @@ export default async function BestBudgetPhonesPage() {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
     mainEntity: [
-      { '@type': 'Question', name: "Best phone under Rs 15000 in India in MONTH YEAR?", acceptedAnswer: { '@type': 'Answer', text: "Redmi Note 14 5G (Rs 14,999) is the best all-around buy under Rs 15,000 in MONTH YEAR — AMOLED display, strong camera, 5500mAh battery. Samsung Galaxy M15 5G (Rs 13,999) is the smarter long-term buy if you plan to use it 3+ years, due to 4-year update commitment and Samsung service network." } },
+      { '@type': 'Question', name: "Best phone under Rs 15000 in India in {month} {year}?", acceptedAnswer: { '@type': 'Answer', text: "Redmi Note 14 5G (Rs 14,999) is the best all-around buy under Rs 15,000 in {month} {year} — AMOLED display, strong camera, 5500mAh battery. Samsung Galaxy M15 5G (Rs 13,999) is the smarter long-term buy if you plan to use it 3+ years, due to 4-year update commitment and Samsung service network." } },
       { '@type': 'Question', name: "Is 5G worth buying under Rs 15000?", acceptedAnswer: { '@type': 'Answer', text: "Yes — the 5G premium in this segment is minimal (Rs 500-1000 over 4G equivalent). 5G future-proofs your phone for a 3-year ownership period, and all current Rs 14,000+ budget 5G phones include n78 band support for Jio and Airtel. Buy 5G unless your area specifically has no 5G coverage." } },
       { '@type': 'Question', name: "Which is better — Redmi or Samsung under Rs 15000?", acceptedAnswer: { '@type': 'Answer', text: "Redmi Note 14 5G wins on: camera quality, display brightness, performance per rupee. Samsung Galaxy M15 5G wins on: software update longevity (4 years vs 2 years), service network in smaller cities, more consistent performance over time. Choose Redmi for better immediate specs; Samsung for better 3-year ownership." } },
-      { '@type': 'Question', name: "Can budget phones handle BGMI in MONTH YEAR?", acceptedAnswer: { '@type': 'Answer', text: "Yes, but at 60fps setting. Redmi Note 14 5G and Samsung M35 5G handle BGMI Medium settings at 60fps stably. For 90fps BGMI, you need to budget Rs 22,000+ (Poco X6, Redmi Note 13 Pro). At Rs 14,999, set expectations at 60fps and enjoy a playable experience." } }
+      { '@type': 'Question', name: "Can budget phones handle BGMI in {month} {year}?", acceptedAnswer: { '@type': 'Answer', text: "Yes, but at 60fps setting. Redmi Note 14 5G and Samsung M35 5G handle BGMI Medium settings at 60fps stably. For 90fps BGMI, you need to budget Rs 22,000+ (Poco X6, Redmi Note 13 Pro). At Rs 14,999, set expectations at 60fps and enjoy a playable experience." } }
     ],
   }
 
   return (
     <>
-      <PillarNav />
+      <PillarNav currentHref="/best-budget-phones-india" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <div className="bg-paper min-h-screen">
         <div className="max-w-4xl mx-auto px-4 py-10">
@@ -68,10 +68,10 @@ export default async function BestBudgetPhonesPage() {
             </h1>
             {/* Subheader */}
             <p className="font-sans text-base font-semibold text-[#1a3a5c] border-l-4 border-[#1a3a5c] pl-4 mb-4">
-              India's most competitive price range — ranked honestly for 5G, battery, camera, and long-term value in MONTH YEAR.
+              India's most competitive price range — ranked honestly for 5G, battery, camera, and long-term value in {month} {year}.
             </p>
             <p className="font-body text-lg text-[#2a2a2a] leading-relaxed">
-              The Rs 10,000 to Rs 20,000 price range is where India's smartphone market is most competitive and most confusing. In MONTH YEAR, you can get 5G, AMOLED displays, and 50MP cameras — but not all at once, and not without compromising something. This guide tells you exactly what you get and what you give up at each budget.
+              The Rs 10,000 to Rs 20,000 price range is where India's smartphone market is most competitive and most confusing. In {month} {year}, you can get 5G, AMOLED displays, and 50MP cameras — but not all at once, and not without compromising something. This guide tells you exactly what you get and what you give up at each budget.
             </p>
           </div>
 
@@ -105,14 +105,14 @@ export default async function BestBudgetPhonesPage() {
 
           {/* Main Content Sections — 3000+ words of original editorial content */}
 
-          <h2 className="font-playfair text-2xl font-bold text-ink mt-10 mb-4 pb-2 border-b-2 border-[#d4220a]">The Budget Phone Reality in India — MONTH YEAR</h2>
-          <p className="font-body text-base text-[#2a2a2a] leading-relaxed mb-4">India's budget phone market in MONTH YEAR is genuinely impressive. Rs 12,000 now buys you 5G connectivity, an AMOLED display, and a 50MP camera — specifications that cost Rs 25,000 just three years ago. But here's the honest truth: every budget phone makes compromises, and understanding which compromise matters least to you is the difference between a satisfying purchase and a frustrated one.</p>
+          <h2 className="font-playfair text-2xl font-bold text-ink mt-10 mb-4 pb-2 border-b-2 border-[#d4220a]">The Budget Phone Reality in India — {month} {year}</h2>
+          <p className="font-body text-base text-[#2a2a2a] leading-relaxed mb-4">India's budget phone market in {month} {year} is genuinely impressive. Rs 12,000 now buys you 5G connectivity, an AMOLED display, and a 50MP camera — specifications that cost Rs 25,000 just three years ago. But here's the honest truth: every budget phone makes compromises, and understanding which compromise matters least to you is the difference between a satisfying purchase and a frustrated one.</p>
           <p className="font-body text-base text-[#2a2a2a] leading-relaxed mb-4">The biggest compromise in budget phones is not specifications — it is long-term software support. A Redmi or Realme phone at Rs 14,999 will typically receive 2 years of OS updates. After that, no new Android versions, and security patches become inconsistent. Samsung Galaxy M15 5G at the same price offers 4 years of updates. That is a meaningful difference for a phone you plan to use for 3 years.</p>
           <p className="font-body text-base text-[#2a2a2a] leading-relaxed mb-4">The second major compromise is thermal performance. Budget processors — even good ones like Snapdragon 4 Gen 2 — throttle under sustained load. BGMI at 90fps sustained for 30+ minutes? Most budget phones cannot do it. 60fps stable for a 20-minute match? Most can. Set your expectations based on actual use, not spec sheet promises.</p>
           <h3 className="font-playfair text-lg font-bold text-ink mt-6 mb-3">Under Rs 12,000 — iQOO Z9 Lite Is the Safe Bet</h3>
           <p className="font-body text-base text-[#2a2a2a] leading-relaxed mb-4">At Rs 11,999, the iQOO Z9 Lite offers Snapdragon 4 Gen 2 — the same chip class as phones at Rs 15,000-16,000 — with a 5000mAh battery and AMOLED display. It does not have the best camera in the segment, but performance consistency is better than most. For buyers who prioritise a smooth daily experience over camera output, this is the buy.</p>
           <h3 className="font-playfair text-lg font-bold text-ink mt-6 mb-3">Rs 12,000 to Rs 15,000 — Redmi Note 14 5G Leads</h3>
-          <p className="font-body text-base text-[#2a2a2a] leading-relaxed mb-4">Redmi Note 14 5G at Rs 14,999 is the most complete budget phone in India in MONTH YEAR. AMOLED display, Snapdragon 4s Gen 2, 5500mAh battery, and Xiaomi's camera processing that consistently over-delivers at this price. The compromise: MIUI/HyperOS has bloatware and 2-3 year update commitment. Worth it? For most buyers: yes.</p>
+          <p className="font-body text-base text-[#2a2a2a] leading-relaxed mb-4">Redmi Note 14 5G at Rs 14,999 is the most complete budget phone in India in {month} {year}. AMOLED display, Snapdragon 4s Gen 2, 5500mAh battery, and Xiaomi's camera processing that consistently over-delivers at this price. The compromise: MIUI/HyperOS has bloatware and 2-3 year update commitment. Worth it? For most buyers: yes.</p>
           <h3 className="font-playfair text-lg font-bold text-ink mt-6 mb-3">Rs 15,000 to Rs 20,000 — More Choices, Clearer Tradeoffs</h3>
           <p className="font-body text-base text-[#2a2a2a] leading-relaxed mb-4">Above Rs 15,000, the choice becomes more nuanced. Realme Narzo 70 Pro at Rs 17,999 brings 45W charging. Poco M6 Pro at Rs 15,999 delivers better gaming performance. Samsung Galaxy M35 5G at Rs 20,999 adds Samsung's service network and 4-year updates. Pick based on your priority: charging speed (Narzo), gaming (Poco), or long-term support (Samsung).</p>
           <h2 className="font-playfair text-2xl font-bold text-ink mt-10 mb-4 pb-2 border-b-2 border-[#d4220a]">5G Reality Check for Budget Phones in India</h2>
@@ -138,8 +138,7 @@ export default async function BestBudgetPhonesPage() {
                       <div className="relative overflow-hidden" style={{ paddingBottom:'56.25%' }}>
                         <img src={a.featuredImage} alt={a.title} width={400} height={225} loading="lazy"
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
-                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }}
-                          onError={e=>{(e.target as HTMLImageElement).src='https://thetechbharat.com/og-image.jpg'}} />
+                          style={{ position:'absolute',inset:0,width:'100%',height:'100%' }}} />
                         <span className="absolute top-2 left-2 bg-[#d4220a] text-white font-sans text-[9px] font-bold px-2 py-0.5 uppercase z-10">
                           {a.type === 'review' ? 'Review' : a.type === 'compare' ? 'Compare' : 'News'}
                         </span>
@@ -176,8 +175,7 @@ export default async function BestBudgetPhonesPage() {
                     {a.featuredImage && (
                       <div className="flex-shrink-0 w-20 h-14 overflow-hidden">
                         <img src={a.featuredImage} alt={a.title} width={80} height={56}
-                          className="w-full h-full object-cover"
-                          onError={e=>{(e.target as HTMLImageElement).src='https://thetechbharat.com/og-image.jpg'}} />
+                          className="w-full h-full object-cover"} />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
@@ -230,9 +228,9 @@ export default async function BestBudgetPhonesPage() {
             </h2>
             <div className="space-y-4" itemScope itemType="https://schema.org/FAQPage">
               <div className="border border-border p-4 bg-white" itemScope itemType="https://schema.org/Question">
-                <h3 className="font-sans text-sm font-bold text-ink mb-2" itemProp="name">Best phone under Rs 15000 in India in MONTH YEAR?</h3>
+                <h3 className="font-sans text-sm font-bold text-ink mb-2" itemProp="name">Best phone under Rs 15000 in India in {month} {year}?</h3>
                 <div itemScope itemType="https://schema.org/Answer">
-                  <p className="font-sans text-sm text-muted leading-relaxed" itemProp="text">Redmi Note 14 5G (Rs 14,999) is the best all-around buy under Rs 15,000 in MONTH YEAR — AMOLED display, strong camera, 5500mAh battery. Samsung Galaxy M15 5G (Rs 13,999) is the smarter long-term buy if you plan to use it 3+ years, due to 4-year update commitment and Samsung service network.</p>
+                  <p className="font-sans text-sm text-muted leading-relaxed" itemProp="text">Redmi Note 14 5G (Rs 14,999) is the best all-around buy under Rs 15,000 in {month} {year} — AMOLED display, strong camera, 5500mAh battery. Samsung Galaxy M15 5G (Rs 13,999) is the smarter long-term buy if you plan to use it 3+ years, due to 4-year update commitment and Samsung service network.</p>
                 </div>
               </div>
               <div className="border border-border p-4 bg-white" itemScope itemType="https://schema.org/Question">
@@ -248,7 +246,7 @@ export default async function BestBudgetPhonesPage() {
                 </div>
               </div>
               <div className="border border-border p-4 bg-white" itemScope itemType="https://schema.org/Question">
-                <h3 className="font-sans text-sm font-bold text-ink mb-2" itemProp="name">Can budget phones handle BGMI in MONTH YEAR?</h3>
+                <h3 className="font-sans text-sm font-bold text-ink mb-2" itemProp="name">Can budget phones handle BGMI in {month} {year}?</h3>
                 <div itemScope itemType="https://schema.org/Answer">
                   <p className="font-sans text-sm text-muted leading-relaxed" itemProp="text">Yes, but at 60fps setting. Redmi Note 14 5G and Samsung M35 5G handle BGMI Medium settings at 60fps stably. For 90fps BGMI, you need to budget Rs 22,000+ (Poco X6, Redmi Note 13 Pro). At Rs 14,999, set expectations at 60fps and enjoy a playable experience.</p>
                 </div>
