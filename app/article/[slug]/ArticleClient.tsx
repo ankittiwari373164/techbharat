@@ -135,12 +135,12 @@ export default function ArticleClient({ article, similar, slug }: ArticleClientP
   const safeQSDate    = liveArticle.quickSummary?.date  || ''
 
   // Format date without locale — avoids Node.js vs browser hydration mismatch
+  // Use UTC methods to avoid server(UTC)/client(IST) timezone mismatch → hydration error
   const pubDate = liveArticle.publishDate
     ? (() => {
         const d = new Date(liveArticle.publishDate)
         const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-        const h = d.getHours(), m = d.getMinutes()
-        return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} at ${h % 12 || 12}:${m.toString().padStart(2,'0')} ${h >= 12 ? 'pm' : 'am'}`
+        return `${d.getUTCDate()} ${months[d.getUTCMonth()]} ${d.getUTCFullYear()}`
       })()
     : ''
 
@@ -210,12 +210,12 @@ export default function ArticleClient({ article, similar, slug }: ArticleClientP
               {/* Share */}
               <div className="ml-auto flex items-center gap-2">
                 <a
-                  href={`https://wa.me/?text=${encodeURIComponent(liveArticle.title + ' ' + (process.env.NEXT_PUBLIC_SITE_URL || 'https://thetechbharat.com') + '/' + liveArticle.slug)}`}
+                  href={`https://wa.me/?text=${encodeURIComponent(liveArticle.title + ' ' + ('https://thetechbharat.com') + '/' + liveArticle.slug)}`}
                   target="_blank" rel="noopener noreferrer"
                   className="font-sans text-xs bg-[#25D366] text-white px-2.5 py-1 hover:opacity-80"
                 >Share</a>
                 <a
-                  href={`https://t.me/share/url?url=${encodeURIComponent((process.env.NEXT_PUBLIC_SITE_URL || 'https://thetechbharat.com') + '/' + liveArticle.slug)}&text=${encodeURIComponent(liveArticle.title)}`}
+                  href={`https://t.me/share/url?url=${encodeURIComponent(('https://thetechbharat.com') + '/' + liveArticle.slug)}&text=${encodeURIComponent(liveArticle.title)}`}
                   target="_blank" rel="noopener noreferrer"
                   className="font-sans text-xs bg-[#2AABEE] text-white px-2.5 py-1 hover:opacity-80"
                 >Telegram</a>
@@ -285,6 +285,7 @@ export default function ArticleClient({ article, similar, slug }: ArticleClientP
               {/* Full Content — strip any <h1> tags (page already has one H1 in header) */}
               <div
                 className="article-content"
+                suppressHydrationWarning
                 dangerouslySetInnerHTML={{ __html: addInternalLinks(
                   (liveArticle.content || '')
                     .replace(/<h1(\s[^>]*)?>/gi, '<h2$1>')

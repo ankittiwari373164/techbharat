@@ -1,6 +1,6 @@
 'use client'
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 const NAV_ITEMS = [
   { label: 'Home', href: '/' },
@@ -14,6 +14,22 @@ const NAV_ITEMS = [
   { label: 'OnePlus', href: '/mobile-news?brand=OnePlus' },
 ]
 
+const PILLAR_LINKS = [
+  { label: 'Best Smartphones',    href: '/best-smartphones-india' },
+  { label: 'Budget Phones',       href: '/best-budget-phones-india' },
+  { label: 'Camera Phones',       href: '/best-camera-phones-india' },
+  { label: 'Gaming Phones',       href: '/best-gaming-phones-india' },
+  { label: 'Battery Phones',      href: '/best-battery-backup-phones-india' },
+  { label: 'Best 5G Phones',      href: '/best-5g-phones-india' },
+  { label: 'Flagship Phones',     href: '/best-flagship-phones-india' },
+  { label: 'Student Phones',      href: '/best-phones-for-students-india' },
+  { label: 'Best Samsung',        href: '/best-samsung-phones-india' },
+  { label: 'Best iPhone',         href: '/best-apple-iphone-india' },
+  { label: 'Best OnePlus',        href: '/best-oneplus-phones-india' },
+  { label: 'Buying Guide',        href: '/smartphone-buying-guide-india' },
+  { label: 'Compare Guide',       href: '/phone-comparison-guide-india' },
+]
+
 // tickerItems passed from server layout — Googlebot sees real headlines on first byte
 interface HeaderProps {
   tickerItems?: string[]
@@ -21,11 +37,24 @@ interface HeaderProps {
 
 export default function Header({ tickerItems = [] }: HeaderProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [guidesOpen, setGuidesOpen] = useState(false)
   const [currentTime, setCurrentTime] = useState('')
   // Initialise with SSR data immediately — no "Loading latest news..." flash
   const [tickerText, setTickerText] = useState(
     tickerItems.length > 0 ? tickerItems.join('  ●  ') : ''
   )
+  const guidesRef = useRef<HTMLDivElement>(null)
+
+  // Close guides dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (guidesRef.current && !guidesRef.current.contains(e.target as Node)) {
+        setGuidesOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
 
   useEffect(() => {
     const update = () => {
@@ -121,7 +150,7 @@ export default function Header({ tickerItems = [] }: HeaderProps) {
 
       {/* Navigation */}
       <nav className="bg-[#0d0d0d] hidden md:block">
-        <div className="max-w-7xl mx-auto px-4 flex overflow-x-auto">
+        <div className="max-w-7xl mx-auto px-4 flex overflow-x-auto items-stretch">
           {NAV_ITEMS.map(item => (
             <Link
               key={item.href}
@@ -131,6 +160,34 @@ export default function Header({ tickerItems = [] }: HeaderProps) {
               {item.label}
             </Link>
           ))}
+
+          {/* Guides dropdown — same style as existing nav items */}
+          <div ref={guidesRef} className="relative flex items-stretch">
+            <button
+              onClick={() => setGuidesOpen(v => !v)}
+              className={`text-white font-sans text-[13px] font-medium px-4 py-2.5 whitespace-nowrap hover:bg-[#d4220a] transition-colors flex items-center gap-1 ${guidesOpen ? 'bg-[#d4220a]' : ''}`}
+            >
+              Guides
+              <svg className={`w-3 h-3 transition-transform ${guidesOpen ? 'rotate-180' : ''}`} fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+
+            {guidesOpen && (
+              <div className="absolute top-full left-0 z-50 bg-[#0d0d0d] border border-gray-700 min-w-[220px] py-1">
+                {PILLAR_LINKS.map(link => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setGuidesOpen(false)}
+                    className="block text-white font-sans text-[13px] font-medium px-4 py-2 whitespace-nowrap hover:bg-[#d4220a] transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </nav>
 
@@ -147,6 +204,22 @@ export default function Header({ tickerItems = [] }: HeaderProps) {
               {item.label}
             </Link>
           ))}
+          {/* Guides section in mobile nav */}
+          <div className="border-b border-gray-700">
+            <p className="text-gray-400 font-sans text-[11px] font-bold uppercase tracking-widest px-5 pt-3 pb-1">
+              Buying Guides
+            </p>
+            {PILLAR_LINKS.map(link => (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setMobileOpen(false)}
+                className="block text-white font-sans text-sm font-medium px-5 py-2.5 border-b border-gray-800 hover:bg-[#d4220a] transition-colors"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
         </nav>
       )}
 
