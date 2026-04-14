@@ -96,8 +96,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link rel="shortcut icon" href="/logo.png" />
         <meta name="msapplication-TileImage" content="/logo.png" />
         <meta name="theme-color" content="#d4220a" />
-        <meta name="google-site-verification" content="YOUR_VERIFICATION_CODE" />
-        <meta name="robots" content="max-image-preview:large" />
+        {/* Add your GSC verification: <meta name="google-site-verification" content="ACTUAL_CODE" /> */}
         <meta name="twitter:site" content="@thetechbharat" />
         <meta name="twitter:creator" content="@thetechbharat" />
         <meta name="twitter:card" content="summary_large_image" />
@@ -112,7 +111,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           "foundingDate": "2025",
           "areaServed": "IN",
           "inLanguage": "en-IN",
-          "sameAs": ["https://t.me/techbharat", "https://twitter.com/techbharat"],
+          "sameAs": ["https://t.me/the_tech_bharat", "https://twitter.com/thetechbharat", "https://whatsapp.com/channel/0029VbCXZfAJJhzh46IrfI2W"],
           "masthead": "https://thetechbharat.com/about",
           "verificationFactCheckingPolicy": "https://thetechbharat.com/editorial-policy",
           "correctionsPolicy": "https://thetechbharat.com/corrections-policy"
@@ -138,38 +137,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {/* Cookie Consent Banner — GDPR/DPDP compliance */}
         {!isAdmin && <CookieConsent />}
 
-        {/* Content protection — right-click, copy, F12, print */}
-        {!isAdmin && (
-          <script dangerouslySetInnerHTML={{ __html: `
-(function(){
-  "use strict";
-
-  // 1. Disable right-click
-  document.addEventListener("contextmenu",function(e){e.preventDefault();return false;});
-
-  // 2. Block copy / cut
-  document.addEventListener("copy",function(e){e.preventDefault();return false;});
-  document.addEventListener("cut",function(e){e.preventDefault();return false;});
-
-  // 3. Block image drag
-  document.addEventListener("dragstart",function(e){if(e.target.tagName==="IMG"){e.preventDefault();return false;}});
-
-  // 4. Block F12 only (NOT Ctrl+C/U etc — breaks AdSense and GA)
-  document.addEventListener("keydown",function(e){
-    if(e.key==="F12"||e.keyCode===123){e.preventDefault();return false;}
-    if(e.ctrlKey&&e.shiftKey&&["i","I","j","J","c","C"].includes(e.key)){e.preventDefault();return false;}
-  });
-
-  // 5. Block print
-  window.addEventListener("beforeprint",function(e){
-    e.preventDefault();
-    document.body.style.visibility="hidden";
-    setTimeout(function(){document.body.style.visibility="visible";},100);
-  });
-
-})();
-          `}} />
-        )}
       </body>
     </html>
   )
