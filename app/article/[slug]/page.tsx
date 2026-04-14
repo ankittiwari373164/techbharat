@@ -36,16 +36,19 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return {
       title,
       description,
-      alternates: { canonical, types: { 'application/amphtml': `${SITE_URL}/${params.slug}/amp` } },
+      alternates: {
+        canonical,
+        types: { 'application/amphtml': `${SITE_URL}/${params.slug}/amp` },
+      },
       openGraph: {
         title, description,
-        url:       canonical,
-        siteName:  'The Tech Bharat',
-        type:      'article',
+        url:           canonical,
+        siteName:      'The Tech Bharat',
+        type:          'article',
         publishedTime: article.publishDate,
         modifiedTime:  (article as any).updatedDate || article.publishDate,
-        authors:   [article.author || 'Vijay Yadav'],
-        images:    article.featuredImage
+        authors:       [article.author || 'Vijay Yadav'],
+        images: article.featuredImage
           ? [{ url: article.featuredImage, width: 1200, height: 630, alt: title }]
           : [{ url: 'https://thetechbharat.com/og-image.jpg', width: 1200, height: 630, alt: 'The Tech Bharat' }],
       },
@@ -55,7 +58,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         description,
         site:        '@thetechbharat',
         creator:     '@thetechbharat',
-        images:      article.featuredImage
+        images: article.featuredImage
           ? [article.featuredImage]
           : ['https://thetechbharat.com/og-image.jpg'],
       },
@@ -75,18 +78,15 @@ export default async function ArticlePage({ params }: PageProps) {
     article = articles.find((a: any) => a.slug === slug) || null
     if (article) {
       const articleBrand = article.brand || ''
-      // BRAND-ONLY similar articles: Samsung article → only Samsung, Apple → only Apple
-      // No cross-brand pollution. No duplicates (slug deduplication).
+      // BRAND-ONLY similar articles — no cross-brand pollution, no duplicates
       const seen = new Set([slug])
       similar = articles
         .filter((a: any) => {
           if (seen.has(a.slug)) return false
           if (!a.slug || !a.title) return false
-          // Must match brand exactly (case-insensitive)
           if (articleBrand && articleBrand !== 'Mobile') {
             return (a.brand || '').toLowerCase() === articleBrand.toLowerCase()
           }
-          // For generic 'Mobile' brand: fallback to same type
           return a.type === article.type
         })
         .sort((a: any, b: any) => new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime())
@@ -104,84 +104,157 @@ export default async function ArticlePage({ params }: PageProps) {
     )
   }
 
-  // Schema.org JSON-LD — in raw HTML for crawlers
-  const schema = {
+  // ── ENHANCED: Article Schema with full author + publisher details ──────────
+  const articleSchema = {
     '@context': 'https://schema.org',
     '@type': 'NewsArticle',
-    headline: article.title,
+    '@id': `${SITE_URL}/${slug}#article`,
+    headline:    article.title,
     description: article.seoDescription || article.summary,
-    image: article.featuredImage ? [article.featuredImage] : [],
+    image: article.featuredImage
+      ? [{ '@type': 'ImageObject', url: article.featuredImage, width: 1200, height: 630 }]
+      : [{ '@type': 'ImageObject', url: 'https://thetechbharat.com/og-image.jpg', width: 1200, height: 630 }],
     datePublished: article.publishDate,
-    dateModified: article.updatedDate || article.publishDate,
-    url: `${SITE_URL}/${slug}`,
+    dateModified:  article.updatedDate || article.publishDate,
     author: {
-      '@type': 'Person',
-      name: article.author || 'Vijay Yadav',
-      url: `${SITE_URL}/author`,
-      jobTitle: 'Technology Journalist',
-      worksFor: { '@type': 'Organization', name: 'The Tech Bharat' },
+      '@type':  'Person',
+      name:     article.author || 'Vijay Yadav',
+      url:      `${SITE_URL}/author/${(article.author || 'vijay-yadav').toLowerCase().replace(/\s+/g, '-')}`,
+      sameAs: [
+        'https://twitter.com/thetechbharat',
+        'https://www.linkedin.com/company/the-tech-bharat',
+      ],
     },
     publisher: {
       '@type': 'Organization',
-      name: 'The Tech Bharat',
-      logo: { '@type': 'ImageObject', url: `${SITE_URL}/logo.png` },
+      name:    'The Tech Bharat',
+      url:     SITE_URL,
+      logo: {
+        '@type':  'ImageObject',
+        url:      `${SITE_URL}/logo.png`,
+        width:    600,
+        height:   600,
+      },
+      sameAs: [
+        'https://twitter.com/thetechbharat',
+        'https://www.facebook.com/thetechbharat',
+        'https://t.me/the_tech_bharat',
+      ],
     },
-    mainEntityOfPage: { '@type': 'WebPage', '@id': `${SITE_URL}/${slug}` },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id':   `${SITE_URL}/${slug}`,
+    },
+    articleBody:    (article.content || '').replace(/<[^>]*>/g, '').substring(0, 5000),
+    keywords:       [...(article.tags || []), article.brand || 'Mobile', article.category || ''].filter(Boolean).join(', '),
+    articleSection: article.category || article.type,
+    wordCount:      ((article.content || '').match(/\b\w+\b/g) || []).length,
+    inLanguage:     'en-IN',
   }
 
+  // ── ENHANCED: Breadcrumb with @id ─────────────────────────────────────────
   const breadcrumbSchema = {
     '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
+    '@type':    'BreadcrumbList',
+    '@id':      `${SITE_URL}/${slug}#breadcrumb`,
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
-      { '@type': 'ListItem', position: 2, name: article.category || article.type, item: `${SITE_URL}/${article.type}` },
-      { '@type': 'ListItem', position: 3, name: article.title, item: `${SITE_URL}/${slug}` },
+      { '@type': 'ListItem', position: 1, name: 'Home',                                   item: SITE_URL },
+      { '@type': 'ListItem', position: 2, name: article.category || article.type || 'News', item: `${SITE_URL}/${article.type || 'mobile-news'}` },
+      { '@type': 'ListItem', position: 3, name: article.title,                             item: `${SITE_URL}/${slug}` },
     ],
   }
 
-  // FAQ schema — built from article bullets for rich result CTR boost
-  // FAQ schema — extract ONLY from article content h3+p pairs
-  // Never build from bullets — avoids duplicate FAQPage from AI-generated content
+  // ── ENHANCED: FAQ Schema — only from dedicated FAQ section ────────────────
+  // Extract h3+p pairs that appear after an h2 containing FAQ/Frequently/Question.
+  // Prevents duplicate FAQPage errors in GSC.
   const buildFaqSchema = (): object | null => {
     const articleContent = (article as any).content || ''
-    // Only extract from a dedicated FAQ section (after an h2 containing "FAQ" or "Question")
-    const faqSectionMatch = articleContent.match(/<h2[^>]*>[^<]*(FAQ|Frequently|Questions)[^<]*<\/h2>([\s\S]*?)(?=<h2|$)/i)
-    const searchIn = faqSectionMatch ? faqSectionMatch[2] : articleContent
 
-    const faqMatches: {q: string, a: string}[] = []
-    // Strict: only h3 immediately followed by p
+    const faqSectionMatch = articleContent.match(
+      /<h2[^>]*>[^<]*(FAQ|Frequently|Question)[^<]*<\/h2>([\s\S]*?)(?=<h2|$)/i
+    )
+    const searchIn = faqSectionMatch ? faqSectionMatch[2] : ''
+
+    if (!searchIn) return null
+
+    const faqMatches: { q: string; a: string }[] = []
     const pairs = [...searchIn.matchAll(/<h3[^>]*>(.*?)<\/h3>\s*<p[^>]*>(.*?)<\/p>/gi)]
+
     for (const m of pairs) {
-      if (faqMatches.length >= 4) break
+      if (faqMatches.length >= 5) break
       const q = m[1].replace(/<[^>]*>/g, '').trim()
       const a = m[2].replace(/<[^>]*>/g, '').trim()
-      // Quality gate: question must end with ? and be >15 chars, answer >30 chars
+      // Quality gate: question must end with ? and meet min char counts
       if (q.endsWith('?') && q.length > 15 && a.length > 30) {
         faqMatches.push({ q, a })
       }
     }
+
     if (faqMatches.length < 2) return null
+
     return {
       '@context': 'https://schema.org',
-      '@type': 'FAQPage',
-      mainEntity: faqMatches.map(({ q, a }) => ({
+      '@type':    'FAQPage',
+      '@id':      `${SITE_URL}/${slug}#faqpage`,
+      mainEntity: faqMatches.slice(0, 5).map(({ q, a }) => ({
         '@type': 'Question',
-        name: q,
-        acceptedAnswer: { '@type': 'Answer', text: a },
+        name:    q,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text:    a.substring(0, 500),
+        },
       })),
     }
   }
-  // Only generate FAQPage if content doesn't already have one embedded
-  // This prevents the duplicate FAQPage GSC error
-  const contentHasFAQ = ((article as any).content || '').includes('"@type":"FAQPage"') ||
-                         ((article as any).content || '').includes("'@type':'FAQPage'")
+
+  // Only generate FAQPage if content doesn't already embed one (avoids GSC duplicate error)
+  const contentHasFAQ =
+    ((article as any).content || '').includes('"@type":"FAQPage"') ||
+    ((article as any).content || '').includes("'@type':'FAQPage'")
   const faqSchema = contentHasFAQ ? null : buildFaqSchema()
+
+  // ── NEW: Product Schema — only for brand-specific articles ────────────────
+  const productSchema =
+    article.brand && article.brand !== 'Mobile'
+      ? {
+          '@context': 'https://schema.org',
+          '@type':    'Product',
+          name:       article.title,
+          brand: {
+            '@type': 'Brand',
+            name:    article.brand,
+          },
+          description: article.summary,
+          image:       article.featuredImage || 'https://thetechbharat.com/og-image.jpg',
+          publisher: {
+            '@type': 'Organization',
+            name:    'The Tech Bharat',
+          },
+        }
+      : null
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
-      {faqSchema && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+      {faqSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+        />
+      )}
+      {productSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
+        />
+      )}
       <ArticleClient article={article} similar={similar} slug={slug} />
     </>
   )
