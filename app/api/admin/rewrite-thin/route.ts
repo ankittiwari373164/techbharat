@@ -94,11 +94,12 @@ async function rewriteArticle(article: any): Promise<any> {
     rumour:    '<p class="source-note"><strong>Based on Leaks:</strong> Specs and pricing unconfirmed by manufacturer. All details may change at official launch. Do not make purchase decisions based on leaked information.</p>',
   }[status]
 
-  const typeInstructions = {
+  const typeInstructions: Record<string, string> = {
     'review':      'Write as an in-depth phone review. Include: hands-on feel (or honest disclaimer if pre-launch), camera samples described, gaming performance, battery test results, daily use impressions.',
     'compare':     'Write as a head-to-head comparison. Include: specs table comparing BOTH phones side-by-side, which wins on each spec, definitive verdict by use case (budget buyer, photographer, gamer, power user).',
     'mobile-news': 'Write as informed analysis. Include: what this means for Indian buyers, price positioning, how it fits the market, who should pay attention.',
-  }[articleType] || 'Write as informed mobile technology analysis for Indian buyers.'
+  }
+  const selectedTypeInstruction = typeInstructions[articleType] || 'Write as informed mobile technology analysis for Indian buyers.'
 
   const prompt = `You are Vijay Yadav, Senior Mobile Editor at The Tech Bharat. You have 11 years covering the Indian smartphone market. You write for Indian buyers — Delhi, Mumbai, Bengaluru, but also Patna, Indore, and Coimbatore. You are direct, occasionally wry, genuinely excited by good hardware, and specifically frustrated by marketing fluff.
 
@@ -115,7 +116,7 @@ PRODUCT STATUS: ${status.toUpperCase()}
 ${statusFraming}
 
 ARTICLE TYPE INSTRUCTIONS:
-${typeInstructions}
+${selectedTypeInstruction}
 
 BRAND-SPECIFIC REQUIREMENTS:
 ${brandHints || 'Include India pricing in ₹, 5G band support for Jio/Airtel (n78), service centre availability, update policy.'}
@@ -193,9 +194,9 @@ Return ONLY valid JSON with NO markdown wrapper:
     ...article,
     title:          cleanTitle,
     summary:        (parsed.summary || '').replace(/<[^>]*>/g, '').trim(),
-    bullets:        Array.isArray(parsed.bullets) ? parsed.bullets : article.bullets,
+    bullets:        Array.isArray(parsed.bullets) ? parsed.bullets : article.bullets || [],
     content:        parsed.fullContent,
-    tags:           Array.isArray(parsed.tags)    ? parsed.tags    : article.tags,
+    tags:           Array.isArray(parsed.tags)    ? parsed.tags    : article.tags || [],
     readTime:       rt,
     wordCount:      actualWordCount,
     // Full titles — no truncation

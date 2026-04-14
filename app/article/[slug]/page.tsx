@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const articles = await getAllArticlesAsync() as {
       slug: string; title: string; summary: string;
       seoTitle?: string; seoDescription?: string; featuredImage?: string;
-      publishDate: string; author?: string; brand?: string
+      publishDate: string; author?: string; brand?: string; tags?: string[]
     }[]
     const article = articles.find(a => a.slug === params.slug)
     if (!article) return { title: 'Article Not Found | The Tech Bharat' }
@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return {
       title,
       description,
-      keywords:   [...(article.tags || []), article.brand || '', article.category || ''].filter(Boolean),
+      keywords:   [...(article.tags || []), article.brand || '', (article as any).category || ''].filter(Boolean),
       robots:     { index: true, follow: true, googleBot: { index: true, follow: true, 'max-image-preview': 'large' } },
       alternates: { canonical },
       openGraph: {
@@ -167,8 +167,8 @@ export default async function ArticlePage({ params }: PageProps) {
     mainEntityOfPage: { '@type': 'WebPage', '@id': `${SITE_URL}/${slug}` },
     articleBody: articleBodyText,
     wordCount: actualWordCount,
-    keywords: [...(article.tags || []), article.brand || '', article.category || ''].filter(Boolean).join(', '),
-    articleSection: article.category || article.type || 'Mobile Technology',
+    keywords: [...(article.tags || []), article.brand || '', (article as any).category || ''].filter(Boolean).join(', '),
+    articleSection: (article as any).category || article.type || 'Mobile Technology',
     inLanguage: 'en-IN',
   }
 
@@ -177,7 +177,7 @@ export default async function ArticlePage({ params }: PageProps) {
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
-      { '@type': 'ListItem', position: 2, name: article.category || article.type, item: `${SITE_URL}/${article.type}` },
+      { '@type': 'ListItem', position: 2, name: (article as any).category || article.type, item: `${SITE_URL}/${article.type}` },
       { '@type': 'ListItem', position: 3, name: article.title, item: `${SITE_URL}/${slug}` },
     ],
   }
