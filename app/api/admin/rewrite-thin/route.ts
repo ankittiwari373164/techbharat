@@ -1,163 +1,200 @@
 // app/api/admin/rewrite-thin/route.ts
 // ─────────────────────────────────────────────────────────────────────────────
-// Rewrites thin, duplicate, or low-quality articles with genuine content
-// POST /api/admin/rewrite-thin            — rewrite ALL thin articles
-// POST /api/admin/rewrite-thin?slug=xxx   — rewrite ONE specific article
-// POST /api/admin/rewrite-thin?all=1      — force rewrite ALL articles
-// POST /api/admin/rewrite-thin?all=1&type=review — force rewrite all reviews
+// Rewrites ALL articles with 100% unique, high-value, India-specific content
+//
+// USAGE:
+//   POST /api/admin/rewrite-thin              → rewrites articles that need it
+//   POST /api/admin/rewrite-thin?all=1        → force rewrites EVERY article
+//   POST /api/admin/rewrite-thin?slug=xxx     → rewrites ONE article by slug
+//   POST /api/admin/rewrite-thin?all=1&type=review → force all reviews
+//   POST /api/admin/rewrite-thin?batch=1&offset=0&limit=20 → batch mode
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getAllArticlesAsync, saveArticlesAsync } from '@/lib/store'
 
-export const dynamic    = 'force-dynamic'
+export const dynamic     = 'force-dynamic'
 export const maxDuration = 300
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || ''
-const SITE_URL          = process.env.NEXT_PUBLIC_SITE_URL || 'https://thetechbharat.com'
+const SITE_URL          = 'https://thetechbharat.com'
 
-// Articles under this word count are rewritten automatically
-const MIN_WORD_COUNT = 900
+// ── QUALITY THRESHOLDS ───────────────────────────────────────────────────────
+const MIN_WORD_COUNT     = 1000  // Articles below this are definitely thin
+const TARGET_WORD_COUNT  = 1600  // Target for all rewrites
 
-// Brand-specific content enhancement instructions
-const BRAND_FIXES: Record<string, string> = {
-  'samsung': 'Include: Galaxy S/A/M series tier breakdown for India, OneUI vs stock Android, service centre advantage (3000+ centres), software update commitment (7yr S-series, 5yr A-series, 4yr M-series), India-specific 5G bands (n78), actual ₹ prices from Flipkart/Amazon India.',
-  'apple':   'Include: India pricing reality vs USA, import duty impact, Made-in-India iPhone models (15, 16, 16e), AppleCare+ India cost, resale value data, actual ₹ prices, service centre count in India, Certified Refurbished option on apple.com/in.',
-  'oneplus': 'Include: SUPERVOOC charging speeds (100W Nord 4, 80W 13R), OxygenOS vs stock Android, service network expansion data, actual ₹ prices, Nord series value vs flagship, India launch pricing history.',
-  'xiaomi':  'Include: MIUI/HyperOS India version, actual ₹ prices from mi.com India and Flipkart, service centre reality (concentrated in metros), update support policy (2yr), 5G band support confirmation.',
-  'realme':  'Include: realme UI India features, actual ₹ prices, charging speed comparison, update policy (2yr), gaming performance on Dimensity chips, India market positioning vs Redmi.',
-  'vivo':    'Include: India pricing ₹, Funtouch OS features, camera strengths (front camera focus), service network, 5G band support, target demographic (selfie-focused buyers).',
-  'nothing': 'Include: Nothing OS transparency, glyph interface real utility, India pricing vs global, Nothing service in India (limited), update policy, niche appeal vs Samsung/OnePlus mainstream.',
-  'google':  'Include: Tensor G4 vs Snapdragon real-world performance, Pixel camera computational photography (Night Sight, Magic Eraser), Google service in India (very limited), india.google/pixel pricing, comparison with OnePlus at similar price.',
+// ── BRAND-SPECIFIC INDIA CONTEXT ─────────────────────────────────────────────
+const BRAND_CONTEXT: { [key: string]: string } = {
+  samsung:  'Galaxy S/A/M/F tier breakdown for India, One UI vs stock Android, 3000+ service centres nationwide, software updates (7yr S-series, 5yr A-series, 4yr M-series), n78 5G band support, ₹ prices from Flipkart/Samsung.com, Samsung Care+ warranty, Made in India models',
+  apple:    'India pricing vs USA (15-20% premium post PLI), Made-in-India models (15/16/16e), AppleCare+ India rates, resale value data (50% after 2yr), Certified Refurbished at apple.com/in, 100+ authorised service points, 7-year iOS update commitment',
+  oneplus:  'SUPERVOOC charging (100W OnePlus 13/Nord 4, 80W 13R), OxygenOS 15 India features, 200+ service centres, Nord series positioning vs flagship, ₹ prices India, n78 5G support confirmed, update policy (4yr OnePlus 13, 3yr Nord 4, 2yr Nord CE)',
+  xiaomi:   'HyperOS India version, ₹ prices from mi.com India/Flipkart, service concentrated in metros (weakness), 2yr update policy, n78 5G support, Redmi vs Poco vs Xiaomi India lineup explained',
+  realme:   'realme UI 5.0 India, ₹ prices, GT vs Narzo vs C-series India positioning, 2yr updates, fast charging (67W-150W), Dimensity gaming performance BGMI tested',
+  vivo:     'Funtouch OS India, ₹ prices, front camera leadership (50MP selfie standard), service network, 5G bands, X-series vs V-series vs Y-series India targeting, extended warranty options',
+  nothing:  'Nothing OS 3.0 glyph practical utility, India pricing vs global, limited service network (major metros only), 3yr OS updates, transparent design India market reception, niche vs mainstream comparison',
+  google:   'Tensor G4 reality vs Snapdragon (thermal, gaming), Pixel AI features India availability (Magic Eraser, Photo Unblur), very limited India service (25 cities only), india.google/pixel pricing, ₹ prices, 7yr Android update commitment',
+  motorola: 'Motorola Edge/G/S series India, ₹ prices, near-stock Android advantage, 3yr updates, ThinkShield security, India service improving but patchy tier-3',
+  oppo:     'ColorOS India features, ₹ prices, VOOC/SUPERVOOC charging India, service network, Find N3 foldable India pricing, Reno vs Find series India',
+  iqoo:     'Monster Gaming Mode benchmarks, BGMI/Free Fire tested frame rates, ₹ prices India, iQOO vs OnePlus gaming comparison, 120W charging speed, Neo vs Pro series India',
+  poco:     'Poco X vs M vs F series India positioning, ₹ prices, Snapdragon vs Dimensity gaming, MIUI/HyperOS fork, budget gaming champion, Flipkart exclusive launches',
 }
 
-// Detect product status for honest framing
+// ── DETECT PRODUCT STATUS ────────────────────────────────────────────────────
 function detectProductStatus(article: any): 'launched' | 'announced' | 'rumour' {
-  const content = (article.content || '').toLowerCase()
-  const title   = (article.title   || '').toLowerCase()
-  const hasSourceNote = content.includes('source-note') || content.includes('pre-launch') || content.includes('based on leaks')
-  if (content.includes('available now') || content.includes('on sale') || content.includes('buy now') ||
-      content.includes('flipkart') || content.includes('amazon india')) return 'launched'
-  if (content.includes('leaked') || content.includes('reportedly') || content.includes('geekbench spotted') ||
-      title.includes('leak') || title.includes('rumour')) return 'rumour'
-  if (content.includes('announced') || content.includes('launched globally') || content.includes('set to launch') ||
-      content.includes('expected') || content.includes('pre-launch')) return 'announced'
-  return 'launched' // default assumption
+  const c = ((article.content || '') + (article.title || '')).toLowerCase()
+  if (c.includes('leaked') || c.includes('reportedly') || c.includes('geekbench spotted') ||
+      c.includes('tipster') || c.includes('leak suggests')) return 'rumour'
+  if (c.includes('announced') || c.includes('launched globally') || c.includes('set to launch') ||
+      c.includes('expected to arrive') || c.includes('pre-launch') || c.includes('india launch expected')) return 'announced'
+  if (c.includes('available now') || c.includes('on sale') || c.includes('buy now') ||
+      c.includes('flipkart') || c.includes('amazon india') || c.includes('mi.com') ||
+      c.includes('samsung.com/in')) return 'launched'
+  return 'launched'
 }
 
-function isArticleThin(article: any): boolean {
-  const wc = (article.content || '').replace(/<[^>]*>/g, '').split(/\s+/).filter(Boolean).length
-  return wc < MIN_WORD_COUNT
-}
+// ── NEED REWRITE CHECK ────────────────────────────────────────────────────────
+function needsRewrite(article: any): boolean {
+  const wc = ((article.content || '').replace(/<[^>]*>/g, '').match(/\b\w+\b/g) || []).length
+  if (wc < MIN_WORD_COUNT) return true
 
-function hasDuplicateLanguage(article: any): boolean {
-  const content = (article.content || '').replace(/<[^>]*>/g, '').toLowerCase()
-  const badPhrases = [
-    'seamless experience', 'cutting-edge technology', 'revolutionary design',
-    'robust performance', 'game-changer', 'next-level', 'state-of-the-art',
-    'boasts impressive', 'packs a punch', 'impressive feat', 'noteworthy',
-    'it is worth noting', 'it should be noted', 'in conclusion', 'furthermore',
-    'in summary', 'to summarize', 'overall, this phone', 'overall, the device',
+  const c = (article.content || '').toLowerCase()
+  // Generic AI phrases that indicate low-uniqueness content
+  const genericPhrases = [
+    'seamless experience', 'cutting-edge', 'revolutionary', 'robust performance',
+    'game-changer', 'state-of-the-art', 'packs a punch', 'noteworthy',
+    'in conclusion,', 'to summarize,', 'furthermore,', 'moreover,',
+    'it is worth noting', 'it should be noted', 'boasts impressive',
+    'impressive feat', 'without further ado', 'in today\'s fast-paced',
   ]
-  const count = badPhrases.filter(p => content.includes(p)).length
-  return count >= 3  // 3+ banned phrases = duplicate AI-speak
+  const genericCount = genericPhrases.filter(p => c.includes(p)).length
+  if (genericCount >= 2) return true
+
+  // Fake hands-on for non-launched products
+  if (detectProductStatus(article) !== 'launched') {
+    const fakeHandsOn = ['after two weeks with', 'in my hands-on', 'as my daily driver',
+      "i've been using", 'after spending time with', 'during my review period']
+    if (fakeHandsOn.some(p => c.includes(p))) return true
+  }
+
+  return false
 }
 
-function hasFakeHandsOn(article: any): boolean {
-  const content = (article.content || '').toLowerCase()
-  const status  = detectProductStatus(article)
-  if (status === 'launched') return false  // Real hands-on is fine
-  const fakeHandsOn = [
-    'after two weeks with', 'in my hands-on', 'as my daily driver',
-    "i've been using", 'after spending time with', 'in my testing',
-    'during my review period', 'after a month with', 'my review unit',
-  ]
-  return fakeHandsOn.some(phrase => content.includes(phrase))
-}
+// ── MAIN REWRITE FUNCTION ────────────────────────────────────────────────────
+async function rewriteArticleWithClaude(article: any): Promise<any> {
+  const wc     = ((article.content || '').replace(/<[^>]*>/g, '').match(/\b\w+\b/g) || []).length
+  const brand  = (article.brand || 'Mobile').toLowerCase()
+  const status = detectProductStatus(article)
+  const type   = article.type || 'mobile-news'
 
-async function rewriteArticle(article: any): Promise<any> {
-  const wordCount  = (article.content || '').replace(/<[^>]*>/g, '').split(/\s+/).filter(Boolean).length
-  const brand      = (article.brand || '').toLowerCase()
-  const brandHints = BRAND_FIXES[brand] || ''
-  const status     = detectProductStatus(article)
-  const articleType = article.type || 'mobile-news'
+  const brandCtx = BRAND_CONTEXT[brand] || 'Include: India pricing in ₹, Flipkart/Amazon India, service centre availability in metros and tier-2 cities, 5G band support (n78 for Jio/Airtel), software update policy, EMI options'
 
-  const statusFraming = {
-    launched:  'This product IS AVAILABLE IN INDIA. Write with confidence. You may reference pricing from Flipkart/Amazon India.',
-    announced: 'This product has been officially announced but NOT yet in India. Use "expected", "announced", "set to launch". NO fake hands-on language.',
-    rumour:    'This is based on leaks/rumours. Use "leaked specs suggest", "reportedly", "if accurate". Label ALL claims as unconfirmed.',
+  const statusNote = {
+    launched:  'Product IS AVAILABLE in India. Write with full confidence. Can reference Flipkart/Amazon India prices.',
+    announced: 'Product officially announced but NOT YET in India. Use "expected", "set to launch", "announced". NO fake hands-on.',
+    rumour:    'Based on leaks only. Use "leaked specs suggest", "reportedly", "if accurate". All claims unconfirmed.',
   }[status]
 
   const sourceNote = {
-    launched:  '<p class="source-note"><strong>Availability:</strong> Available in India on Flipkart and Amazon India. Verify current price before purchase.</p>',
-    announced: '<p class="source-note"><strong>Pre-Launch Analysis:</strong> Based on official announcements. India pricing estimated from global price and import duties. Verify on Flipkart/Amazon before purchase.</p>',
-    rumour:    '<p class="source-note"><strong>Based on Leaks:</strong> Specs and pricing unconfirmed by manufacturer. All details may change at official launch. Do not make purchase decisions based on leaked information.</p>',
+    launched:  '<p class="source-note font-sans text-xs text-muted mt-6 border-t border-border pt-4"><strong>Availability:</strong> Available in India on Flipkart and Amazon India. Prices verified at time of writing — confirm current price before purchase.</p>',
+    announced: '<p class="source-note font-sans text-xs text-muted mt-6 border-t border-border pt-4"><strong>Pre-Launch Analysis:</strong> Based on official announcements and specifications. India pricing estimated from global price plus import duties. Verify on Flipkart/Amazon India before purchase.</p>',
+    rumour:    '<p class="source-note font-sans text-xs text-muted mt-6 border-t border-border pt-4"><strong>Based on Leaks:</strong> Specifications and pricing from leaked sources — unconfirmed by manufacturer. Details may change at official launch.</p>',
   }[status]
 
-  const typeInstructions: Record<string, string> = {
-    'review':      'Write as an in-depth phone review. Include: hands-on feel (or honest disclaimer if pre-launch), camera samples described, gaming performance, battery test results, daily use impressions.',
-    'compare':     'Write as a head-to-head comparison. Include: specs table comparing BOTH phones side-by-side, which wins on each spec, definitive verdict by use case (budget buyer, photographer, gamer, power user).',
-    'mobile-news': 'Write as informed analysis. Include: what this means for Indian buyers, price positioning, how it fits the market, who should pay attention.',
-  }
-  const selectedTypeInstruction = typeInstructions[articleType] || 'Write as informed mobile technology analysis for Indian buyers.'
+  const typeGuide = ({
+    review:       `REVIEW ARTICLE: Write as a real phone review. Structure: first impressions → design/build → display → performance/gaming → camera (with specific scenarios) → battery life (screen-on time estimates) → software/updates → value verdict → who should buy/skip → FAQ`,
+    compare:      `COMPARISON ARTICLE: Write as a head-to-head comparison. Include a specs table comparing BOTH phones row-by-row. Verdict by use case: daily driver, photographer, gamer, student, professional. Definitive recommendation at end.`,
+    'mobile-news': `NEWS ANALYSIS: Start with the actual news. Then analyse: what this means for Indian buyers, how it changes the competitive landscape, India pricing estimate, who this is for, what to buy instead while waiting.`,
+  } as { [key: string]: string })[type] || `NEWS ANALYSIS: Write as informed mobile technology analysis for Indian buyers.`
 
-  const prompt = `You are Vijay Yadav, Senior Mobile Editor at The Tech Bharat. You have 11 years covering the Indian smartphone market. You write for Indian buyers — Delhi, Mumbai, Bengaluru, but also Patna, Indore, and Coimbatore. You are direct, occasionally wry, genuinely excited by good hardware, and specifically frustrated by marketing fluff.
+  const prompt = `You are Vijay Yadav, Senior Mobile Editor at The Tech Bharat (thetechbharat.com). You have 11 years covering the Indian smartphone market — Mumbai, Delhi, Bengaluru, but you also know buyers in Patna, Surat, Bhubaneswar. You are direct, occasionally wry, frustrated by marketing fluff, and genuinely excited when hardware is actually good. You are writing for Vijay's real editorial voice — not a generic tech blog.
 
-ARTICLE TO REWRITE:
+═══════════════════════════════════════
+ARTICLE TO REWRITE
+═══════════════════════════════════════
 Title: ${article.title}
-Type: ${articleType}
 Brand: ${article.brand || 'Unknown'}
-Current word count: ${wordCount} words
+Type: ${type}
+Current words: ${wc}
 
-CURRENT CONTENT (first 1500 chars):
-${(article.content || '').slice(0, 1500)}
+CURRENT CONTENT (first 2000 chars for context):
+${(article.content || '').slice(0, 2000)}
 
-PRODUCT STATUS: ${status.toUpperCase()}
-${statusFraming}
+═══════════════════════════════════════
+STATUS: ${status.toUpperCase()}
+${statusNote}
 
-ARTICLE TYPE INSTRUCTIONS:
-${selectedTypeInstruction}
+ARTICLE TYPE: ${typeGuide}
 
-BRAND-SPECIFIC REQUIREMENTS:
-${brandHints || 'Include India pricing in ₹, 5G band support for Jio/Airtel (n78), service centre availability, update policy.'}
+BRAND CONTEXT TO INCLUDE:
+${brandCtx}
 
-MANDATORY QUALITY REQUIREMENTS:
-1. MINIMUM 1600 words — Google AdSense rejects anything under 1000. This will be human-reviewed.
-2. BANNED PHRASES — never use: seamless, cutting-edge, revolutionary, robust, game-changer, state-of-the-art, boasts, packs a punch, noteworthy, "it is worth noting", "in conclusion", "furthermore", "in summary"
-3. AUTHENTIC VOICE: At least 3 personal opinion sentences. Use: "I think", "My honest take", "Personally", "In my experience with Indian phones", "What bothers me about this is"
-4. INDIA CONTEXT in every major section: pricing in ₹, Flipkart/Amazon, EMI options, 5G band compatibility (Jio n78, Airtel n78), service centre access, summer heat/dust durability
-5. NUMBERS AND DATA: specific specs, exact prices, benchmark scores if applicable — no vague claims
-6. FRAMING HONESTY: follow status rules above — no fake hands-on for pre-launch products
-7. COMPARISON: mention at least 2 competitors at similar price, with honest verdict
-8. Source note: add exactly this HTML at end:
+═══════════════════════════════════════
+ABSOLUTE REQUIREMENTS — EVERY ONE MUST BE MET
+═══════════════════════════════════════
+
+1. WORD COUNT: Minimum ${TARGET_WORD_COUNT} words. Count carefully. Short articles fail AdSense review.
+
+2. BANNED PHRASES — If any appear, the article is rejected:
+   seamless, cutting-edge, revolutionary, robust, game-changer, state-of-the-art, boasts, packs a punch, noteworthy, "it is worth noting", "in conclusion", "to summarize", "furthermore", "moreover", "without further ado", "in today's fast-paced world", "in the realm of"
+
+3. AUTHENTIC VOICE — Required elements:
+   - At least 4 sentences starting with "I think", "My honest take", "Personally", "In my view", "What frustrates me about this"
+   - At least 1 moment of genuine enthusiasm about something specific
+   - At least 1 honest criticism or disappointment
+   - Reference to Indian use context (heat/monsoon/dust, service centres, EMI, 5G on Jio/Airtel)
+
+4. CONCRETE DATA — Every claim needs a number:
+   - Prices in ₹ (not just "affordable")
+   - Battery mAh + charging wattage + estimated charge time
+   - Specific processor name + generation
+   - Camera megapixels + OIS yes/no + specific scenario (night shot, portrait)
+   - 5G bands: confirm n78 (3500MHz) for Jio/Airtel
+   - Software update years (exact number, not "regular updates")
+
+5. COMPETITORS — Must name at least 2 alternatives at similar price with honest comparison
+
+6. STRUCTURE (each section 2-4 paragraphs minimum):
+   • Opening paragraph: Start with the most surprising or interesting specific fact
+   • Full specs breakdown: real-world meaning, not spec sheet copy
+   • India pricing analysis: actual ₹ cost + EMI + competitor prices
+   • Camera: specific scenarios — WhatsApp photos, Instagram reels, night shots, portraits
+   • Performance: BGMI at which fps, app switching, heating under load
+   • Battery: estimated hours, charge time, daily use survival
+   • Software: update years, UI bloat level, India-relevant features
+   • Who should buy / Who should skip / What to buy instead
+   • FAQ: 4 questions Indian buyers actually ask
+   • Source note (exact HTML below)
+
+7. SOURCE NOTE (paste exactly):
 ${sourceNote}
 
-MANDATORY STRUCTURE:
-Section 1 (200 words): Opening — start with the most interesting specific thing about this product, not generic intro
-Section 2 (250 words): Full specs with real-world meaning (not spec sheet copy-paste — explain what each spec MEANS)  
-Section 3 (200 words): India pricing analysis — actual ₹ cost, EMI breakdown, competitor prices
-Section 4 (200 words): Camera quality (real results or honest pre-launch estimate based on sensor specs)
-Section 5 (200 words): Battery life and charging (real results or honest estimate)
-Section 6 (200 words): Who should buy this / who should skip / what to buy instead
-Section 7 (150 words): FAQ section with 3-4 questions India buyers actually ask (price, 5G, service, updates)
-Section 8: Source note (per status rules)
+8. HTML ONLY: Use <p>, <h2>, <h3>, <table>, <tr>, <td>, <th>, <strong>, <ul>, <li>
+   NO markdown, NO code blocks, NO backticks in output
 
-HTML FORMATTING ONLY: use <p>, <h2>, <h3>, <table>, <strong>, <ul>, <li>. No markdown.
+═══════════════════════════════════════
+OUTPUT FORMAT
+═══════════════════════════════════════
+Return ONLY valid JSON. No markdown. No wrapper text. No explanation.
 
-Return ONLY valid JSON with NO markdown wrapper:
 {
-  "title": "specific title with model name — question or opinion format if appropriate, never truncated",
-  "summary": "3 specific sentences about this exact product with real numbers. Never generic. Never truncated with ...",
-  "bullets": ["5 bullets with specific numbers — no vague claims", "each bullet under 12 words", "no duplicate information across bullets"],
-  "fullContent": "MINIMUM 1600 words of HTML content per structure above",
-  "tags": ["6 specific SEO tags: model name, brand, category, India, price range, feature"]
+  "title": "Full title — never truncated. Format: [Product Name] [Key Differentiator]: [Question/Opinion for Indian Buyers]. Example: 'Nothing Phone (4a) Pro at ₹35,000: Mid-Range Champion or Overpriced Gimmick?'",
+  "summary": "3 complete sentences. Each contains a specific number or comparison. No truncation with ...",
+  "bullets": [
+    "Specific bullet with number — e.g. '50MP OIS camera, f/1.88, confirmed n78 5G for Jio'",
+    "Specific bullet with comparison — e.g. '₹34,999 price: Rs 5K less than OnePlus Nord 4'",
+    "Specific bullet with data — e.g. '4,500mAh battery, 45W charging — 0-50% in ~35 min'",
+    "Update commitment bullet — e.g. '3 years OS updates, 4 years security patches confirmed'",
+    "Honest assessment bullet — e.g. 'Limited Nothing service network — major metros only'"
+  ],
+  "fullContent": "MINIMUM ${TARGET_WORD_COUNT} WORDS of HTML. All sections present. Source note at end.",
+  "tags": ["Nothing Phone 4a Pro", "Nothing Phone India price", "mid-range phone India 2026", "Nothing Phone review", "₹35000 phone India", "best phone under 35000"]
 }`
 
   const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
+    method:  'POST',
     headers: {
-      'Content-Type':    'application/json',
-      'x-api-key':       ANTHROPIC_API_KEY,
+      'Content-Type':      'application/json',
+      'x-api-key':         ANTHROPIC_API_KEY,
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
@@ -167,46 +204,49 @@ Return ONLY valid JSON with NO markdown wrapper:
     }),
   })
 
-  if (!res.ok) throw new Error(`Anthropic API ${res.status}: ${await res.text()}`)
-  const data = await res.json()
-  const raw  = data.content.filter((b: {type:string}) => b.type === 'text').map((b: {text:string}) => b.text).join('')
-  const clean = raw.replace(/^```json\s*/m, '').replace(/```\s*$/m, '').trim()
-  const match = clean.match(/\{[\s\S]*\}/)
-  if (!match) throw new Error('No JSON in response')
-  const parsed = JSON.parse(match[0])
+  if (!res.ok) throw new Error(`Claude API ${res.status}: ${await res.text()}`)
 
-  if (!parsed.fullContent || parsed.fullContent.length < 500) {
-    throw new Error('Response too short — likely API timeout')
+  const data = await res.json()
+  const raw  = data.content.filter((b: any) => b.type === 'text').map((b: any) => b.text).join('')
+
+  // Robust JSON extraction
+  const jsonMatch = raw.match(/\{[\s\S]*\}/)
+  if (!jsonMatch) throw new Error('No JSON in response')
+  const parsed = JSON.parse(jsonMatch[0])
+
+  if (!parsed.fullContent || parsed.fullContent.length < 800) {
+    throw new Error(`Content too short: ${parsed.fullContent?.length || 0} chars`)
   }
 
-  const wc = (parsed.fullContent || '').replace(/<[^>]*>/g, '').split(/\s+/).filter(Boolean).length
-  const rt = Math.max(5, Math.ceil(wc / 220))
+  const wc2 = ((parsed.fullContent || '').replace(/<[^>]*>/g, '').match(/\b\w+\b/g) || []).length
+  const rt  = Math.max(5, Math.ceil(wc2 / 220))
 
-  // Clean title — never truncate, never add suffix
   const cleanTitle = (parsed.title || article.title)
     .replace(/\s*\|\s*The Tech Bharat\s*$/i, '')
     .trim()
 
-  // Accurate word count for schema
-  const actualWordCount = wc
+  const cleanSummary = (parsed.summary || '')
+    .replace(/<[^>]*>/g, '')
+    .trim()
 
   return {
     ...article,
     title:          cleanTitle,
-    summary:        (parsed.summary || '').replace(/<[^>]*>/g, '').trim(),
-    bullets:        Array.isArray(parsed.bullets) ? parsed.bullets : article.bullets || [],
+    summary:        cleanSummary,
+    bullets:        Array.isArray(parsed.bullets) ? parsed.bullets.slice(0, 5) : article.bullets,
     content:        parsed.fullContent,
-    tags:           Array.isArray(parsed.tags)    ? parsed.tags    : article.tags || [],
+    tags:           Array.isArray(parsed.tags) ? parsed.tags.slice(0, 8) : article.tags,
     readTime:       rt,
-    wordCount:      actualWordCount,
-    // Full titles — no truncation
-    seoTitle:       cleanTitle,
-    seoDescription: (parsed.summary || '').replace(/<[^>]*>/g, '').trim().slice(0, 155),
+    wordCount:      wc2,
+    seoTitle:       cleanTitle,                       // Full title — never truncated
+    seoDescription: cleanSummary.slice(0, 155),       // First 155 chars of summary
     updatedDate:    new Date().toISOString(),
     lastRewritten:  new Date().toISOString(),
+    rewriteVersion: 2,                               // Track rewrite version
   }
 }
 
+// ── API HANDLER ───────────────────────────────────────────────────────────────
 export async function POST(request: NextRequest) {
   const cookie = request.cookies.get('__tb_admin')?.value
   if (!cookie?.startsWith('TBOK:')) {
@@ -217,34 +257,42 @@ export async function POST(request: NextRequest) {
   const targetSlug = searchParams.get('slug')
   const forceAll   = searchParams.get('all') === '1'
   const typeFilter = searchParams.get('type') || ''
-  const minWords   = parseInt(searchParams.get('minwords') || '0') || MIN_WORD_COUNT
+  const batchMode  = searchParams.get('batch') === '1'
+  const offset     = parseInt(searchParams.get('offset') || '0')
+  const limit      = parseInt(searchParams.get('limit')  || '20')
 
   const articles = await getAllArticlesAsync() as any[]
 
   let toRewrite: any[] = []
 
   if (targetSlug) {
+    // Single article
     const found = articles.find((a: any) => a.slug === targetSlug)
     if (!found) return NextResponse.json({ error: `Not found: ${targetSlug}` }, { status: 404 })
     toRewrite = [found]
+
   } else if (forceAll) {
-    toRewrite = typeFilter ? articles.filter((a: any) => a.type === typeFilter) : articles
-  } else {
-    // Auto: thin + duplicate language + fake hands-on + never rewritten
+    // Force rewrite ALL — respects type filter
     let pool = typeFilter ? articles.filter((a: any) => a.type === typeFilter) : articles
-    toRewrite = pool.filter((a: any) => {
-      if (isArticleThin(a))          return true
-      if (hasDuplicateLanguage(a))   return true
-      if (hasFakeHandsOn(a))         return true
-      return false
-    })
+    // Batch mode: process offset/limit slice for pagination
+    toRewrite = batchMode ? pool.slice(offset, offset + limit) : pool
+
+  } else {
+    // Smart mode: only articles that actually need work
+    let pool = typeFilter ? articles.filter((a: any) => a.type === typeFilter) : articles
+    toRewrite = pool.filter((a: any) => needsRewrite(a) || !a.lastRewritten)
+    if (batchMode) toRewrite = toRewrite.slice(offset, offset + limit)
   }
 
   if (toRewrite.length === 0) {
+    const total = typeFilter ? articles.filter((a: any) => a.type === typeFilter).length : articles.length
     return NextResponse.json({
       success: true,
-      message: 'No articles need rewriting — all meet quality standards',
-      checked: articles.length,
+      message: forceAll
+        ? 'No articles in this batch'
+        : 'No articles need rewriting — all meet quality standards',
+      checked: total,
+      total:   articles.length,
     })
   }
 
@@ -255,28 +303,46 @@ export async function POST(request: NextRequest) {
   for (let i = 0; i < toRewrite.length; i++) {
     const article = toRewrite[i]
     try {
-      console.log(`[Rewrite] ${i+1}/${toRewrite.length}: ${article.slug}`)
-      const improved = await rewriteArticle(article)
+      console.log(`[Rewrite] ${i+1}/${toRewrite.length}: ${article.slug} (${(article.content || '').replace(/<[^>]*>/g, '').split(/\s+/).filter(Boolean).length} words)`)
+      const improved = await rewriteArticleWithClaude(article)
+      const newWc = improved.wordCount || 0
+      console.log(`[Rewrite] ✅ ${article.slug}: ${newWc} words`)
       updatedMap.set(article.id, improved)
       rewritten.push(article.slug)
+      // Rate limit: 2.5s between articles to avoid API throttling
       if (i < toRewrite.length - 1) await new Promise(r => setTimeout(r, 2500))
     } catch (err) {
       const msg = (err as Error).message
       errors.push(`${article.slug}: ${msg}`)
-      console.error(`[Rewrite] Failed ${article.slug}:`, msg)
+      console.error(`[Rewrite] ❌ ${article.slug}:`, msg)
     }
   }
 
-  const finalArticles = articles.map((a: any) =>
-    updatedMap.has(a.id) ? updatedMap.get(a.id) : a
-  )
-  await saveArticlesAsync(finalArticles)
+  // Save all rewrites back to Redis
+  if (updatedMap.size > 0) {
+    const finalArticles = articles.map((a: any) =>
+      updatedMap.has(a.id) ? updatedMap.get(a.id) : a
+    )
+    await saveArticlesAsync(finalArticles)
+  }
+
+  const nextOffset = offset + limit
+  const hasMore    = forceAll && nextOffset < (typeFilter ? articles.filter((a: any) => a.type === typeFilter).length : articles.length)
 
   return NextResponse.json({
-    success:   true,
-    rewritten: rewritten.length,
-    errors:    errors.length,
-    slugs:     rewritten,
-    errorList: errors,
+    success:    true,
+    rewritten:  rewritten.length,
+    errors:     errors.length,
+    slugs:      rewritten,
+    errorList:  errors,
+    total:      articles.length,
+    // Batch pagination info
+    ...(batchMode && {
+      offset,
+      limit,
+      nextOffset: hasMore ? nextOffset : null,
+      nextUrl:    hasMore ? `/api/admin/rewrite-thin?all=1&batch=1&offset=${nextOffset}&limit=${limit}` : null,
+      hasMore,
+    }),
   })
 }

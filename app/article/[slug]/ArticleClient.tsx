@@ -301,6 +301,9 @@ export default function ArticleClient({ article, similar, slug }: ArticleClientP
                 suppressHydrationWarning
                 dangerouslySetInnerHTML={{ __html: addInternalLinks(
                   (liveArticle.content || '')
+                    // Strip embedded JSON-LD schema — page-level schema handles this properly
+                    .replace(/<script[^>]*type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi, '')
+                    // Strip h1 tags (replace with h2 — page already has one h1)
                     .replace(/<h1(\s[^>]*)?>/gi, '<h2$1>')
                     .replace(/<\/h1>/gi, '</h2>'),
                   slug,
