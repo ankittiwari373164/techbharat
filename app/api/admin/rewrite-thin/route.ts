@@ -190,10 +190,21 @@ Return ONLY this JSON (no wrapper, no explanation):
   }
 }
 
+// ── AUTH HELPER: Check token from cookie or query param ────────────────────────
+function validateAuth(request: NextRequest): boolean {
+  const { searchParams } = new URL(request.url)
+  
+  // Try cookie first (browser), then query param (automation)
+  const token = request.cookies.get('__tb_admin')?.value || searchParams.get('token')
+  
+  return token?.startsWith('TBOK:') ?? false
+}
+
 // ── GET: returns slugs that need rewriting ────────────────────────────────────
 export async function GET(request: NextRequest) {
-  const cookie = request.cookies.get('__tb_admin')?.value
-  if (!cookie?.startsWith('TBOK:')) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
+  if (!validateAuth(request)) {
+    return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
+  }
 
   const { searchParams } = new URL(request.url)
   const forceAll   = searchParams.get('all') === '1'
@@ -219,8 +230,9 @@ export async function GET(request: NextRequest) {
 
 // ── POST: rewrites EXACTLY ONE article ────────────────────────────────────────
 export async function POST(request: NextRequest) {
-  const cookie = request.cookies.get('__tb_admin')?.value
-  if (!cookie?.startsWith('TBOK:')) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
+  if (!validateAuth(request)) {
+    return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
+  }
 
   const { searchParams } = new URL(request.url)
   const slug = searchParams.get('slug')
