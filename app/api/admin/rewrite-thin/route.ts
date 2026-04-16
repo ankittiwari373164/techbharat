@@ -191,18 +191,26 @@ Return ONLY this JSON (no wrapper, no explanation):
 }
 
 // ── AUTH HELPER: Check token from cookie or query param ────────────────────────
-function validateAuth(request: NextRequest): boolean {
-  const { searchParams } = new URL(request.url)
+function validateAuth(request: NextRequest): string | null {
+  const url = new URL(request.url)
+  const searchParams = url.searchParams
   
   // Try cookie first (browser), then query param (automation)
-  const token = request.cookies.get('__tb_admin')?.value || searchParams.get('token')
+  const cookieToken = request.cookies.get('__tb_admin')?.value
+  const queryToken = searchParams.get('token')
+  const token = cookieToken || queryToken
   
-  return token?.startsWith('TBOK:') ?? false
+  if (token?.startsWith('TBOK:')) {
+    return token
+  }
+  
+  return null
 }
 
 // ── GET: returns slugs that need rewriting ────────────────────────────────────
 export async function GET(request: NextRequest) {
-  if (!validateAuth(request)) {
+  const token = validateAuth(request)
+  if (!token) {
     return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
   }
 
@@ -230,7 +238,8 @@ export async function GET(request: NextRequest) {
 
 // ── POST: rewrites EXACTLY ONE article ────────────────────────────────────────
 export async function POST(request: NextRequest) {
-  if (!validateAuth(request)) {
+  const token = validateAuth(request)
+  if (!token) {
     return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
   }
 
