@@ -221,7 +221,10 @@ const actualWordCount = plainText ? (plainText.match(/\b\w+\b/g) || []).length :
 
   // FAQ schema — STRICT quality gate
   const buildFaqSchema = (): object | null => {
-    const articleContent = (article as any).content || ''
+   const articleContent =
+  typeof (article as any).content === 'string'
+    ? (article as any).content
+    : ''
     // Only extract from a dedicated FAQ section (after h2 containing "FAQ" or "Question")
     const faqSectionMatch = articleContent.match(/<h2[^>]*>[^<]*(FAQ|Frequently|Questions)[^<]*<\/h2>([\s\S]*?)(?=<h2|$)/i)
     const searchIn = faqSectionMatch ? faqSectionMatch[2] : articleContent
@@ -252,8 +255,14 @@ const actualWordCount = plainText ? (plainText.match(/\b\w+\b/g) || []).length :
   }
 
   // Only generate FAQPage if content doesn't already have one embedded
-  const contentHasFAQ = ((article as any).content || '').includes('"@type":"FAQPage"') ||
-                         ((article as any).content || '').includes("'@type':'FAQPage'")
+  const safeContentForFAQ =
+  typeof (article as any).content === 'string'
+    ? (article as any).content
+    : ''
+
+const contentHasFAQ =
+  safeContentForFAQ.includes('"@type":"FAQPage"') ||
+  safeContentForFAQ.includes("'@type':'FAQPage'")
   const faqSchema = contentHasFAQ ? null : buildFaqSchema()
 
   // Product schema for branded articles — STRICT quality gate

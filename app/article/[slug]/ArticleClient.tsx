@@ -284,7 +284,7 @@ export default function ArticleClient({ article, similar, slug }: ArticleClientP
                 className="article-content"
                 suppressHydrationWarning
                 dangerouslySetInnerHTML={{ __html: addInternalLinks(
-                  (liveArticle.content || '')
+                  (typeof liveArticle.content === 'string' ? liveArticle.content : '')
                     .replace(/<script[^>]*type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi, '')
                     .replace(/<h1(\s[^>]*)?>/gi, '<h2$1>')
                     .replace(/<\/h1>/gi, '</h2>'),
