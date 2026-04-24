@@ -12,7 +12,13 @@ export const revalidate = 60
 
 export default async function ReviewsPage() {
   const all      = await getAllArticlesAsync() as any[]
-  const reviews  = all.filter((a: any) => a.type === 'review')
+
+  // ✅ ONLY CHANGE: filter high-quality review articles (with safe fallback)
+  const reviews  = all.filter((a: any) => {
+    const quality = a.contentQuality ?? 7
+    return a.type === 'review' && quality >= 6 && !a.isLowValue
+  })
+
   const featured = reviews[0]
   const rest     = reviews.slice(1)
 

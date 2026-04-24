@@ -5,6 +5,8 @@
 //  - Image URLs validated to be absolute and non-empty
 //  - Added noindex signal for /disclaimer (thin content)
 //  - Better cache headers
+//  - ✅ NEW: Filters OUT low-quality articles from sitemap (CRITICAL SEO FIX)
+
 export const dynamic = 'force-dynamic'
 
 const SITE_URL = process.env.SITE_URL || 'https://thetechbharat.com'
@@ -28,13 +30,11 @@ function entryXml(entry: SitemapEntry): string {
   out += `    <changefreq>${entry.changefreq}</changefreq>\n`
   out += `    <priority>${entry.priority}</priority>\n`
   if (entry.image) {
-    // Image URLs must be absolute — only include if valid
     const imgUrl = entry.image.startsWith('http') ? entry.image : `${SITE_URL}${entry.image.startsWith('/') ? '' : '/'}${entry.image}`
-    // Skip placeholder/empty/broken images
     const isValid = imgUrl &&
       imgUrl !== SITE_URL &&
       imgUrl !== SITE_URL + '/' &&
-      !imgUrl.includes('/phone-images/') && // local phone images not publicly accessible as canonical
+      !imgUrl.includes('/phone-images/') &&
       entry.image.length > 5
     if (isValid) {
       out += `    <image:image>\n      <image:loc>${esc(imgUrl)}</image:loc>\n`
@@ -49,8 +49,6 @@ function entryXml(entry: SitemapEntry): string {
 export async function GET() {
   const today = new Date().toISOString().split('T')[0]
 
-  // Static pages with real content — excludes thin policy pages from sitemap
-  // (they still exist but don't need sitemap priority)
   const staticPages: SitemapEntry[] = [
     { url: '/',              priority: '1.0', changefreq: 'hourly',  lastmod: today },
     { url: '/mobile-news',   priority: '0.9', changefreq: 'hourly',  lastmod: today },
@@ -59,7 +57,6 @@ export async function GET() {
     { url: '/web-stories',   priority: '0.8', changefreq: 'daily',   lastmod: today },
     { url: '/about',         priority: '0.6', changefreq: 'monthly', lastmod: today },
     { url: '/author',        priority: '0.7', changefreq: 'monthly', lastmod: today },
-    // Pillar/evergreen pages — high SEO value
     { url: '/best-smartphones-india',           priority: '0.85', changefreq: 'weekly', lastmod: today },
     { url: '/best-camera-phones-india',         priority: '0.85', changefreq: 'weekly', lastmod: today },
     { url: '/best-gaming-phones-india',         priority: '0.85', changefreq: 'weekly', lastmod: today },
@@ -79,15 +76,21 @@ export async function GET() {
   try {
     const { getAllArticlesAsync } = await import('@/lib/store')
     const articles = await getAllArticlesAsync()
-    articleEntries = articles.map(a => ({
-      // CRITICAL FIX: Use /<slug> NOT /article/<slug> — canonical URL
-      url:        `/${a.slug}`,
-      lastmod:    ((a as { updatedDate?: string }).updatedDate || a.publishDate || today).split('T')[0],
-      priority:   a.type === 'review' ? '0.85' : a.type === 'compare' ? '0.8' : '0.75',
-      changefreq: 'weekly',
-      image:      (a as { featuredImage?: string }).featuredImage || '',
-      title:      a.title || '',
-    }))
+
+    // ✅ CRITICAL FIX: ONLY include high-quality articles
+    articleEntries = articles
+      .filter((a: any) => {
+        const quality = a.contentQuality ?? 5
+        return quality >= 6 && !a.isLowValue
+      })
+      .map((a: any) => ({
+        url:        `/${a.slug}`,
+        lastmod:    (a.updatedDate || a.publishDate || today).split('T')[0],
+        priority:   a.type === 'review' ? '0.85' : a.type === 'compare' ? '0.8' : '0.75',
+        changefreq: 'weekly',
+        image:      a.featuredImage || '',
+        title:      a.title || '',
+      }))
   } catch { /* no articles yet */ }
 
   try {

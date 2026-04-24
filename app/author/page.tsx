@@ -15,7 +15,12 @@ export const metadata: Metadata = {
 
 export default async function AuthorPage() {
   const allArticles = await getAllArticlesAsync()
-  const recent = allArticles.slice(0, 6)
+  const recent = allArticles
+  .filter((a: any) => {
+    const quality = a.contentQuality ?? 5
+    return quality >= 6 && !a.isLowValue
+  })
+  .slice(0, 6)
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">

@@ -5,6 +5,13 @@ export const metadata: Metadata = {
   title: 'About The Tech Bharat – India\'s Independent Mobile Tech News',
   description: 'The Tech Bharat is India\'s independent mobile technology news site. Founded by Vijay Yadav, a journalist with 11 years covering Indian smartphones. No brand affiliations. No paid reviews.',
   alternates: { canonical: 'https://thetechbharat.com/about' },
+  openGraph: {
+    title: 'About The Tech Bharat – India\'s Independent Mobile Tech News',
+    description: 'The Tech Bharat is India\'s independent mobile technology news site. Founded by Vijay Yadav, a journalist with 11 years covering Indian smartphones.',
+    url: 'https://thetechbharat.com/about',
+    siteName: 'The Tech Bharat',
+    type: 'website',
+  }
 }
 
 export default function AboutPage() {

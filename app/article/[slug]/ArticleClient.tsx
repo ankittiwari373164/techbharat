@@ -5,86 +5,70 @@ import type { Article } from '@/lib/store'
 import ArticleCard from '@/components/ArticleCard'
 import PillarNav from '@/components/PillarNav'
 
-// ── AUTO INTERNAL LINKER ──────────────────────────────────────────
+// ── IMPROVED INTERNAL LINKER (2-3 LINKS MAX, NATURAL FLOW) ────────
 function getInternalLinkMap(articleBrand?: string): [RegExp, string, string][] {
-  // Brand-specific pillar links — injected FIRST so they take priority
+  // Brand-specific pillar links (highest priority)
   const brandPillarLinks: [RegExp, string, string][] = []
-
   const brand = (articleBrand || '').toLowerCase()
 
   if (brand === 'samsung') {
-    brandPillarLinks.push([/\b(Samsung|Galaxy)\b/g, '/best-samsung-phones-india', 'Best Samsung Smartphones India 2026'])
+    brandPillarLinks.push([/\b(Samsung Galaxy|Galaxy S|Galaxy A|Galaxy M)\b/g, '/best-samsung-phones-india', 'Best Samsung Phones India 2026'])
   } else if (brand === 'apple' || brand === 'iphone') {
-    brandPillarLinks.push([/\b(Apple|iPhone|iOS)\b/g, '/best-apple-iphone-india', 'Best iPhones in India 2026'])
+    brandPillarLinks.push([/\b(iPhone|Apple)\b/g, '/best-apple-iphone-india', 'Best iPhones in India 2026'])
   } else if (brand === 'oneplus') {
-    brandPillarLinks.push([/\b(OnePlus|OxygenOS|Nord)\b/g, '/best-oneplus-phones-india', 'Best OnePlus Phones India 2026'])
+    brandPillarLinks.push([/\bOnePlus\b/g, '/best-oneplus-phones-india', 'Best OnePlus Phones India 2026'])
+  } else if (brand === 'google' || brand === 'pixel') {
+    brandPillarLinks.push([/\b(Pixel|Google Pixel)\b/g, '/best-google-phones-india', 'Best Google Phones India 2026'])
   }
 
   return [
     ...brandPillarLinks,
-    // ── Brand news links (non-brand-pillar brands) ─────────────────────────
-    [/\bXiaomi\b/g,       '/mobile-news?brand=Xiaomi',   'Latest Xiaomi news'],
-    [/\bRealme\b/g,       '/mobile-news?brand=Realme',   'Latest Realme news'],
-    [/\bVivo\b/g,         '/mobile-news?brand=Vivo',     'Latest Vivo news'],
-    [/\bOPPO\b/g,         '/mobile-news?brand=OPPO',     'Latest OPPO news'],
-    [/\biQOO\b/g,         '/mobile-news?brand=iQOO',     'Latest iQOO news'],
-    [/\bPoco\b/g,         '/mobile-news?brand=Poco',     'Latest Poco news'],
-    [/\bRedmi\b/g,        '/mobile-news?brand=Xiaomi',   'Latest Redmi news'],
-    [/\bMotorola\b/g,     '/mobile-news?brand=Motorola', 'Latest Motorola news'],
-    [/\bNothing\b/g,      '/mobile-news?brand=Nothing',  'Latest Nothing Phone news'],
-    // ── Pillar page topic links ────────────────────────────────────────────
-    [/\b(buying guide|how to choose a (smartphone|phone)|which phone to buy)\b/gi, '/smartphone-buying-guide-india', 'Smartphone Buying Guide India 2026'],
-    [/\b(best (smartphones?|phones?) (in India|for India))\b/gi,                   '/best-smartphones-india',        'Best Smartphones India 2026'],
-    [/\b(best camera phone|top camera phone|photography phone)s?\b/gi,             '/best-camera-phones-india',      'Best Camera Phones India 2026'],
-    [/\b(gaming phone|BGMI phone|best phone for gaming)s?\b/gi,                    '/best-gaming-phones-india',      'Best Gaming Phones India 2026'],
-    [/\b(battery backup|long battery|best battery phone)s?\b/gi,                   '/best-battery-backup-phones-india','Best Battery Phones India 2026'],
-    [/\b(best 5G phone|top 5G smartphone)s?\b/gi,                                  '/best-5g-phones-india',          'Best 5G Phones India 2026'],
-    [/\b(flagship phone|premium smartphone|best flagship)s?\b/gi,                  '/best-flagship-phones-india',    'Best Flagship Phones India 2026'],
-    [/\b(budget phone under|best phone under ₹)\b/gi,                             '/best-budget-phones-india',      'Best Budget Phones India 2026'],
-    [/\b(phone comparison|compare phone)s?\b/gi,                                   '/phone-comparison-guide-india',  'Phone Comparison Guide India'],
-    [/\b(battery health|battery degradation|charging habit)s?\b/gi,                '/android-battery-health-guide',  'Android Battery Health Guide'],
-    // ── Content section links ─────────────────────────────────────────────
-    [/\b(phone review|hands-on|first look)s?\b/gi, '/reviews',     'Phone reviews India'],
-    [/\b(compare|head-to-head|versus)\b/gi,        '/compare',     'Compare phones India'],
-    [/\b(Flipkart|Amazon India)\b/g,               '/mobile-news', 'Best phone deals India'],
-    [/\b(Jio|Airtel)\b/g,                          '/mobile-news', 'Latest 5G news India'],
-    [/\b(web stor(?:y|ies))\b/gi,                  '/web-stories', 'Web Stories'],
+    // Buying guide — general (single instance only)
+    [/\b(buying guide|how to choose a phone|which phone to buy)\b/i, '/smartphone-buying-guide-india', 'Smartphone Buying Guide India 2026'],
+    // Price-specific guides
+    [/\b(best phone under ₹30000|₹30k|₹30,000)\b/i, '/best-budget-phones-india', 'Best Budget Phones India 2026'],
+    [/\b(best flagship|premium smartphone|flagship phone)\b/i, '/best-flagship-phones-india', 'Best Flagship Phones India 2026'],
+    [/\b(best 5G phone|5G smartphones?)\b/i, '/best-5g-phones-india', 'Best 5G Phones India 2026'],
+    [/\b(best camera phone|camera performance)\b/i, '/best-camera-phones-india', 'Best Camera Phones India 2026'],
+    [/\b(gaming phone|BGMI|game performance)\b/i, '/best-gaming-phones-india', 'Best Gaming Phones India 2026'],
+    // Content section links
+    [/\b(phone reviews?|hands-on|first look)\b/i, '/reviews', 'Phone Reviews India'],
+    [/\b(compare|comparison|vs|versus)\b/i, '/compare', 'Compare Phones India'],
   ]
 }
 
 function addInternalLinks(html: string, _currentSlug: string, articleBrand?: string): string {
   if (!html || typeof html !== 'string') return ''
 
-  // Split on ALL tags — including script, style, anchor tags
   const parts = html.split(/(<[^>]+>)/g)
   const linked = new Set<string>()
   let insideAnchor = false
   let insideScript = false
   let insideStyle  = false
-  let depth = 0  // anchor depth tracker
+  let depth = 0
+  let linkCount = 0
+  const MAX_LINKS = 3
 
   return parts.map((part) => {
-    // Track script/style blocks — never touch text inside them
     if (/^<script[\s>]/i.test(part))  { insideScript = true;  return part }
     if (/^<\/script>/i.test(part))    { insideScript = false; return part }
     if (/^<style[\s>]/i.test(part))   { insideStyle  = true;  return part }
     if (/^<\/style>/i.test(part))     { insideStyle  = false; return part }
     if (insideScript || insideStyle)  return part
-
-    // Track anchor nesting depth — never create nested anchors
-    if (/^<a[\s>]/i.test(part))  { insideAnchor = true; depth++; return part }
-    if (/^<\/a>/i.test(part))    { depth = Math.max(0, depth - 1); if (depth === 0) insideAnchor = false; return part }
-    if (part.startsWith('<'))    return part  // any other tag — pass through
-    if (insideAnchor)            return part  // inside anchor — don't double-wrap
+    if (/^<a[\s>]/i.test(part))       { insideAnchor = true; depth++; return part }
+    if (/^<\/a>/i.test(part))         { depth = Math.max(0, depth - 1); if (depth === 0) insideAnchor = false; return part }
+    if (part.startsWith('<'))         return part
+    if (insideAnchor)                 return part
 
     let text = part
     for (const [regex, url, title] of getInternalLinkMap(articleBrand)) {
-      if (linked.has(url)) continue
+      if (linked.has(url) || linkCount >= MAX_LINKS) continue
       regex.lastIndex = 0
       const newText = text.replace(regex, (match) => {
-        if (linked.has(url)) return match  // one link per destination URL
+        if (linked.has(url) || linkCount >= MAX_LINKS) return match
         linked.add(url)
-        return `<a href="${url}" title="${title}" class="internal-link text-[#1a3a5c] font-semibold hover:text-[#d4220a] transition-colors underline decoration-dotted">${match}</a>`
+        linkCount++
+        return `<a href="${url}" title="${title}" class="internal-link text-[#1a3a5c] font-semibold hover:text-[#d4220a] transition-colors underline decoration-dotted" rel="internal">${match}</a>`
       })
       if (newText !== text) text = newText
     }
@@ -98,7 +82,7 @@ interface ArticleClientProps {
   slug: string
 }
 
-// Brand detection — defined outside component to prevent hydration mismatch
+// Brand detection map
 const BRAND_DETECT_MAP: [RegExp, string][] = [
   [/\bSamsung\b/i, 'Samsung'], [/\b(Apple|iPhone)\b/i, 'Apple'],
   [/\b(Xiaomi|Redmi)\b/i, 'Xiaomi'], [/\bOnePlus\b/i, 'OnePlus'],
@@ -119,25 +103,24 @@ export default function ArticleClient({ article, similar, slug }: ArticleClientP
 
   const similarArticles = similar as Article[]
 
-  // ── Defensive data normalisation (Redis may return nulls) ──────────────
-  // Filter out local /phone-images/ fallbacks and empty strings — only use real proxy URLs
+  // Defensive: filter out local fallbacks, only use real proxy URLs
   const safeImages = (Array.isArray(liveArticle.images) ? liveArticle.images : [])
     .filter((img: string) => img && !img.startsWith('/phone-images/') && !img.includes('picsum'))
 
-  // Featured image: use first valid image, skip local fallbacks
   const featuredImg = (() => {
     const fi = liveArticle.featuredImage || ''
     if (fi && !fi.startsWith('/phone-images/') && !fi.includes('picsum')) return fi
     if (safeImages[0]) return safeImages[0]
     return 'https://thetechbharat.com/og-image.jpg'
   })()
+  
   const safeBullets   = Array.isArray(liveArticle.bullets)               ? liveArticle.bullets               : []
   const safeTags      = Array.isArray(liveArticle.tags)                  ? liveArticle.tags                  : []
   const safeReviews   = Array.isArray(liveArticle.reviews)               ? liveArticle.reviews               : []
   const safeQSBullets = Array.isArray(liveArticle.quickSummary?.bullets) ? liveArticle.quickSummary!.bullets : []
   const safeQSBrand   = liveArticle.quickSummary?.brand || liveArticle.brand || ''
 
-  // Fix: if stored brand is generic 'Mobile', detect from title
+  // Brand resolution: detect from title if generic 'Mobile'
   const resolvedBrand = (() => {
     if (liveArticle.brand && liveArticle.brand !== 'Mobile') return liveArticle.brand
     for (const [rx, name] of BRAND_DETECT_MAP) {
@@ -145,10 +128,9 @@ export default function ArticleClient({ article, similar, slug }: ArticleClientP
     }
     return liveArticle.brand || 'Mobile'
   })()
-  const safeQSDate    = liveArticle.quickSummary?.date  || ''
+  const safeQSDate = liveArticle.quickSummary?.date || ''
 
-  // Format date without locale — avoids Node.js vs browser hydration mismatch
-  // Use UTC methods to avoid server(UTC)/client(IST) timezone mismatch → hydration error
+  // Date formatting without locale issues
   const pubDate = liveArticle.publishDate
     ? (() => {
         const d = new Date(liveArticle.publishDate)
@@ -187,7 +169,9 @@ export default function ArticleClient({ article, similar, slug }: ArticleClientP
             <nav className="font-sans text-xs text-muted mb-4 flex items-center gap-2">
               <Link href="/" className="hover:text-[#d4220a]">Home</Link>
               <span>/</span>
-              <Link href={`/${liveArticle.type}`} className="hover:text-[#d4220a] capitalize">{liveArticle.type === 'review' ? 'Hands-On' : liveArticle.category}</Link>
+              <Link href={`/${liveArticle.type}`} className="hover:text-[#d4220a] capitalize">
+                {liveArticle.type === 'review' ? 'Hands-On' : liveArticle.category}
+              </Link>
               <span>/</span>
               <span className="text-ink line-clamp-1">{liveArticle.title}</span>
             </nav>
@@ -286,31 +270,28 @@ export default function ArticleClient({ article, similar, slug }: ArticleClientP
               </div>
             )}
 
-            {/* Full article content — always visible for crawlers, AdSense, and users */}
+            {/* Full article content */}
             <div className="article-body-full">
-              {/* Inline image after intro */}
+              {/* Inline images */}
               {safeImages[1] && (
                 <div className="relative my-6 overflow-hidden" style={{ paddingBottom: '50%' }}>
                   <img src={safeImages[1]} alt={`${liveArticle.title} — detailed view`} width={800} height={450} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}} loading="lazy" onError={(e)=>{(e.target as HTMLImageElement).src="https://thetechbharat.com/og-image.jpg"}} />
                 </div>
               )}
 
-              {/* Full Content — strip any <h1> tags (page already has one H1 in header) */}
+              {/* Full Content with limited internal links */}
               <div
                 className="article-content"
                 suppressHydrationWarning
                 dangerouslySetInnerHTML={{ __html: addInternalLinks(
                   (liveArticle.content || '')
-                    // Strip embedded JSON-LD schema — page-level schema handles this properly
                     .replace(/<script[^>]*type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi, '')
-                    // Strip h1 tags (replace with h2 — page already has one h1)
                     .replace(/<h1(\s[^>]*)?>/gi, '<h2$1>')
                     .replace(/<\/h1>/gi, '</h2>'),
                   slug,
                   liveArticle.brand
                 ) }}
               />
-
 
               {/* Mid-article image */}
               {safeImages[2] && (
@@ -331,24 +312,24 @@ export default function ArticleClient({ article, similar, slug }: ArticleClientP
               )}
             </div>
 
-            {/* Pillar Page Navigation Strip */}
+            {/* Pillar Navigation */}
             <div className="mt-8">
               <p className="font-sans text-xs font-bold text-[#d4220a] uppercase tracking-wider mb-3">Browse All Guides</p>
               <PillarNav variant="compact" />
             </div>
 
-            {/* Internal Navigation Links */}
+            {/* Internal Navigation */}
             <div className="mt-4 p-4 bg-[#f8f4ef] border-l-4 border-[#d4220a]">
-              <p className="font-sans text-xs font-bold text-[#d4220a] uppercase tracking-wider mb-3">Explore More on The Tech Bharat</p>
+              <p className="font-sans text-xs font-bold text-[#d4220a] uppercase tracking-wider mb-3">Explore More</p>
               <div className="flex flex-wrap gap-2">
                 <a href="/mobile-news" className="font-sans text-xs text-ink border border-border bg-white px-3 py-1.5 hover:border-[#d4220a] hover:text-[#d4220a] transition-colors">📱 Mobile News</a>
-                <a href="/reviews" className="font-sans text-xs text-ink border border-border bg-white px-3 py-1.5 hover:border-[#d4220a] hover:text-[#d4220a] transition-colors">⭐ Phone Reviews</a>
-                <a href="/compare" className="font-sans text-xs text-ink border border-border bg-white px-3 py-1.5 hover:border-[#d4220a] hover:text-[#d4220a] transition-colors">⚖️ Compare Phones</a>
+                <a href="/reviews" className="font-sans text-xs text-ink border border-border bg-white px-3 py-1.5 hover:border-[#d4220a] hover:text-[#d4220a] transition-colors">⭐ Reviews</a>
+                <a href="/compare" className="font-sans text-xs text-ink border border-border bg-white px-3 py-1.5 hover:border-[#d4220a] hover:text-[#d4220a] transition-colors">⚖️ Compare</a>
                 {resolvedBrand && resolvedBrand !== 'Mobile' && <a href={`/mobile-news?brand=${resolvedBrand}`} className="font-sans text-xs text-ink border border-border bg-white px-3 py-1.5 hover:border-[#d4220a] hover:text-[#d4220a] transition-colors">🔍 More {resolvedBrand} News</a>}
               </div>
             </div>
 
-            {/* Similar Articles Section */}
+            {/* Similar Articles */}
             {similarArticles.length > 0 && (
               <section className="mt-10 pt-6 border-t-2 border-border">
                 <div className="flex items-center gap-3 mb-5">
@@ -402,7 +383,7 @@ export default function ArticleClient({ article, similar, slug }: ArticleClientP
                   ))}
                 </div>
               ) : (
-                <p className="font-sans text-sm text-muted mb-6 italic">Be the first to share your experience with this device.</p>
+                <p className="font-sans text-sm text-muted mb-6 italic">Be the first to share your experience.</p>
               )}
 
               {/* Submit Review Form */}
@@ -436,7 +417,7 @@ export default function ArticleClient({ article, similar, slug }: ArticleClientP
                     ))}
                   </div>
                   <textarea
-                    placeholder="Share your thoughts about this phone / news... *"
+                    placeholder="Share your thoughts... *"
                     value={reviewText}
                     onChange={e => setReviewText(e.target.value)}
                     rows={3}
@@ -459,7 +440,7 @@ export default function ArticleClient({ article, similar, slug }: ArticleClientP
 
           {/* Sidebar */}
           <aside className="lg:col-span-1 space-y-6">
-            {/* About Author */}
+            {/* Author Bio */}
             <div className="bg-white border border-border p-5">
               <h3 className="font-sans text-xs font-bold uppercase tracking-widest text-muted mb-3">About the Author</h3>
               <div className="flex items-center gap-3 mb-3">
@@ -475,14 +456,14 @@ export default function ArticleClient({ article, similar, slug }: ArticleClientP
                 Vijay has reviewed 300+ devices and covered the Indian smartphone market for 11 years. Founder of The Tech Bharat, based in New Delhi.
               </p>
               <Link href="/author" className="font-sans text-xs font-semibold text-[#d4220a] mt-2 inline-block hover:underline">
-                View Author Profile →
+                View Profile →
               </Link>
             </div>
 
             {/* Similar Articles Sidebar */}
             {similarArticles.slice(0, 4).length > 0 && (
               <div className="bg-white border border-border p-5">
-                <h3 className="font-sans text-xs font-bold uppercase tracking-widest text-muted mb-4">You May Also Like</h3>
+                <h3 className="font-sans text-xs font-bold uppercase tracking-widest text-muted mb-4">Similar Articles</h3>
                 <div className="space-y-4">
                   {similarArticles.slice(0, 4).map(a => (
                     <ArticleCard key={a.id} article={a} variant="side" />
@@ -491,10 +472,10 @@ export default function ArticleClient({ article, similar, slug }: ArticleClientP
               </div>
             )}
 
-            {/* Channels CTA */}
+            {/* CTA */}
             <div className="bg-[#1a3a5c] p-5 text-white">
               <p className="font-playfair text-lg font-bold mb-2">Never Miss a Launch</p>
-              <p className="font-sans text-xs opacity-80 mb-3">Get instant phone news on your phone.</p>
+              <p className="font-sans text-xs opacity-80 mb-3">Get phone news on your channel.</p>
               <div className="space-y-2">
                 <a href="https://t.me/the_tech_bharat" target="_blank" rel="noopener noreferrer"
                   className="block bg-[#2AABEE] text-white font-sans text-xs font-semibold text-center py-2 hover:opacity-90">

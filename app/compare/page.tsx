@@ -13,7 +13,12 @@ export const revalidate = 60
 
 export default async function ComparePage() {
   const allA = await getAllArticlesAsync()
-  const articles = allA.filter(a => a.type === 'compare')
+
+  // ✅ ONLY CHANGE: filter high-quality comparison articles
+  const articles = allA.filter((a: any) => {
+  const quality = a.contentQuality ?? 7
+  return a.type === 'compare' && quality >= 6 && !a.isLowValue
+})
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">

@@ -14,6 +14,10 @@ export async function GET() {
     <loc>${SITE_URL}/web-stories-sitemap.xml</loc>
     <lastmod>${today}</lastmod>
   </sitemap>
+  <sitemap>
+    <loc>${SITE_URL}/sitemap-news.xml</loc>
+    <lastmod>${today}</lastmod>
+  </sitemap>
 </sitemapindex>`
 
   return new Response(xml, {

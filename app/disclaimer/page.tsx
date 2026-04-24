@@ -3,6 +3,16 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = {
   title: 'Disclaimer – The Tech Bharat',
   description: 'The Tech Bharat Disclaimer. Important information about the content we publish.',
+  alternates: {
+    canonical: 'https://thetechbharat.com/disclaimer',
+  },
+  openGraph: {
+    title: 'Disclaimer – The Tech Bharat',
+    description: 'Important information about the content published on The Tech Bharat.',
+    url: 'https://thetechbharat.com/disclaimer',
+    siteName: 'The Tech Bharat',
+    type: 'website',
+  },
 }
 
 export default function DisclaimerPage() {

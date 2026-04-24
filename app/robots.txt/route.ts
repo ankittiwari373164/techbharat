@@ -7,7 +7,7 @@ export async function GET() {
   const robots = `User-agent: *
 Allow: /
 Allow: /api/image/
-Allow: /api/img
+Allow: /api/img/
 Allow: /api/article/
 Allow: /api/ticker/
 Allow: /api/admin/uploaded-image/
@@ -20,13 +20,12 @@ Disallow: /api/fetch
 Disallow: /api/analytics
 Disallow: /api/auto-index
 Disallow: /api/index-url
-Disallow: /article/
 Disallow: /default
 Disallow: /feeds/
 
 User-agent: Googlebot-Image
 Allow: /api/image/
-Allow: /api/img
+Allow: /api/img/
 
 Sitemap: ${SITE_URL}/sitemap.xml
 Sitemap: ${SITE_URL}/web-stories-sitemap.xml`

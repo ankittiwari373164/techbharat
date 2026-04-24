@@ -29,7 +29,8 @@ export default function ArticleCard({ article, variant = 'card' }: ArticleCardPr
               alt={article.title}
               width={1200} height={675}
             className="object-cover group-hover:scale-105 transition-transform duration-500"
-            loading="lazy" />
+            loading="eager"
+fetchPriority="high" />
           </div>
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">

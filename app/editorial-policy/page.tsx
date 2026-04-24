@@ -3,6 +3,16 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = {
   title: 'Editorial Policy – The Tech Bharat',
   description: 'The Tech Bharat Editorial Policy and Standards. How we create, verify, and publish content.',
+  alternates: {
+    canonical: 'https://thetechbharat.com/editorial-policy',
+  },
+  openGraph: {
+    title: 'Editorial Policy – The Tech Bharat',
+    description: 'Learn how The Tech Bharat creates, verifies, and publishes content with transparency and editorial independence.',
+    url: 'https://thetechbharat.com/editorial-policy',
+    siteName: 'The Tech Bharat',
+    type: 'website',
+  },
 }
 
 export default function EditorialPolicyPage() {

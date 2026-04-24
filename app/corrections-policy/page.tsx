@@ -2,6 +2,17 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Corrections Policy – The Tech Bharat',
+  description: 'The Tech Bharat corrections policy explaining how we handle errors, updates, and transparency in our content.',
+  alternates: {
+    canonical: 'https://thetechbharat.com/corrections-policy',
+  },
+  openGraph: {
+    title: 'Corrections Policy – The Tech Bharat',
+    description: 'Learn how The Tech Bharat handles corrections, updates, and maintains transparency in its content.',
+    url: 'https://thetechbharat.com/corrections-policy',
+    siteName: 'The Tech Bharat',
+    type: 'website',
+  },
 }
 
 export default function CorrectionsPage() {

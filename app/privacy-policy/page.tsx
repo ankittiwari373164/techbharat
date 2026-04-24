@@ -5,6 +5,13 @@ export const metadata: Metadata = {
   title: 'Privacy Policy – The Tech Bharat',
   description: 'Privacy Policy for The Tech Bharat. Learn how we collect, use, and protect your personal information.',
   alternates: { canonical: 'https://thetechbharat.com/privacy-policy' },
+  openGraph: {
+    title: 'Privacy Policy – The Tech Bharat',
+    description: 'Learn how The Tech Bharat collects, uses, and protects your personal information.',
+    url: 'https://thetechbharat.com/privacy-policy',
+    siteName: 'The Tech Bharat',
+    type: 'website',
+  },
 }
 
 export default function PrivacyPolicyPage() {

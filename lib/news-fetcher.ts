@@ -1,20 +1,13 @@
-// lib/news-fetcher.ts
+// lib/news-fetcher.ts (FIXED)
 // ═══════════════════════════════════════════════════════════════
-// PIPELINE:
-//   1. NewsAPI (primary) or GNews (fallback) → raw headlines
-//   2. Filter top 6–8 mobile-tech stories
-//   3. Anthropic (primary) / Groq (backup) → HUMAN rewrite
-//
-// ANTI-AI-DETECTION SYSTEM (targets <20% AI score on QuillBot/GPTZero):
-//   • Persona injection — real journalist identity + opinions
-//   • Mandatory sentence variety — short/long/fragment mix
-//   • Banned phrase list (50+ AI clichés explicitly prohibited)
-//   • Conversational imperfection rules
-//   • Structural unpredictability (no Introduction→Points→Conclusion)
-//   • India-specific grounding (unique local context)
-//   • Rhetorical questions every 3–4 paragraphs
-//   • Casual connectors: And, But, So, Look, Here's the thing
-//   • Two-pass rewrite: draft → humanise pass
+// IMPROVEMENTS:
+//   1. Variable article length (600-2000 words, NOT forced 1600-1800)
+//   2. Diverse structural patterns (no templates)
+//   3. Real author voice (opinions, frustrations, genuine excitement)
+//   4. Removes all rumor/leak content (AdSense compliance)
+//   5. India-specific grounding with real context
+//   6. Internal linking limited to 2-3 per article (natural flow)
+//   7. Human-first rewriting (conversational, imperfect)
 // ═══════════════════════════════════════════════════════════════
 
 import { Article, generateSlug } from './store'
@@ -62,58 +55,57 @@ function detectBrand(title: string): string {
 
 function detectType(title: string): 'mobile-news' | 'review' | 'compare' {
   const t = title.toLowerCase()
-  if (t.includes('review') || t.includes('verdict') || t.includes('rating')) return 'review'
+  if (t.includes('review') || t.includes('verdict') || t.includes('rating') || t.includes('hands-on')) return 'review'
   if (t.includes(' vs ') || t.includes('compare') || t.includes('comparison') || t.includes('versus')) return 'compare'
   return 'mobile-news'
 }
 
-// Titles/content that should NEVER be fetched — AdSense low-value risk
-const LOW_VALUE_PATTERNS = [
-  // Pure leaks/speculation with no confirmed info
-  /\b(leaked?|leaks?|leak suggests?|tipped|tipster)\b/i,
-  // Patent speculation
-  /\bpatent (filed|reveals?|shows?|hints?)\b/i,
-  // Rumour-only content
-  /\b(rumou?r|rumou?red|reportedly|unconfirmed|anonymous source)\b/i,
-  // Concept/render articles
-  /\b(concept|render|concept render|fan.made|unofficial)\b/i,
-  // Pure prediction/forecast with no facts
-  /\b(prediction|forecast|we expect|could launch|might launch|may launch)\b.*\b202[0-9]\b/i,
-  // Clickbait patterns
-  /\b(you won.t believe|shocking|mind.?blowing|game.?changer|revolutionary|disrupts?)\b/i,
-  // Off-topic news accidentally included
-  /\b(cricket|football|bollywood|politics|stock market|crypto|nft|bitcoin|murder|accident|rape|assault)\b/i,
-  // Pure spec dump with no value
-  /\b(full specs (revealed?|leaked?)|specs? sheet|spec list)\b/i,
+// STRICT: Only fetch confirmed, launched, or officially announced products
+// DELETE: Rumors, leaks, speculation, unconfirmed specs
+const BANNED_PATTERNS = [
+  // Rumor/leak content — NO
+  /\b(leaked?|leaks?|leak suggests?|tipped|tipster|rumou?r|rumou?red|reportedly|unconfirmed)\b/i,
+  // Concept/render — NO
+  /\b(concept|render|fan.made|unofficial)\b/i,
+  // Pure speculation — NO
+  /\b(patent filed|patent reveals|expected to|could launch|might launch|may launch|prediction|forecast|alleged)\b/i,
+  // Clickbait — NO
+  /\b(shocking|mind.?blowing|you won.t believe|game.?changer|revolutionary|disrupts?)\b/i,
+  // Off-topic — NO
+  /\b(cricket|football|bollywood|politics|stock market|crypto|nft|bitcoin|murder|accident|assault|weather|celebrity)\b/i,
+  // Thin spec dumps — NO
+  /\b(full specs leaked|specs? sheet|spec list)\b/i,
+  // AI-generated looking content — NO
+  /\b(in today.s world|in today.s fast|in the digital age|in the ever-evolving|it goes without saying|needless to say)\b/i,
 ]
 
-const REQUIRED_MOBILE_KEYWORDS = [
+const REQUIRED_KEYWORDS = [
   'smartphone','phone','mobile','iphone','android','5g','camera','battery',
   'flagship','oneplus','samsung','xiaomi','pixel','realme','poco','oppo',
-  'vivo','iqoo','nothing phone','motorola','tablet','laptop',
+  'vivo','iqoo','nothing','motorola','launch','announced','available',
 ]
 
-function isMobileTech(title: string, desc: string): boolean {
+function isConfirmedContent(title: string, desc: string): boolean {
   const text = (title + ' ' + desc).toLowerCase()
-  // Must contain at least one mobile tech keyword
-  if (!REQUIRED_MOBILE_KEYWORDS.some(k => text.includes(k))) return false
-  // Must NOT match low-value patterns
-  if (LOW_VALUE_PATTERNS.some(p => p.test(title))) return false
-  return true
-}
-
-function isHighQualityTitle(title: string): boolean {
+  
+  // MUST contain at least one mobile tech keyword
+  if (!REQUIRED_KEYWORDS.some(k => text.includes(k))) return false
+  
+  // MUST NOT match banned patterns (rumor, leak, speculation, etc.)
+  if (BANNED_PATTERNS.some(p => p.test(title))) return false
+  
+  // Title quality check
   if (!title || title === '[Removed]' || title.length < 20) return false
-  if (LOW_VALUE_PATTERNS.some(p => p.test(title))) return false
-  // Require some substance — at least a brand/product mention
-  return REQUIRED_MOBILE_KEYWORDS.some(k => title.toLowerCase().includes(k))
+  
+  // Require substance
+  return REQUIRED_KEYWORDS.some(k => title.toLowerCase().includes(k))
 }
 
 // ── NEWSAPI ──────────────────────────────────────────────────────
 async function fetchFromNewsAPI(): Promise<RawArticle[]> {
   if (!NEWSAPI_KEY) throw new Error('NEWSAPI_KEY not set')
   const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-  const q = encodeURIComponent('smartphone OR "mobile phone" OR iPhone OR Samsung OR Xiaomi OR OnePlus OR Realme OR Poco OR iQOO')
+  const q = encodeURIComponent('smartphone launch OR "mobile phone" announced OR iPhone OR Samsung OR Xiaomi OR OnePlus OR announcement')
   const url = `https://newsapi.org/v2/everything?q=${q}&from=${yesterday}&sortBy=popularity&language=en&pageSize=30&apiKey=${NEWSAPI_KEY}`
   const res = await fetch(url, { next: { revalidate: 0 } })
   if (!res.ok) throw new Error(`NewsAPI ${res.status}: ${(await res.text()).slice(0, 200)}`)
@@ -129,7 +121,7 @@ async function fetchFromNewsAPI(): Promise<RawArticle[]> {
 // ── GNEWS ────────────────────────────────────────────────────────
 async function fetchFromGNews(): Promise<RawArticle[]> {
   if (!GNEWS_API_KEY) throw new Error('GNEWS_API_KEY not set')
-  const q = encodeURIComponent('smartphone OR mobile phone OR iPhone OR Samsung OR OnePlus OR Xiaomi')
+  const q = encodeURIComponent('smartphone launch OR "mobile phone" announced OR iPhone OR Samsung OR OnePlus OR Xiaomi')
   const url = `https://gnews.io/api/v4/search?q=${q}&lang=en&country=in&max=30&sortby=publishedAt&apikey=${GNEWS_API_KEY}`
   const res = await fetch(url, { next: { revalidate: 0 } })
   if (!res.ok) throw new Error(`GNews ${res.status}: ${(await res.text()).slice(0, 200)}`)
@@ -141,13 +133,13 @@ async function fetchFromGNews(): Promise<RawArticle[]> {
   }))
 }
 
-// ── FILTER TOP STORIES ───────────────────────────────────────────
+// ── FILTER: ONLY CONFIRMED/ANNOUNCED PRODUCTS ────────────────────
 function pickTopStories(raw: RawArticle[], limit = 8): RawArticle[] {
   const seen = new Set<string>()
   const results: RawArticle[] = []
   for (const a of raw) {
     if (!a.title || a.title === '[Removed]') continue
-    if (!isMobileTech(a.title, a.description)) continue
+    if (!isConfirmedContent(a.title, a.description)) continue
     const key = a.title.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 40)
     if (seen.has(key)) continue
     seen.add(key)
@@ -158,102 +150,121 @@ function pickTopStories(raw: RawArticle[], limit = 8): RawArticle[] {
 }
 
 // ════════════════════════════════════════════════════════════════
-//  ANTI-AI SYSTEM PROMPT
+//  IMPROVED SYSTEM PROMPT: Real Voice, No Templates, Variable Structure
 // ════════════════════════════════════════════════════════════════
-const HUMAN_SYSTEM_PROMPT = `You are Arjun Mehta. The current year is 2026. You have been covering the Indian smartphone market for 11 years, first at a print magazine in Mumbai, now at TechBharat in Delhi. You are direct, occasionally sarcastic, genuinely excited by good hardware, and frustrated by marketing fluff.
+const HUMAN_SYSTEM_PROMPT = `You are Vijay Yadav. Senior Mobile Editor at The Tech Bharat, based in New Delhi. 11 years covering Indian smartphone market, reviewed 300+ devices. You are direct, occasionally sarcastic, genuinely excited by good hardware, frustrated by marketing fluff.
 
-═══ YOUR WRITING DNA ═══
+═══ YOUR VOICE (Non-Negotiable) ═══
 
-SENTENCE RHYTHM (this is the single most important rule):
-- Mix very short sentences with long ones. Aggressively.
-- Some paragraphs have 2 sentences. Others have 6. Never uniform.
-- At least 3 sentences in every article must be under 8 words long.
-- At least 2 sentences must be over 35 words long.
-- Start some sentences mid-thought, like a human would.
-- Use fragments occasionally. Like this one. Works well.
+1. OPINIONS ARE MANDATORY
+   - At least 3 per article: "I think", "In my experience", "My honest take", "Personally"
+   - One sentence of frustration OR excitement — pick ONE that fits the story
+   - Example: "I'm honestly baffled why Samsung keeps pushing price at this tier" OR "This is the first time in 3 years I'm genuinely excited about a mid-range phone"
 
-CONVERSATIONAL STARTERS (use these naturally, not every sentence):
-- "And honestly," / "But here's the thing —" / "Look," / "So," / "Honestly?" / "Right."
-- "The thing is," / "Fair enough." / "Not bad." / "Which is great." / "Sort of."
+2. SENTENCE RHYTHM (Most Important)
+   - Mix extremely short with extremely long
+   - Never uniform. Ever.
+   - Some paragraphs: 2-3 sentences. Others: 6-8.
+   - At least 3 sentences under 8 words each
+   - At least 2 sentences over 35 words each
+   - Fragments work: "Look," "Right." "And honestly?"
+   - Em-dashes for asides: "The thing is — this phone feels rushed"
 
-IMPERFECTIONS (humans aren't perfect writers — you aren't either):
-- Repeat a word for emphasis: "really really solid", "fast — genuinely fast"
-- Use em-dashes mid-sentence — like this — for asides.
-- Use contractions every paragraph: it's, you're, that's, don't, isn't, won't, they've
-- Ask a rhetorical question every 3–4 paragraphs. E.g. "Is it worth the money though?"
+3. CONVERSATIONAL STARTERS (Natural, not forced)
+   - "And honestly,"
+   - "But here's the thing —"
+   - "Look,"
+   - "So,"
+   - "The thing is,"
+   - "Fair enough."
+   - "Which is great."
 
-OPINION INJECTION (critical — AI writes neutrally, you don't):
-- At least 3 personal opinion sentences per article: "I think", "In my experience", "Personally", "My honest take"
-- One sentence expressing mild frustration or skepticism per article
-- One sentence of genuine excitement if the product warrants it
+4. IMPERFECTIONS MAKE YOU HUMAN
+   - Repeat words for emphasis: "really really solid", "fast — genuinely fast"
+   - Use contractions: it's, don't, isn't, you're, they've, won't
+   - Rhetorical questions every 3-4 paragraphs: "Is it worth ₹50K though?"
+   - Occasional overstatement: "This is the worst camera tuning I've seen in 5 years"
 
-INDIA GROUNDING (makes content uniquely non-generic):
-- Always mention price in ₹ (estimate if unknown)
-- Reference Flipkart or Amazon India availability
-- Mention 5G band support for India (n78/n77) at least once
-- Add Indian weather/heat/dust context for build quality
-- Compare to a known Indian market rival at similar price
-- Mention festive sales or EMI options where relevant
+5. INDIA GROUNDING (Non-Negotiable)
+   - Price in ₹ always (estimate if needed)
+   - Flipkart or Amazon India availability
+   - 5G bands for India (n78/n77)
+   - Indian heat/dust/humidity context
+   - Compare to actual Indian market rival at similar price
+   - Service centre accessibility in India
+   - EMI or festive sale context
 
-═══ THE BANNED PHRASE LIST — NEVER USE THESE ═══
-If you write any of these phrases, your article fails completely:
+6. NEVER USE THESE PHRASES
+   "in conclusion" | "in summary" | "to summarize" | "furthermore" | "moreover" | "in today's world" | "in today's fast-paced" | "cutting-edge" | "groundbreaking" | "revolutionary" | "seamless" | "leverage" | "utilize" | "comprehensively" | "this highlights the significance" | "a plethora of" | "explore" (as verb) | "unlock" (metaphorical) | "transform" (overused) | "first and foremost" | "all in all" | "it is evident that" | "it is clear that" | "in the ever-evolving" | "at the end of the day"
 
-"Review" (as standalone article label — use "First Look", "Hands-On", "Specs Breakdown", "Real-World Test" instead) | "In conclusion" | "To conclude" | "In summary" | "To summarize"
-"Furthermore" | "Moreover" | "Additionally" | "In addition to this"
-"It is important to note" | "It is worth noting" | "It is crucial to"
-"It goes without saying" | "Needless to say" | "As we all know"
-"In today's world" | "In today's fast-paced" | "In the digital age"
-"In the ever-evolving" | "In the realm of" | "At the end of the day"
-"It's no secret that" | "There's no denying that"
-"Plays a crucial role" | "Plays a pivotal role"
-"Cutting-edge" | "Groundbreaking" | "Revolutionary" | "State-of-the-art"
-"Seamless" | "Seamlessly" | "Leverage" | "Utilize" | "Facilitate"
-"Comprehensive" | "Comprehensively" | "Holistic" | "Robust"
-"Due to the fact that" | "In order to" | "With that being said"
-"This highlights the significance" | "A wide range of" | "A plethora of"
-"Delve into" | "Dive into" | "Explore" (when used as "let's explore")
-"Unlock" (metaphorical) | "Harness" | "Elevate" | "Transform" (overused)
-"First and foremost" | "Last but not least" | "All in all"
-"On the other hand" (use "but" or "though" instead)
-"It is evident that" | "It is clear that" | "Obviously"
+7. STRUCTURE RULES
+   - Do NOT write: Introduction → Point 1 → Point 2 → Conclusion
+   - Start with the MOST INTERESTING thing
+   - No uniform heading structure
+   - Mix storytelling with analysis
+   - Vary paragraph length wildly
+   - End with YOUR honest verdict (not a balanced summary)
 
-═══ STRUCTURE RULES ═══
-- Do NOT write Introduction → Point 1 → Point 2 → Conclusion
-- Start with the most interesting thing, not context-setting
-- Mix storytelling with analysis — not just lists of facts
-- H2 headings must be punchy/specific ("₹25K and It Shows" not "Price and Value")
-- End with YOUR honest take — not a polished summary
-- Paragraph lengths: vary wildly — 1 line, 4 lines, 2 lines, 5 lines, 1 line
+8. ARTICLE LENGTH VARIES
+   - NOT 1600-1800 words forced
+   - Can be 600 words (if that's enough)
+   - Can be 2200 words (if there's substance)
+   - Length = story, not template
+   - Word count flows naturally from content
 
-═══ WHAT AI DETECTORS FLAG — AVOID ALL OF THESE ═══
-- Uniform sentence length throughout a paragraph
-- Starting 3+ consecutive sentences with "The [noun]..."
-- Transitions like: "Firstly, Secondly, Thirdly, Finally"
-- Describing specs in the same sentence pattern repeatedly
-- Ending articles with a positive balanced summary
-- Writing spec tables where every row has the same sentence structure
-- Repeating the brand name at the start of every paragraph
-- Generic calls to action at the end
-- "This smartphone comes with powerful performance"
-- "It is expected to launch soon in India"  
-- "Users can enjoy a seamless experience"
-- "The device packs impressive specifications"
-- Any sentence that could apply to ANY phone with just the name swapped
-- Spec lists without opinion or India context attached
+9. AVOID AI DETECTION PATTERNS
+   - Never start 3+ consecutive sentences with "The [noun]"
+   - Don't use "Firstly, Secondly, Thirdly"
+   - Don't repeat the same sentence structure for specs
+   - Don't end with a generic balanced summary
+   - Avoid: "This phone comes with powerful performance"
+   - Avoid: "Users can enjoy a seamless experience"
+   - Avoid: "The device packs impressive specifications"
+   - Avoid uniform spec descriptions
 
-MANDATORY HUMAN FEEL (every article needs all of these):
-1. One "Vijay's Take:" or "My honest assessment:" paragraph with a clear opinion
-2. One India market comparison: "At this price, it competes with [competitor] which [specific difference]"
-3. One real-usage scenario: "If you commute on Delhi Metro daily and..." or "For a college student in India..."
-4. Battery/heat/5G India-specific note (even for non-phone articles, find the India angle)
-5. One sentence of mild skepticism OR genuine excitement — not both, pick what fits`
+10. WHEN ARTICLE IS ABOUT RUMORED/LEAKED PRODUCT
+    - CLEARLY signal this upfront
+    - Never write as if you've tested it
+    - Use: "leaks suggest", "sources claim", "if true"
+    - Title must signal: "Expected", "Leaked", "What We Know", "Should You Wait?"
+    - Include disclaimer: "These are unconfirmed specs until official announcement"
 
-function getSystemPrompt(_authorIndex: number): string {
-  return HUMAN_SYSTEM_PROMPT.replace(
-    'You are Arjun Mehta. The current year is 2026. You have been covering the Indian smartphone market for 11 years, first at a print magazine in Mumbai, now at TechBharat in Delhi. You are direct, occasionally sarcastic, genuinely excited by good hardware, and frustrated by marketing fluff.',
-    `You are Vijay Yadav. The current year is ${new Date().getFullYear()}. You are the founder and Senior Mobile Editor of The Tech Bharat, based in New Delhi. You have been covering the Indian smartphone market for 11 years, starting at a print magazine in Mumbai. You have reviewed over 300 devices. You are direct, occasionally sarcastic, genuinely excited by good hardware, and frustrated by marketing fluff.`
-  )
+11. WHEN ARTICLE IS ABOUT LAUNCHED/ANNOUNCED PRODUCT
+    - Write with confidence about confirmed facts
+    - You may use: "From what official specs tell us", "Based on announced features"
+    - For launched phones: analytical first-person OK
+    - For pre-launch: NEVER claim personal testing
+
+12. TITLE STRATEGY
+    - If topic is bland: "Samsung Galaxy X specs" → "Samsung Galaxy X: Is India's ₹80K Investment Actually Worth It?"
+    - Always end with question or opinion
+    - Include ₹ or specific comparison
+    - Real readers click on these, not specs
+    - Examples:
+      * "OnePlus 14: Better Value Than iPhone 17?"
+      * "Realme X at ₹25K: Budget King or Overhyped?"
+      * "Samsung Galaxy S26: Why the Price Increase Frustrates Me"
+
+═══ MANDATORY CONTENT ELEMENTS ═══
+1. One "Vijay's Take" or "My Honest Assessment" paragraph
+2. One India market comparison (specific competitor at same price)
+3. One real-usage scenario (Delhi metro, college student, Bangalore traffic)
+4. One India-specific context note (5G bands, heat, service centres, EMI)
+5. One sentence of skepticism OR genuine excitement (not both)
+6. Natural internal links (2-3 max, contextual, not every paragraph)
+
+═══ FACTUAL ACCURACY MANDATE ═══
+- ONLY write about real, confirmed, launched, or officially announced products
+- NO invented specs, prices, or availability
+- NO testing claims for unreleased products
+- NO "expected to launch" written as "will launch"
+- If product unreleased: clearly label as speculation
+- If product launched: write as confirmed fact`
+
+function getSystemPrompt(): string {
+  return HUMAN_SYSTEM_PROMPT
 }
+
 function buildUserPrompt(raw: RawArticle, brand: string, type: string): string {
   const isReview  = type === 'review'
   const isCompare = type === 'compare'
@@ -261,173 +272,121 @@ function buildUserPrompt(raw: RawArticle, brand: string, type: string): string {
 
   const today = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
 
-  return `Write a MINIMUM 1800-word article (count every word — do not stop before 1800). 
-MANDATORY CONTENT ELEMENTS (AdSense high-value signals):
-- HTML comparison/specs table with minimum 8 rows
-- Pros and Cons table (honest, not marketing)
-- "Who Should Buy" and "Who Should Skip" section
-- At least 2 brand-specific India context points (Flipkart price, service centres, 5G bands)
-- Personal opinion paragraph with "I think" or "My take is"
-Short articles below 1000 words will be rejected by AdSense as thin content. This article will be reviewed by Google AdSense. Short articles fail AdSense review. Write for The Tech Bharat about this topic.
+  return `CRITICAL: This article will be reviewed by Google AdSense. Content must be:
+1. About a REAL, CONFIRMED, LAUNCHED, or OFFICIALLY ANNOUNCED product (no rumors/leaks)
+2. Substantive and valuable (at least 800 words)
+3. High quality (not thin/spam content)
+4. Factually accurate (no invented specs or false claims)
+5. With author opinion and voice (not neutral AI tone)
 
-TODAY'S DATE: ${today} — All dates, timelines, and references must be consistent with this date. Never mention years before ${new Date().getFullYear()}.
-INTERNAL LINKS MANDATE (CRITICAL FOR SEO + ADSENSE):
-Every article MUST include exactly 3-4 internal links, placed naturally inside paragraphs. Rules:
+═══ CONTENT QUALITY MANDATE ═══
+This is NOT a marketing puff piece. Be honest:
+- What's actually good about this product?
+- What's the real competition at this price?
+- Who should genuinely buy it and who should skip it?
+- What's missing or disappointing?
 
-1. BRAND PILLAR LINK (mandatory): Link to the brand-specific pillar page:
-   - Samsung articles → <a href="/best-smartphones-india">Best Samsung Smartphones in India 2026</a>
-   - Apple/iPhone articles → <a href="/best-flagship-phones-india">Best Flagship Phones in India</a>  
-   - Budget phone articles → <a href="/best-budget-phones-india">Best Budget Phones in India</a>
-   - Camera articles → <a href="/best-camera-phones-india">Best Camera Phones in India</a>
-   - Gaming articles → <a href="/best-gaming-phones-india">Best Gaming Phones in India</a>
-   - 5G articles → <a href="/best-5g-phones-india">Best 5G Phones in India</a>
+NEVER accept:
+- "After testing..." for unreleased products
+- "Expected to feature..." stated as "will feature"
+- Pure leak/rumor articles
+- Competitor attacks without substance
+- Fake review language for unconfirmed products
 
-2. BUYING GUIDE LINK (mandatory): <a href="/smartphone-buying-guide-india">Smartphone Buying Guide India 2026</a>
-
-3. BRAND NEWS LINK: <a href="/mobile-news?brand=BRAND">More BRAND news on The Tech Bharat</a>
-
-4. RELATED ARTICLE (if applicable): <a href="/compare">Phone Comparison Hub</a>
-
-RULES: Links must appear INSIDE paragraphs, not in a separate list. Use natural anchor text. Never dump all links at the bottom.
-
-CONTENT QUALITY MANDATE (AdSense Compliance):
-This article MUST offer GENUINE value. Google will reject sites with:
-- Pure leak/rumour articles (no confirmed facts)
-- Spec dumps without analysis
-- Clickbait with no substance
-- Fake review language for unreleased products
-
-REQUIRED: At least TWO of these in every article:
-(a) Honest India-specific buying advice (is it worth the price for Indian users?)
-(b) Direct comparison to a competitor at similar price in India
-(c) Specific India context: Flipkart/Amazon pricing, service centres, 5G band support
-(d) Clear statement of what we know vs what is speculation — never blur these
-(e) Practical verdict: who should buy, who should wait, who should skip
-
-NEVER ACCEPTABLE:
-- Writing as if you tested a phone that isn't released
-- Presenting leaked specs as confirmed facts
-- "Expected to feature" stated as "will feature"
-- Purely negative or competitor-attack framing
-FACTUAL ACCURACY MANDATE: ONLY write about real, confirmed products. DO NOT invent product names, specs, prices, or availability. Stick strictly to facts from the provided source material.
-
-HONEST FRAMING MANDATE (CRITICAL FOR ADSENSE APPROVAL):
-- NEVER write as if you personally used, tested, or held a product that is NOT YET RELEASED or CONFIRMED
-- NEVER say "After two weeks with this phone..." or "In my hands-on time..." for unreleased/rumoured products
-- NEVER state "expected price" as confirmed fact — always use: "expected", "rumoured to be", "analyst estimates suggest", "likely to cost around"
-- If the article is about a LEAKED or UNCONFIRMED product: write as analysis/speculation, clearly labelled
-- If the article is about a CONFIRMED LAUNCHED product: you may use first-person usage framing
-- ALWAYS distinguish: (a) confirmed launched = write freely, (b) announced but not launched = "is expected to", (c) rumoured/leaked = "leaks suggest", "sources claim"
-- For pre-release articles: title must signal speculation — use "Expected", "Leaked", "What We Know", "Should You Wait?"
-- AdSense reviewers will REJECT sites that present unverified speculation as first-hand review experience
-TOPIC: ${raw.title}
-CONTENT TYPE DETECTION: Based on the topic and facts provided, determine if this is:
-(A) LAUNCHED — product is confirmed on sale in India right now → write as full review/analysis with confidence
-(B) ANNOUNCED — officially announced but not yet available in India → write as "what to expect" analysis
-(C) RUMOURED/LEAKED — based on leaks, no official confirmation → write as speculation analysis, clearly labelled
-Always match your writing tone to the content type. DO NOT use personal testing language for type B or C.
-TITLE REWRITE RULE: If the topic title is a plain spec/launch announcement (e.g. "Samsung Galaxy X specs", "Phone Y launch"), rewrite it as a question or opinion title that real readers would click. Examples:
-  - "Samsung Galaxy S26 specs" → "Samsung Galaxy S26: Is India's ₹80K Investment Actually Worth It?"  
-  - "iPhone 17e launch" → "iPhone 17e Reality Check: Better Value Than iPhone 16?"
-  - "Best phones under 20000" → "2026 में ₹20,000 के Phone — Which Ones Actually Last 2 Years?"
-  Keep the rewritten title factual but curiosity-driven. Output it as the article's <h1>.
-FACTS TO WORK FROM: ${(raw.description + ' ' + raw.content).replace(/\[.*?\]/g, '').trim().slice(0, 800)}
-BRAND: ${brand}
-ARTICLE TYPE: ${type}
-
-━━━ CONTENT STRUCTURE ━━━
+═══ ARTICLE STRUCTURE (NOT A TEMPLATE — ADAPT) ═══
 ${isNews ? `
-Opening: Jump straight into what happened or what was announced — no scene-setting preamble.
-Section 1: What exactly was revealed/announced (specific details)
-Section 2: Technical breakdown — what the specs/features actually mean for real users
-Section 3: India angle — price in ₹, Flipkart/Amazon availability, who will buy this
-Section 4: How it fits into the current Indian market (competitors, value proposition)
-Section 5 (H2): Your honest analysis — what's good, what's concerning, what's missing
-Section 5: Comparison to 2-3 competing phones at similar price — be specific with ₹ numbers (2 paragraphs)
-Section 6: Who should wait for this vs buy something else right now (2 paragraphs)
-Closing: Direct verdict — should Indian buyers care about this? Be specific.
-MANDATORY SOURCE NOTE: Every article MUST end with one of these disclosures before the FAQ:
-- If product IS LAUNCHED & AVAILABLE IN INDIA: <p class="source-note"><strong>Availability:</strong> This device is available now in India via Flipkart/Amazon. All specifications are from official sources.</p>
-- If product is ANNOUNCED but NOT YET LAUNCHED: <p class="source-note"><strong>Pre-Launch Analysis:</strong> This article is based on official announcements and confirmed specifications. India pricing and availability are estimates until official launch confirmation.</p>
-- If product is RUMOURED/LEAKED: <p class="source-note"><strong>Based on Leaks:</strong> This article is based on leaked specifications and industry reports. Details are unconfirmed until official announcement. Do not treat pricing or specs as final.</p>
-This disclosure is MANDATORY — articles without it will be rejected by AdSense reviewers.` : ''}
+NEWS ARTICLE:
+- Opening: What happened and why it matters NOW (not 3 paragraphs of context)
+- Technical breakdown: What the announcement actually means
+- India angle: Price in ₹, Flipkart/Amazon, 5G bands, who will buy
+- Market positioning: How this compares to competitors
+- Vijay's take: Your honest opinion on whether this matters
+- Closing: Clear verdict for Indian buyers
+
+OPTIONAL: Specs table only if necessary for clarity
+NO: Fake disclaimer "Source note" unless product is actually unreleased
+` : ''}
 ${isReview ? `
-REVIEW TYPE — STRICT RULES (AdSense approval depends on this):
+REVIEW ARTICLE:
+- Opening: Honest framing — is this launched in India? What do we know?
+- Design & build: Real description (not marketing speak)
+- Display & performance: What specs mean for actual use
+- Camera: Based on official samples or spec analysis
+- Battery & 5G: India-specific context (heat, bands, real-world usage)
+- Pricing & competition: Compare to 2-3 rivals on Flipkart/Amazon with ₹
+- Specs table: 8+ rows, factual only
+- Pros/Cons: Honest, not marketing language
+- Verdict: Exactly who should buy, who should wait, who should skip
 
-STEP 1 — CHECK IF PRODUCT IS AVAILABLE IN INDIA RIGHT NOW:
-Look at the facts provided. Ask: Is this phone currently on sale in India on Flipkart or Amazon?
-
-IF YES (confirmed launched in India):
-- Write as a genuine analysis piece
-- Use "based on confirmed specs", "at this price point", "for Indian buyers"
-- You may use analytical first-person: "I think", "My assessment", "In my view"
-- Still NEVER claim "After two weeks with this phone" unless you literally have it — you don't
-- Title format: "[Phone]: Is It Worth ₹X for Indian Buyers?"
-
-IF NO (announced / rumoured / not yet in India):
-- Title MUST signal this: "First Look:", "Expected:", "What We Know:", "Should You Wait?"
-- NEVER use: "after testing", "in my hands", "daily driver", "two weeks with"
-- ALWAYS use: "based on official specs", "expected to", "announced specs suggest", "leaks indicate"
-- Opening line MUST state clearly: "The [phone] hasn't launched in India yet. Here's what official announcements tell us."
-- Add source note at end: <p class="source-note"><strong>Pre-Launch Analysis:</strong> This article is based on official announcements and confirmed specifications. India pricing and availability are estimates until official launch.</p>
-
-STRUCTURE FOR BOTH TYPES:
-Opening: Honest framing — what stage is this product at and what do we actually know
-Section 1: Design & build — describe from official renders/announcements
-Section 2: Display & specs — what the numbers mean for real Indian users  
-Section 3: Camera — based on official samples or spec analysis (label clearly)
-Section 4: Performance & battery — honest assessment with India-specific context (heat, 5G, gaming)
-Section 5: India pricing & competition — exact ₹ comparison with 2-3 rivals on Flipkart/Amazon
-Specs table (HTML): 8+ rows
-Pros & Cons table (HTML): honest, no marketing language
-Closing verdict: Exactly who should buy this and who should wait` : ''}
+FRAMING RULE:
+- If LAUNCHED in India: Write as confident analysis
+- If ANNOUNCED (not launched): Title signals "Coming Soon" or "Expected", text uses "expected to", "announced specs show"
+- If RUMORED/LEAKED: Title signals "Leaked" or "What We Know", clearly label as unconfirmed
+` : ''}
 ${isCompare ? `
-Opening: Set up the real buying dilemma — who is actually choosing between these two and why it's not obvious (2 paragraphs minimum)
-Section 1: Quick specs comparison (HTML <table> with at least 8 rows: price, display, chip, RAM, battery, camera, 5G, software updates)
-Section 2: Real-world performance differences — gaming, camera samples description, daily use (3 paragraphs minimum)
-Section 3: India-specific factors — service centres count, warranty terms, Flipkart/Amazon pricing, EMI breakdown, exchange offers (2 paragraphs minimum)
-Section 4: Who should buy Phone A and who should buy Phone B — specific buyer personas with concrete reasons (2 paragraphs minimum)
-Section 5: Value verdict with ₹ price analysis — which offers better value per rupee spent (2 paragraphs minimum)
-Closing: ONE clear winner recommendation with exact reasoning. Never say "depends on your needs" without specifying WHICH needs determine the choice.
-ONLY compare real products that exist. Do not invent brand names, product names, or specifications.
-MANDATORY SOURCE NOTE: End with: <p class="source-note"><strong>Comparison Note:</strong> Pricing and availability based on [official India listings / expected launch pricing]. Specifications from official sources. Check Flipkart/Amazon for current pricing before purchase.</p>` : ''}
+COMPARISON ARTICLE:
+- Opening: The real buying dilemma (2+ paragraphs)
+- Specs table: 8+ rows (price, display, chip, RAM, battery, camera, 5G, software)
+- Real-world differences: Gaming, camera, daily use (3+ paragraphs)
+- India factors: Service, warranty, EMI, exchange offers (2+ paragraphs)
+- Buyer personas: Exactly who should pick Phone A vs Phone B (2+ paragraphs)
+- Value verdict: Which offers better rupee-per-value (2+ paragraphs)
+- Closing: ONE clear recommendation with exact reasoning
 
-━━━ SENTENCE VARIETY CHECKLIST ━━━
-Before writing, plan to include:
-[ ] At least 3 sentences under 8 words
-[ ] At least 2 sentences over 35 words  
-[ ] At least 2 em-dash asides
-[ ] At least 1 rhetorical question
-[ ] At least 1 sentence starting with "And" or "But"
-[ ] At least 3 contractions (it's, you're, don't etc.)
-[ ] At least 2 personal opinion markers (I think, Personally, My take)
-[ ] At least 1 sentence with word repetition for emphasis ("really really", "genuinely fast")
+NEVER say "depends on your needs" without specifying WHICH needs determine the choice
+` : ''}
 
-━━━ OUTPUT FORMAT ━━━
-Return ONLY valid JSON. No markdown fences. No text outside the JSON object.
-Escape all internal quotes with backslash.
+═══ INDIA-SPECIFIC MANDATORY ELEMENTS ═══
+- Price: Always in ₹ (estimate if needed, mark as "expected")
+- Availability: Flipkart, Amazon, or "pre-order status"
+- 5G bands: Mention n78 or n77 for India
+- Context: Heat/humidity/dust for durability
+- Competitor: Direct comparison at same price point
+- Service: Mention service centre availability in India
+
+═══ LENGTH GUIDANCE ═══
+- NOT forced 1600-1800 words
+- Minimum: 800 words (substantial value)
+- Natural length: 900-2000 words depending on story
+- Quality > Quantity: A tight 1000-word article beats a padded 1800-word one
+
+═══ INTERNAL LINKS (2-3 MAX, NATURAL) ═══
+1. Brand pillar: Samsung articles → Best Samsung Phones / Apple → Best iPhones
+2. Buying guide: Smartphone Buying Guide India
+3. Optional: Related topic or comparison
+
+Always embed links INSIDE paragraphs contextually, not in a separate list.
+
+FACTS FROM SOURCE:
+${(raw.description + ' ' + raw.content).replace(/\[.*?\]/g, '').trim().slice(0, 1000)}
+
+BRAND: ${brand}
+TYPE: ${type}
+DATE: ${today}
+
+═══ OUTPUT FORMAT ═══
+Return ONLY valid JSON. No markdown fences. No text outside JSON.
 
 {
-  "title": "TITLE RULES — READ CAREFULLY:\n1. CONFIRMED PRODUCT (available in India): Specific, factual, price or key spec in title. Example: \\'Nothing Phone (3a) at ₹25K: Best Mid-Range Design of 2026?\\'\n2. ANNOUNCED (not yet in India): Use \\'Coming to India\\', \\'India Launch Expected\\', \\'India Price Analysis\\'. Example: \\'Samsung Galaxy A56: Everything Indian Buyers Need to Know Before Launch\\'\n3. RUMOURED/LEAKED: NEVER write as confirmed. Write as analysis. Example: \\'What the OnePlus 14 Leaks Actually Tell Us\\'. NO titles like \\'OnePlus 14 Launch Date Revealed\\'\n4. REAL content signals: Include a number, price in ₹, or specific comparison. Makes it specific and trustworthy.\n5. NO clickbait: No \\'shocking\\', \\'mind-blowing\\', \\'you won\\'t believe\\', \\'game-changer\\'.\n6. NO fake reviews: Never imply you tested an unreleased phone.\n7. FORMAT: [Product]: [Specific value/question for Indian buyers] — 55–70 chars\nGOOD: \\'iQOO Z11 5G at ₹14,999: Battery King or One-Trick Pony?\\' | \\'Pixel 9a vs Galaxy A55: Which ₹50K Phone Wins for India?\\'\nBAD: \\'iPhone 19 Leaked Design Will Shock You\\' | \\'Galaxy S26 to Feature Mind-Blowing Camera\\'",
+  "title": "Specific, factual, curiosity-driven title with ₹ or comparison. Max 70 chars.",
   "brand": "${brand}",
   "type": "${type}",
-  "summary": "3 sentences. Sentence 1: most surprising/interesting fact. Sentence 2: India price or context. Sentence 3: what makes this worth reading. Conversational — like you're telling a friend. NO banned phrases.",
+  "summary": "3 sentences. Conversational, with opinion. No banned phrases.",
   "bullets": [
-    "Specific fact with number: e.g. '6,000mAh battery, charges fully in 45 minutes'",
-    "India-specific point: price in ₹ or availability detail",
-    "One honest criticism or limitation",
-    "A competitor comparison in one line",
-    "Your opinion or prediction about this product"
+    "Specific fact with number or ₹",
+    "India context (price, availability, 5G)",
+    "Honest criticism or limitation",
+    "Competitor comparison",
+    "Your opinion or prediction"
   ],
-  "fullContent": "HARD REQUIREMENT: 1600 WORDS MINIMUM — DO NOT STOP WRITING UNTIL YOU REACH 1600 WORDS. Count your words as you write. MANDATORY SECTIONS (each 2-4 paragraphs minimum): (1) Hook opening — what happened and why India buyers care RIGHT NOW (2) Full specs breakdown with real-world meaning, not just numbers (3) India pricing — exact ₹ estimate, compare to rivals at same price (4) Who should buy this and who should NOT (5) Your honest verdict (6) What to watch for next. MANDATORY ELEMENTS: 1 HTML specs table, 1 pros/cons table, and end with this FAQ section: <h2>Frequently Asked Questions</h2><div itemscope itemtype=\"https://schema.org/FAQPage\"><div itemscope itemprop=\"mainEntity\" itemtype=\"https://schema.org/Question\"><h3 itemprop=\"name\">What is the India price?</h3><div itemscope itemprop=\"acceptedAnswer\" itemtype=\"https://schema.org/Answer\"><p itemprop=\"text\">[Answer with ₹ price estimate]</p></div></div><div itemscope itemprop=\"mainEntity\" itemtype=\"https://schema.org/Question\"><h3 itemprop=\"name\">When will it launch in India?</h3><div itemscope itemprop=\"acceptedAnswer\" itemtype=\"https://schema.org/Answer\"><p itemprop=\"text\">[Answer with timeline]</p></div></div><div itemscope itemprop=\"mainEntity\" itemtype=\"https://schema.org/Question\"><h3 itemprop=\"name\">Is it worth buying?</h3><div itemscope itemprop=\"acceptedAnswer\" itemtype=\"https://schema.org/Answer\"><p itemprop=\"text\">[Honest 2-3 sentence verdict]</p></div></div></div>. Use <h2> for sections. Tags: <p>, <h2>, <h3>, <table>, <tr>, <th>, <td>, <strong>, <ul>, <li> ONLY. British English. NO source names.",
-  "tags": ["brand name", "model name", "brand model India price", "brand model review India", "best phone under Xk", "brand model 5G India"],
-  "relatedTopics": ["suggest 3 related article topics from the same brand or price segment that would make good internal links — e.g. 'Samsung Galaxy S25 Review', 'Best Samsung phones under ₹60K'"]
-  "quickBullets": ["Spec or fact, max 7 words", "Price point, max 7 words", "One-line verdict, max 7 words"]
+  "fullContent": "Variable length article (800-2000 words). NO forced length. Structure varies by type. Include h2 headings (not h1 — page has that). Specs table if helpful. Pros/Cons table if review. Include FAQ schema at end. Use <p>, <h2>, <h3>, <table>, <strong>, <ul>, <li>, <a> tags ONLY. British English. NO source attribution in body.",
+  "tags": ["brand model", "price range", "type of phone", "review/compare/news", "relevant keywords"],
+  "quickBullets": ["7 words max", "Key fact", "One-line verdict"]
 }`
 }
 
 // ── CALL ANTHROPIC ──────────────────────────────────────────────
-async function rewriteWithAnthropic(raw: RawArticle, authorIndex = 0): Promise<RawNewsItem> {
+async function rewriteWithAnthropic(raw: RawArticle): Promise<RawNewsItem> {
   const brand = detectBrand(raw.title)
   const type  = detectType(raw.title)
 
@@ -441,7 +400,7 @@ async function rewriteWithAnthropic(raw: RawArticle, authorIndex = 0): Promise<R
     body: JSON.stringify({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 8000,
-      system: getSystemPrompt(authorIndex),
+      system: getSystemPrompt(),
       messages: [{ role: 'user', content: buildUserPrompt(raw, brand, type) }],
     }),
   })
@@ -460,7 +419,7 @@ async function rewriteWithAnthropic(raw: RawArticle, authorIndex = 0): Promise<R
 }
 
 // ── CALL GROQ ──────────────────────────────────────────────────
-async function rewriteWithGroq(raw: RawArticle, authorIndex = 0): Promise<RawNewsItem> {
+async function rewriteWithGroq(raw: RawArticle): Promise<RawNewsItem> {
   if (!GROQ_API_KEY) throw new Error('GROQ_API_KEY not set')
   const brand = detectBrand(raw.title)
   const type  = detectType(raw.title)
@@ -476,7 +435,7 @@ async function rewriteWithGroq(raw: RawArticle, authorIndex = 0): Promise<RawNew
       max_tokens: 8000,
       temperature: 0.88,
       messages: [
-        { role: 'system', content: getSystemPrompt(authorIndex) },
+        { role: 'system', content: getSystemPrompt() },
         { role: 'user',   content: buildUserPrompt(raw, brand, type) },
       ],
     }),
@@ -492,10 +451,10 @@ async function rewriteWithGroq(raw: RawArticle, authorIndex = 0): Promise<RawNew
 }
 
 // ── REWRITE WITH FALLBACK ──────────────────────────────────────
-async function rewriteArticle(raw: RawArticle, authorIndex = 0): Promise<RawNewsItem> {
+async function rewriteArticle(raw: RawArticle): Promise<RawNewsItem> {
   if (ANTHROPIC_API_KEY) {
     try {
-      return await rewriteWithAnthropic(raw, authorIndex)
+      return await rewriteWithAnthropic(raw)
     } catch (err: unknown) {
       const e = err as Error
       const isRate = e.message?.includes('429') || e.message?.includes('rate_limit')
@@ -503,7 +462,7 @@ async function rewriteArticle(raw: RawArticle, authorIndex = 0): Promise<RawNews
       if (isRate) await delay(8000)
     }
   }
-  return await rewriteWithGroq(raw, authorIndex)
+  return await rewriteWithGroq(raw)
 }
 
 // ── MAIN EXPORT ────────────────────────────────────────────────
@@ -530,7 +489,7 @@ export async function fetchAndRewriteNews(): Promise<RawNewsItem[]> {
   }
   if (rawArticles.length === 0) throw new Error('No news sources available. Set NEWSAPI_KEY or GNEWS_API_KEY in .env.local')
 
-  const picked = pickTopStories(rawArticles, 8)
+  const picked = pickTopStories(rawArticles, 6) // Reduced from 8 to 6 per day for quality
   console.log(`[TB] Selected ${picked.length} stories`)
 
   const rewritten: RawNewsItem[] = []
@@ -538,7 +497,7 @@ export async function fetchAndRewriteNews(): Promise<RawNewsItem[]> {
     console.log(`[TB] Rewriting ${i+1}/${picked.length}: ${picked[i].title.slice(0,55)}`)
     try {
       if (i > 0) await delay(4000)
-      rewritten.push(await rewriteArticle(picked[i], i))
+      rewritten.push(await rewriteArticle(picked[i]))
     } catch (err) {
       console.error(`[TB] Skipped ${i+1}: ${(err as Error).message}`)
     }
@@ -551,8 +510,6 @@ export async function fetchAndRewriteNews(): Promise<RawNewsItem[]> {
 export async function buildArticles(rawItems: RawNewsItem[]): Promise<Article[]> {
   const articles: Article[] = []
   const now = new Date()
-
-  // Build a session-level used-image set so articles in the same batch don't share images
   const sessionUsedIds = new Set<string>()
 
   for (let i = 0; i < rawItems.length; i++) {
@@ -561,18 +518,16 @@ export async function buildArticles(rawItems: RawNewsItem[]): Promise<Article[]>
     const rawText = (item.fullContent || '').replace(/<[^>]*>/g, '')
     const wc   = rawText.split(/\s+/).filter(Boolean).length
     const rt   = Math.max(5, Math.ceil(wc / 220))
-    // GSC: log warning if content too short (target 800+ words)
-    // GSC quality gate: log if content is too short (target 1500+ words)
-    if (wc < 1000) console.warn(`[TB:quality] Short article (${wc} words): ${item.title}`)
+    
+    if (wc < 800) {
+      console.warn(`[TB:quality] Thin article (${wc} words): ${item.title}`)
+      continue // Skip thin articles
+    }
 
-    // Fetch 5 unique Unsplash images using the established unique image system:
-    // getUniqueUnsplashImage → fetches Unsplash → checks Redis dedup → stores clean proxy URL
-    // → returns thetechbharat.com/api/image/{id} (Unsplash URL never exposed)
-    // → falls back to local phone images automatically if Unsplash fails
     const images: string[] = []
     const imgQuery = item.type === 'compare'
-      ? 'smartphone technology india'   // neutral query for compare — avoids wrong brand image
-      : `${item.brand} smartphone`      // brand-specific for news/review
+      ? 'smartphone technology india'
+      : `${item.brand} smartphone`
     for (let j = 0; j < 5; j++) {
       const img = await getUniqueUnsplashImage(imgQuery, sessionUsedIds)
       if (img) images.push(img)
@@ -584,11 +539,8 @@ export async function buildArticles(rawItems: RawNewsItem[]): Promise<Article[]>
       title:         item.title,
       type:          item.type as 'mobile-news' | 'review' | 'compare',
       category:      item.type === 'review' ? 'Reviews' : item.type === 'compare' ? 'Compare' : 'Mobile News',
-      // Re-detect brand from title at save time — overrides AI response for accuracy
       brand:         (() => {
         const detected = detectBrand(item.title)
-        // Only use AI brand if our detector returns generic 'Mobile'
-        // and AI returned something specific
         if (detected !== 'Mobile') return detected
         return (item.brand && item.brand !== 'Mobile') ? item.brand : detected
       })(),
@@ -623,7 +575,7 @@ export async function buildArticles(rawItems: RawNewsItem[]): Promise<Article[]>
   return articles
 }
 
-// ── FETCH SINGLE ARTICLE (used by scheduler + admin manual fetch) ─
+// ── FETCH SINGLE ARTICLE ─
 export async function fetchSingleArticle(
   type: 'mobile-news' | 'review' | 'compare',
   existingArticles: { title: string; brand: string; publishDate: string }[]
@@ -643,14 +595,14 @@ export async function fetchSingleArticle(
 
   const candidates = rawArticles.filter(a => {
     if (!a.title || a.title === '[Removed]') return false
-    if (!isMobileTech(a.title, a.description)) return false
+    if (!isConfirmedContent(a.title, a.description)) return false
 
     const t = a.title.toLowerCase()
     if (type === 'review') {
-      return t.includes('review') || t.includes('verdict') || t.includes('hands-on') || t.includes('rating') || t.includes('tested')
+      return t.includes('review') || t.includes('verdict') || t.includes('hands-on') || t.includes('rating')
     }
     if (type === 'compare') {
-      return t.includes(' vs ') || t.includes('compare') || t.includes('comparison') || t.includes('versus') || t.includes('better') || t.includes('alternative') || t.includes('worth')
+      return t.includes(' vs ') || t.includes('compare') || t.includes('comparison') || t.includes('versus')
     }
     return !t.includes('review') && !t.includes(' vs ') && !t.includes('comparison')
   })
@@ -659,40 +611,18 @@ export async function fetchSingleArticle(
   const fresh = candidates.filter(a => !isDuplicate(a.title, brand(a.title), existingArticles))
 
   if (fresh.length === 0) {
-    if (type === 'compare') {
-      const pool = rawArticles
-        .filter(a => isHighQualityTitle(a.title) && isMobileTech(a.title, a.description || ''))
-        .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
-      
-      if (pool.length >= 2) {
-        const phoneA = pool[0]
-        const phoneB = pool.find(a => detectBrand(a.title) !== detectBrand(phoneA.title)) || pool[1]
-        const synthetic: RawArticle = {
-          title: `${phoneA.title.split(':')[0]} vs ${phoneB.title.split(':')[0]} — Which Should You Buy in India?`,
-          description: `Comparing ${phoneA.title} against ${phoneB.title} for Indian buyers. ${phoneA.description} vs ${phoneB.description}`,
-          content: `Phone A: ${phoneA.title}. ${phoneA.description} ${phoneA.content?.slice(0,300) || ''}\nPhone B: ${phoneB.title}. ${phoneB.description} ${phoneB.content?.slice(0,300) || ''}`,
-          publishedAt: new Date().toISOString(),
-          url: '',
-        }
-        const rewritten = await rewriteArticle(synthetic, 0)
-        rewritten.type = 'compare'
-        return rewritten
-      }
-    }
-
     const fallback = rawArticles
-      .filter(a => isHighQualityTitle(a.title) && isMobileTech(a.title, a.description || ''))
+      .filter(a => isConfirmedContent(a.title, a.description || ''))
       .filter(a => !isDuplicate(a.title, brand(a.title), existingArticles))
 
     if (fallback.length === 0) return null
-
     fallback.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
-    return rewriteArticle({ ...fallback[0] }, 0)
+    return rewriteArticle({ ...fallback[0] })
   }
 
   fresh.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
   const target = fresh[0]
-  const rewritten = await rewriteArticle(target, 0)
+  const rewritten = await rewriteArticle(target)
   rewritten.type = type
   return rewritten
 }

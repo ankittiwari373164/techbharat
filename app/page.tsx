@@ -13,11 +13,20 @@ export const revalidate = 60
 export default async function HomePage() {
   const articles = await getAllArticlesAsync()
   const featured = await getFeaturedArticleAsync()
-  const latest         = articles.slice(0, 6)
-  const newsArticles   = articles.filter((a: {type:string}) => a.type === 'mobile-news').slice(0, 4)
-  const reviewArticles = articles.filter((a: {type:string}) => a.type === 'review').slice(0, 3)
-  const compareArticles= articles.filter((a: {type:string}) => a.type === 'compare').slice(0, 3)
-  const sidebarArticles= articles.slice(1, 5)
+
+  // ✅ ONLY ADDITION: filter high-quality articles
+  const qualityArticles = articles.filter((a: any) => {
+    const quality = a.contentQuality ?? 7
+return quality >= 6 && !a.isLowValue
+  })
+
+  // ✅ UPDATED: use filtered articles
+  const latest         = qualityArticles.slice(0, 6)
+  const newsArticles   = qualityArticles.filter((a: {type:string}) => a.type === 'mobile-news').slice(0, 4)
+  const reviewArticles = qualityArticles.filter((a: {type:string}) => a.type === 'review').slice(0, 3)
+  const compareArticles= qualityArticles.filter((a: {type:string}) => a.type === 'compare').slice(0, 3)
+  const sidebarArticles= qualityArticles.slice(1, 5)
+
   const hasArticles    = articles.length > 0
 
   return (

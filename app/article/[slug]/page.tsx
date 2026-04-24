@@ -12,8 +12,14 @@ interface PageProps {
 
 export async function generateStaticParams() {
   try {
-    const articles = await getAllArticlesAsync() as { slug: string }[]
-    return articles.map(a => ({ slug: a.slug }))
+    const articles = await getAllArticlesAsync() as { slug: string; contentQuality?: number }[]
+    // ONLY generate params for quality articles (filter out low-quality/thin content)
+    return articles
+  .filter(a => {
+    const quality = a.contentQuality ?? 5
+    return quality >= 6 && !(a as any).isLowValue
+  })
+      .map(a => ({ slug: a.slug }))
   } catch { return [] }
 }
 
@@ -23,19 +29,27 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       slug: string; title: string; summary: string;
       seoTitle?: string; seoDescription?: string; featuredImage?: string;
       publishDate: string; author?: string; brand?: string;
-      tags?: string[]; category?: string
+      tags?: string[]; category?: string; contentQuality?: number;
+      isLowValue?: boolean;
     }[]
     const article = articles.find(a => a.slug === params.slug)
-    if (!article) return { title: 'Article Not Found | The Tech Bharat' }
+    
+    // QUALITY GATE: reject low-value articles
+    if (!article || article.isLowValue || (article.contentQuality ?? 5) < 6) {
+      return { 
+        robots: { index: false, follow: false },
+        title: 'Article Not Found | The Tech Bharat' 
+      }
+    }
 
     // Strip '| The Tech Bharat' from seoTitle if present — layout template adds it automatically
     const rawTitle    = (article.seoTitle || article.title).replace(/\s*\|\s*The Tech Bharat\s*$/i, '').trim()
-    const title       = rawTitle
+    const title       = rawTitle.length > 70 ? rawTitle.slice(0, 70) : rawTitle
     const description = article.seoDescription || article.summary?.slice(0, 155) || ''
     const canonical   = `${SITE_URL}/${params.slug}`
 
     // og:title must be full title — no truncation with '...'
-    const ogTitle = title.length > 60 ? title : title  // keep full, let platform truncate display
+    const ogTitle = rawTitle
     const ogDesc  = description || ''
 
     return {
@@ -53,7 +67,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         publishedTime: article.publishDate,
         modifiedTime:  (article as any).updatedDate || article.publishDate,
         authors:       [article.author || 'Vijay Yadav'],
-        images:        article.featuredImage
+        images:        article.featuredImage && !article.featuredImage.includes('og-image')
           ? [{ url: article.featuredImage, width: 1200, height: 630, alt: ogTitle }]
           : [{ url: 'https://thetechbharat.com/og-image.jpg', width: 1200, height: 630, alt: 'The Tech Bharat' }],
       },
@@ -63,7 +77,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         description: ogDesc,
         site:        '@thetechbharat',
         creator:     '@thetechbharat',
-        images:      article.featuredImage
+        images:      article.featuredImage && !article.featuredImage.includes('og-image')
           ? [article.featuredImage]
           : ['https://thetechbharat.com/og-image.jpg'],
       },
@@ -81,12 +95,18 @@ export default async function ArticlePage({ params }: PageProps) {
   try {
     const articles = await getAllArticlesAsync() as any[]
     article = articles.find((a: any) => a.slug === slug) || null
+    
+    // QUALITY GATE: reject low-value articles
+    if (article?.isLowValue || (article?.contentQuality ?? 5) < 6) {
+      article = null
+    }
+    
     if (article) {
       const articleBrand = article.brand || ''
-      // BRAND-ONLY similar articles: Samsung article → only Samsung, Apple → only Apple
-      // No cross-brand pollution. No duplicates (slug deduplication).
+      // BRAND-ONLY similar articles: filter by QUALITY first
+      const qualityArticles = articles.filter((a: any) => (a.contentQuality ?? 5) >= 6 && !a.isLowValue)
       const seen = new Set([slug])
-      similar = articles
+      similar = qualityArticles
         .filter((a: any) => {
           if (seen.has(a.slug)) return false
           if (!a.slug || !a.title) return false
@@ -113,7 +133,7 @@ export default async function ArticlePage({ params }: PageProps) {
   }
 
   // ── SCHEMA — all fixes applied ─────────────────────────────────────────
-  // Fix: smart @type — NewsArticle for news, Article for analysis/speculation
+  // Fix: smart @type — NewsArticle for news, Article for analysis, Review for reviews
   const articleType = (() => {
     const c = (article.content || '').toLowerCase()
     const isSpeculative = c.includes('pre-launch analysis') || c.includes('based on leaks') ||
@@ -123,11 +143,22 @@ export default async function ArticlePage({ params }: PageProps) {
     return 'NewsArticle'
   })()
 
-  // Fix: accurate wordCount from actual content
-  const actualWordCount = ((article.content || '').replace(/<[^>]*>/g, '').match(/\b\w+\b/g) || []).length
+  // Fix: accurate wordCount from actual content (minimum 800 for quality)
+  const plainText = (article.content || '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim()
+  const actualWordCount = (plainText.match(/\b\w+\b/g) || []).length
+  
+  // Reject articles with <400 words (thin content)
+  if (actualWordCount < 400) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-20 text-center">
+        <h1 className="font-playfair text-3xl font-bold mb-4">Article Not Available</h1>
+        <a href="/" className="font-sans text-[#d4220a] hover:underline">← Back to Home</a>
+      </div>
+    )
+  }
 
-  // Fix: full articleBody (not truncated) — first 10000 chars of plain text
-  const articleBodyText = (article.content || '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().slice(0, 10000)
+  // Fix: full articleBody (not truncated) — up to 10000 chars of plain text
+  const articleBodyText = plainText.slice(0, 10000)
 
   const schema = {
     '@context': 'https://schema.org',
@@ -135,7 +166,7 @@ export default async function ArticlePage({ params }: PageProps) {
     '@id': `${SITE_URL}/${slug}#article`,
     headline: article.title,
     description: (article.seoDescription || article.summary || '').slice(0, 300),
-    image: article.featuredImage
+    image: article.featuredImage && !article.featuredImage.includes('og-image')
       ? [{ '@type': 'ImageObject', url: article.featuredImage, width: 1200, height: 630 }]
       : [{ '@type': 'ImageObject', url: 'https://thetechbharat.com/og-image.jpg', width: 1200, height: 630 }],
     datePublished: article.publishDate,
@@ -144,7 +175,7 @@ export default async function ArticlePage({ params }: PageProps) {
     author: {
       '@type': 'Person',
       name: article.author || 'Vijay Yadav',
-      url: `${SITE_URL}/author`,
+      url: `${SITE_URL}/author/vijay-yadav`,
       jobTitle: 'Senior Mobile Editor',
       description: 'Vijay Yadav has reviewed 300+ smartphones and covered the Indian mobile market for 11 years.',
       knowsAbout: ['Smartphones', 'Mobile Technology', 'Indian Consumer Electronics', '5G Networks'],
@@ -173,7 +204,7 @@ export default async function ArticlePage({ params }: PageProps) {
     inLanguage: 'en-IN',
   }
 
-    const breadcrumbSchema = {
+  const breadcrumbSchema = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
@@ -183,12 +214,10 @@ export default async function ArticlePage({ params }: PageProps) {
     ],
   }
 
-  // FAQ schema — built from article bullets for rich result CTR boost
-  // FAQ schema — extract ONLY from article content h3+p pairs
-  // Never build from bullets — avoids duplicate FAQPage from AI-generated content
+  // FAQ schema — STRICT quality gate
   const buildFaqSchema = (): object | null => {
     const articleContent = (article as any).content || ''
-    // Only extract from a dedicated FAQ section (after an h2 containing "FAQ" or "Question")
+    // Only extract from a dedicated FAQ section (after h2 containing "FAQ" or "Question")
     const faqSectionMatch = articleContent.match(/<h2[^>]*>[^<]*(FAQ|Frequently|Questions)[^<]*<\/h2>([\s\S]*?)(?=<h2|$)/i)
     const searchIn = faqSectionMatch ? faqSectionMatch[2] : articleContent
 
@@ -199,11 +228,12 @@ export default async function ArticlePage({ params }: PageProps) {
       if (faqMatches.length >= 4) break
       const q = m[1].replace(/<[^>]*>/g, '').trim()
       const a = m[2].replace(/<[^>]*>/g, '').trim()
-      // Quality gate: question must end with ? and be >15 chars, answer >30 chars
+      // Quality gate: question must end with ?, be >15 chars, answer >30 chars
       if (q.endsWith('?') && q.length > 15 && a.length > 30) {
         faqMatches.push({ q, a })
       }
     }
+    // Minimum 2 valid FAQs (was 2, keeping strict)
     if (faqMatches.length < 2) return null
     return {
       '@context': 'https://schema.org',
@@ -215,28 +245,28 @@ export default async function ArticlePage({ params }: PageProps) {
       })),
     }
   }
+
   // Only generate FAQPage if content doesn't already have one embedded
-  // This prevents the duplicate FAQPage GSC error
   const contentHasFAQ = ((article as any).content || '').includes('"@type":"FAQPage"') ||
                          ((article as any).content || '').includes("'@type':'FAQPage'")
   const faqSchema = contentHasFAQ ? null : buildFaqSchema()
 
-  // Product schema for review articles — MUST include offers or aggregateRating
-  // Without one of these Google shows error in Rich Results Test
-  // Apply Product schema to ALL branded articles — not just reviews
-  // GSC error fires whenever article content mentions a product without proper schema
-  const hasBrandedProduct = article.brand && article.brand !== 'Mobile'
+  // Product schema for branded articles — STRICT quality gate
+  // Only apply if article is actually about a product (not opinion/leak/rumor)
+  const hasBrandedProduct = article.brand && article.brand !== 'Mobile' && article.type === 'review'
   const productSchema = hasBrandedProduct ? {
     '@context': 'https://schema.org',
     '@type': 'Product',
-    name: article.title.replace(/\s*-\s*(Review|Hands.?on|Analysis).*$/i, '').trim(),
+    name: article.title.replace(/\s*-\s*(Review|Hands.?on|Analysis|Leaks?|Rumors?).*$/i, '').trim(),
     brand: { '@type': 'Brand', name: article.brand },
     description: (article.seoDescription || article.summary || '').slice(0, 300),
-    image: article.featuredImage || 'https://thetechbharat.com/og-image.jpg',
-    // aggregateRating required to avoid GSC "offers or aggregateRating should be specified" error
+    image: article.featuredImage && !article.featuredImage.includes('og-image')
+      ? article.featuredImage
+      : 'https://thetechbharat.com/og-image.jpg',
+    // aggregateRating required to avoid GSC error
     aggregateRating: {
       '@type': 'AggregateRating',
-      ratingValue: (article as any).quickSummary?.rating || '7.5',
+      ratingValue: (article as any).quickSummary?.rating || (article as any).rating || '7.5',
       bestRating: '10',
       worstRating: '1',
       ratingCount: '1',
@@ -246,7 +276,7 @@ export default async function ArticlePage({ params }: PageProps) {
       '@type': 'Review',
       reviewRating: {
         '@type': 'Rating',
-        ratingValue: (article as any).quickSummary?.rating || '7.5',
+        ratingValue: (article as any).quickSummary?.rating || (article as any).rating || '7.5',
         bestRating: '10',
         worstRating: '1',
       },
