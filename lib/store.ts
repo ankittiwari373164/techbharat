@@ -14,7 +14,7 @@ export interface Article {
 }
 
 const KV_KEY    = 'tb:articles'
-const IS_VERCEL = !!process.env.KV_REST_API_URL
+const IS_VERCEL = process.env.NODE_ENV === 'production' && !!process.env.KV_REST_API_URL
 
 async function getRedis() {
   const { Redis } = await import('@upstash/redis')
