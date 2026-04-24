@@ -227,11 +227,17 @@ const actualWordCount = plainText ? (plainText.match(/\b\w+\b/g) || []).length :
     : ''
     // Only extract from a dedicated FAQ section (after h2 containing "FAQ" or "Question")
     const faqSectionMatch = articleContent.match(/<h2[^>]*>[^<]*(FAQ|Frequently|Questions)[^<]*<\/h2>([\s\S]*?)(?=<h2|$)/i)
-    const searchIn = faqSectionMatch ? faqSectionMatch[2] : articleContent
+    const searchIn =
+  typeof (faqSectionMatch ? faqSectionMatch[2] : articleContent) === 'string'
+    ? (faqSectionMatch ? faqSectionMatch[2] : articleContent)
+    : ''
 
     const faqMatches: {q: string, a: string}[] = []
     // Strict: only h3 immediately followed by p
-    const pairs = [...searchIn.matchAll(/<h3[^>]*>(.*?)<\/h3>\s*<p[^>]*>(.*?)<\/p>/gi)]
+    const pairs =
+  typeof searchIn === 'string'
+    ? [...searchIn.matchAll(/<h3[^>]*>(.*?)<\/h3>\s*<p[^>]*>(.*?)<\/p>/gi)]
+    : []
     for (const m of pairs) {
       if (faqMatches.length >= 4) break
       const q = m[1].replace(/<[^>]*>/g, '').trim()
