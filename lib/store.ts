@@ -14,7 +14,9 @@ export interface Article {
 }
 
 const KV_KEY    = 'tb:articles'
-const IS_VERCEL = process.env.NODE_ENV === 'production' && !!process.env.KV_REST_API_URL
+const IS_VERCEL =
+  process.env.NODE_ENV === 'production' &&
+  !!process.env.KV_REST_API_URL
 
 async function getRedis() {
   const { Redis } = await import('@upstash/redis')
@@ -54,7 +56,15 @@ function fileSet(articles: Article[]): void {
 }
 
 export async function getAllArticlesAsync(): Promise<Article[]> {
-  return IS_VERCEL ? kvGet() : fileGet()
+  try {
+    if (IS_VERCEL) {
+      const data = await kvGet()
+      if (data && data.length) return data
+    }
+  } catch {}
+
+  // ✅ ALWAYS FALLBACK
+  return fileGet()
 }
 
 export async function saveArticlesAsync(articles: Article[]): Promise<void> {
@@ -86,8 +96,19 @@ export function addArticle(article: Article): void {
 }
 
 export async function getArticleBySlugAsync(slug: string): Promise<Article | null> {
-  const all = await getAllArticlesAsync()
-  return all.find(a => a.slug === slug) || null
+  try {
+    const all = await getAllArticlesAsync()
+    const found = all.find(a => a.slug === slug)
+    if (found) return found
+  } catch {}
+
+  // ✅ FALLBACK TO FILE (VERY IMPORTANT)
+  try {
+    const local = fileGet()
+    return local.find(a => a.slug === slug) || null
+  } catch {}
+
+  return null
 }
 
 export function getArticleBySlug(slug: string): Article | null {
