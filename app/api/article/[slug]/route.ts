@@ -15,23 +15,37 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { slug: string } }
 ) {
-  const article = await getArticleBySlugAsync(params.slug)
-  if (!article) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  try { // ✅ ADDED (prevent 500 crash)
+
+    const article = await getArticleBySlugAsync(params.slug)
+    if (!article) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    }
+
+    // Track view — fire and forget, don't block response
+    try {
+      const kv  = getKv()
+      const key = `views:${params.slug}`
+      kv.incr(key).catch(() => {})
+      const today = new Date().toISOString().slice(0, 10)
+      kv.incr(`views:daily:${today}:${params.slug}`).catch(() => {})
+      kv.expire(`views:daily:${today}:${params.slug}`, 90 * 86400).catch(() => {})
+    } catch {}
+
+    let similar: any[] = []// ✅ ADDED (safe fallback)
+    try {
+      similar = await getSimilarArticlesAsync(article, 3)
+    } catch {
+      similar = []
+    }
+
+    return NextResponse.json({ article, similar })
+
+  } catch (error) { // ✅ ADDED (global safety)
+    console.error('Article API error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
   }
-
-  // Track view — fire and forget, don't block response
-  try {
-    const kv  = getKv()
-    const key = `views:${params.slug}`
-    kv.incr(key).catch(() => {})
-    // Also track daily for sparkline: views:daily:YYYY-MM-DD:slug
-    const today = new Date().toISOString().slice(0, 10)
-    kv.incr(`views:daily:${today}:${params.slug}`).catch(() => {})
-    // Expire daily keys after 90 days
-    kv.expire(`views:daily:${today}:${params.slug}`, 90 * 86400).catch(() => {})
-  } catch { /* never block article load */ }
-
-  const similar = await getSimilarArticlesAsync(article, 3)
-  return NextResponse.json({ article, similar })
 }
