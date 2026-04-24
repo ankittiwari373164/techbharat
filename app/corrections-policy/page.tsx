@@ -41,7 +41,7 @@ export default function CorrectionsPage() {
           <p className="mb-2">If you believe you have found an error in any of our articles, we want to hear from you:</p>
           <div className="bg-[#1a3a5c]/5 border border-border p-4">
             <p className="font-sans text-sm font-semibold text-ink mb-1">Email us at:</p>
-            <a href="mailto:corrections@techbharat.com" className="font-sans text-sm text-[#d4220a] hover:underline">corrections@techbharat.com</a>
+            <a href="mailto:corrections@thetechbharat.com" className="font-sans text-sm text-[#d4220a] hover:underline">corrections@thetechbharat.com</a>
             <p className="font-sans text-xs text-muted mt-2">Please include: the article title or URL, the specific error, and the correct information with a reliable source if possible.</p>
           </div>
         </section>

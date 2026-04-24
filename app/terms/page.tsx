@@ -50,7 +50,7 @@ export default function TermsPage() {
         </section>
         <section>
           <h2 className="font-playfair text-xl font-bold text-ink mb-3">8. Contact</h2>
-          <p>Questions about these Terms? Contact us at <a href="mailto:legal@techbharat.com" className="text-[#d4220a] hover:underline">legal@techbharat.com</a>.</p>
+          <p>Questions about these Terms? Contact us at <a href="mailto:legal@thetechbharat.com" className="text-[#d4220a] hover:underline">legal@thetechbharat.com</a>.</p>
         </section>
       </div>
     </div>

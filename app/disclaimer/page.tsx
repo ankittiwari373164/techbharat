@@ -45,7 +45,7 @@ export default function DisclaimerPage() {
         </section>
         <section>
           <h2 className="font-playfair text-xl font-bold text-ink mb-3">Contact</h2>
-          <p>For questions about this disclaimer, contact us at <a href="mailto:legal@techbharat.com" className="text-[#d4220a] hover:underline">legal@techbharat.com</a>.</p>
+          <p>For questions about this disclaimer, contact us at <a href="mailto:legal@thetechbharat.com" className="text-[#d4220a] hover:underline">legal@thetechbharat.com</a>.</p>
         </section>
       </div>
     </div>
