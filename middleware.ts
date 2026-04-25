@@ -9,6 +9,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { NextRequest, NextResponse } from 'next/server'
 
+
+
 // ── ALL known top-level pages — must NOT be treated as article slugs ─────────
 // Add every app/[slug]/page.tsx here so middleware never rewrites them to /article/
 const TOP_LEVEL_ROUTES = new Set([
@@ -49,6 +51,15 @@ function isArticleSlug(pathname: string): boolean {
 }
 
 export function middleware(req: NextRequest) {
+  // ✅ FIX CANNIBALIZATION: redirect /article/* → /
+if (req.nextUrl.pathname.startsWith('/article/')) {
+  const slug = req.nextUrl.pathname.replace('/article/', '')
+
+  if (slug) {
+    const newUrl = new URL(`/${slug}`, req.url)
+    return NextResponse.redirect(newUrl, 301)
+  }
+}
   const { pathname } = req.nextUrl
 
   // ── 5. Rewrite clean slug URLs → /article/[slug] internally ─────────────

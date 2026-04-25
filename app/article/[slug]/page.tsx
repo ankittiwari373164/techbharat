@@ -14,9 +14,6 @@ interface PageProps {
 // ❌ REMOVED generateStaticParams (causing 404 JSON + 500)
 // export async function generateStaticParams() { ... }
 
-export const metadata = {
-  robots: { index: false, follow: false }
-}
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   try {
