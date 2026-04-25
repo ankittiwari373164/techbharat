@@ -73,8 +73,36 @@ export default async function BestSmartphonesPage() {
 
         <p className="font-body text-lg text-[#2a2a2a] leading-relaxed mb-6">India is the world\'s second largest smartphone market and one of its most competitive. Over 150 smartphone models launch in India every year. Choosing the right phone from this overwhelming selection is the purpose of this guide — a comprehensive, honest ranking of the best smartphones available in India in {month} {year} across every budget tier, without brand bias or paid placement.</p>
         <p className="font-body text-base text-[#2a2a2a] leading-relaxed mb-6">This guide covers six price tiers: under Rs 15,000, Rs 15,000-25,000, Rs 25,000-40,000, Rs 40,000-70,000, Rs 70,000-1,00,000, and above Rs 1,00,000. At each tier, I pick the best overall phone and explain exactly why — and which alternatives deserve consideration for specific use cases.</p>
+        {/* ✅ ADDED: BUYER INTENT BLOCK */}
+<div className="bg-[#f8f4ef] border-l-4 border-[#d4220a] p-5 mb-8">
+  <h3 className="font-bold text-sm mb-2">Who should use this guide?</h3>
+  <p className="text-sm text-[#2a2a2a]">
+    This guide is for buyers who want the best smartphone in their budget without wasting money on marketing hype. If you are upgrading after 2–3 years, this will help you choose the right phone for long-term use.
+  </p>
+
+  <h3 className="font-bold text-sm mt-4 mb-2">Who should NOT rely only on this guide?</h3>
+  <p className="text-sm text-[#2a2a2a]">
+    If you already know your exact priority — like gaming, camera, or battery — you should also check dedicated category guides for more focused recommendations.
+  </p>
+
+  <h3 className="font-bold text-sm mt-4 mb-2">Final Verdict</h3>
+  <p className="text-sm text-[#2a2a2a]">
+    In {month} {year}, the best smartphone is not the most expensive one — it is the one that matches your usage, location, and long-term expectations. Choosing smartly within your budget matters more than chasing specs.
+  </p>
+</div>
 
         <h2 className="font-playfair text-2xl font-bold text-ink mt-10 mb-4 pb-2 border-b-2 border-[#d4220a]">Best Smartphones India {month} {year} — All Budgets</h2>
+        {/* ✅ ADDED: INTERNAL LINK BOOST */}
+<p className="font-sans text-sm text-muted mb-6">
+  If you want step-by-step decision help, check our{' '}
+  <Link href="/smartphone-buying-guide-india" className="text-[#d4220a] font-semibold hover:underline">
+    smartphone buying guide
+  </Link>{' '}
+  or compare devices directly in our{' '}
+  <Link href="/phone-comparison-guide-india" className="text-[#d4220a] font-semibold hover:underline">
+    comparison guide
+  </Link>.
+</p>
         <div className="overflow-x-auto mb-8"><table className="w-full border-collapse text-sm font-sans"><thead><tr className="bg-[#1a3a5c] text-white"><th className="px-3 py-2 text-left">Budget</th><th className="px-3 py-2 text-left">Best Pick</th><th className="px-3 py-2 text-left">Price</th><th className="px-3 py-2 text-left">Why</th></tr></thead>
         <tbody>{[
           ['Under Rs 15,000','Redmi Note 14 5G','Rs 14,999','Best display, camera and 5G at budget tier'],
@@ -188,7 +216,13 @@ export default async function BestSmartphonesPage() {
             </div>
           </section>
         )}
-
+{/* ✅ ADDED: FINAL BUYING ADVICE */}
+<div className="mt-10 border-t pt-6">
+  <h2 className="font-playfair text-xl font-bold text-ink mb-3">Final Buying Advice</h2>
+  <p className="font-sans text-sm text-muted leading-relaxed">
+    The best smartphone depends on how long you plan to use it. Budget buyers should prioritise battery and updates, mid-range buyers should focus on balance, and premium buyers should choose ecosystem and long-term support. In India, service availability and software updates matter more than raw specifications.
+  </p>
+</div>
         <div className="mt-10 bg-[#f8f4ef] border-l-4 border-[#d4220a] p-5">
           <p className="font-sans text-xs font-bold text-[#d4220a] uppercase tracking-wider mb-2">Editorial Note</p>
           <p className="font-sans text-sm text-muted">

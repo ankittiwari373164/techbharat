@@ -73,7 +73,35 @@ export default async function BestGamingPhonesPage() {
 
 
         <p className="font-body text-lg text-[#2a2a2a] leading-relaxed mb-6">India is the world\'s largest mobile gaming market by user count. BGMI, Free Fire, Call of Duty Mobile, and Ludo King between them have hundreds of millions of Indian players. Choosing the right gaming phone in {month} {year} means understanding not just spec sheet numbers but real-world sustained performance — what happens to frame rates after 20 minutes of gaming, how hot the phone gets, and how much battery the session consumes.</p>
+        {/* ✅ ADDED: BUYER INTENT BLOCK */}
+<div className="bg-[#f8f4ef] border-l-4 border-[#d4220a] p-5 mb-8">
+  <h3 className="font-bold text-sm mb-2">Who should buy a gaming phone?</h3>
+  <p className="text-sm text-[#2a2a2a]">
+    Gaming phones are ideal for users who regularly play BGMI, Free Fire, or Call of Duty Mobile and need stable frame rates, better cooling, and responsive touch performance.
+  </p>
+
+  <h3 className="font-bold text-sm mt-4 mb-2">Who should NOT buy a gaming phone?</h3>
+  <p className="text-sm text-[#2a2a2a]">
+    If you mainly use your phone for calls, social media, or light usage, gaming-focused hardware may not provide meaningful benefits and you can choose a balanced phone instead.
+  </p>
+
+  <h3 className="font-bold text-sm mt-4 mb-2">Final Verdict</h3>
+  <p className="text-sm text-[#2a2a2a]">
+    In {month} {year}, gaming performance depends more on sustained stability than peak specs. Choosing a phone with good thermal management matters more than just having a powerful chipset.
+  </p>
+</div>
         <h2 className="font-playfair text-2xl font-bold text-ink mt-10 mb-4 pb-2 border-b-2 border-[#d4220a]">Best Gaming Phones India {month} {year} — Ranked</h2>
+        {/* ✅ ADDED: INTERNAL LINK BOOST */}
+<p className="font-sans text-sm text-muted mb-6">
+  For overall recommendations across all categories, check our{' '}
+  <Link href="/best-smartphones-india" className="text-[#d4220a] font-semibold hover:underline">
+    Best Smartphones in India
+  </Link>{' '}
+  and{' '}
+  <Link href="/smartphone-buying-guide-india" className="text-[#d4220a] font-semibold hover:underline">
+    complete buying guide
+  </Link>.
+</p>
         <div className="overflow-x-auto mb-8"><table className="w-full border-collapse text-sm font-sans"><thead><tr className="bg-[#1a3a5c] text-white"><th className="px-3 py-2 text-left">Phone</th><th className="px-3 py-2 text-left">Price</th><th className="px-3 py-2 text-left">Chip</th><th className="px-3 py-2 text-left">BGMI Max</th><th className="px-3 py-2 text-left">Battery</th><th className="px-3 py-2 text-left">Rating</th></tr></thead>
         <tbody>{[
           ['Asus ROG Phone 8','Rs 79,999','Snapdragon 8 Gen 3','90fps Ultra sustained','5,500mAh + 65W','9.5/10'],
@@ -184,7 +212,13 @@ export default async function BestGamingPhonesPage() {
             </div>
           </section>
         )}
-
+{/* ✅ ADDED: FINAL BUYING ADVICE */}
+<div className="mt-10 border-t pt-6">
+  <h2 className="font-playfair text-xl font-bold text-ink mb-3">Final Buying Advice</h2>
+  <p className="font-sans text-sm text-muted leading-relaxed">
+    The best gaming phone depends on your level of play. Casual players can choose mid-range devices like Poco or iQOO Z series, while serious competitive players should invest in Snapdragon 8-series devices for stable 90fps performance. Focus on cooling and consistency rather than just raw specs.
+  </p>
+</div>
         <div className="mt-10 bg-[#f8f4ef] border-l-4 border-[#d4220a] p-5">
           <p className="font-sans text-xs font-bold text-[#d4220a] uppercase tracking-wider mb-2">Editorial Note</p>
           <p className="font-sans text-sm text-muted">

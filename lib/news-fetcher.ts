@@ -454,7 +454,18 @@ async function rewriteWithGroq(raw: RawArticle): Promise<RawNewsItem> {
 async function rewriteArticle(raw: RawArticle): Promise<RawNewsItem> {
   if (ANTHROPIC_API_KEY) {
     try {
-      return await rewriteWithAnthropic(raw)
+      const result = await rewriteWithAnthropic(raw)
+
+      // ✅ ADD: thin content filter (Anthropic)
+      const contentA = (result.fullContent || '').replace(/<[^>]*>/g, '')
+      const wcA = contentA.split(/\s+/).filter(Boolean).length
+      if (wcA < 800) {
+        console.warn('[TB] Skipped thin AI article (Anthropic)')
+        throw new Error('Thin content')
+      }
+
+      return result
+
     } catch (err: unknown) {
       const e = err as Error
       const isRate = e.message?.includes('429') || e.message?.includes('rate_limit')
@@ -462,7 +473,18 @@ async function rewriteArticle(raw: RawArticle): Promise<RawNewsItem> {
       if (isRate) await delay(8000)
     }
   }
-  return await rewriteWithGroq(raw)
+
+  const result = await rewriteWithGroq(raw)
+
+  // ✅ ADD: thin content filter (Groq)
+  const contentB = (result.fullContent || '').replace(/<[^>]*>/g, '')
+  const wcB = contentB.split(/\s+/).filter(Boolean).length
+  if (wcB < 800) {
+    console.warn('[TB] Skipped thin AI article (Groq)')
+    throw new Error('Thin content')
+  }
+
+  return result
 }
 
 // ── MAIN EXPORT ────────────────────────────────────────────────

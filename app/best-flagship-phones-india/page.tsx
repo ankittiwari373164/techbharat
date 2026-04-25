@@ -73,7 +73,35 @@ export default async function BestFlagshipPhonesPage() {
 
 
         <p className="font-body text-lg text-[#2a2a2a] leading-relaxed mb-6">India\'s premium smartphone market — phones above Rs 60,000 — has grown significantly in {month} {year}. More Indian buyers are choosing to spend more on fewer phones rather than upgrading cheaper devices more frequently. This shift makes the flagship purchase decision more important: at Rs 80,000-1,60,000, you\'re expecting this phone to last 4-5 years and deliver genuinely differentiated performance.</p>
+        {/* ✅ ADDED: BUYER INTENT BLOCK */}
+<div className="bg-[#f8f4ef] border-l-4 border-[#d4220a] p-5 mb-8">
+  <h3 className="font-bold text-sm mb-2">Who should buy a flagship phone?</h3>
+  <p className="text-sm text-[#2a2a2a]">
+    Flagship phones are ideal for users who plan to keep their device for 4–5 years, want the best camera and performance, and value long-term software updates and premium build quality.
+  </p>
+
+  <h3 className="font-bold text-sm mt-4 mb-2">Who should NOT buy a flagship phone?</h3>
+  <p className="text-sm text-[#2a2a2a]">
+    If you upgrade every 1–2 years or mainly use basic apps, spending over Rs 1 lakh on a flagship may not provide real value compared to mid-range phones.
+  </p>
+
+  <h3 className="font-bold text-sm mt-4 mb-2">Final Verdict</h3>
+  <p className="text-sm text-[#2a2a2a]">
+    In {month} {year}, flagship phones make financial sense only when used long-term. Their real value comes from durability, software support, and resale — not just raw performance.
+  </p>
+</div>
         <h2 className="font-playfair text-2xl font-bold text-ink mt-10 mb-4 pb-2 border-b-2 border-[#d4220a]">Best Flagship Phones India {month} {year}</h2>
+        {/* ✅ ADDED: INTERNAL LINK BOOST */}
+<p className="font-sans text-sm text-muted mb-6">
+  For broader recommendations across all budgets, check our{' '}
+  <Link href="/best-smartphones-india" className="text-[#d4220a] font-semibold hover:underline">
+    Best Smartphones in India
+  </Link>{' '}
+  and{' '}
+  <Link href="/smartphone-buying-guide-india" className="text-[#d4220a] font-semibold hover:underline">
+    complete buying guide
+  </Link>.
+</p>
         <div className="overflow-x-auto mb-8"><table className="w-full border-collapse text-sm font-sans"><thead><tr className="bg-[#1a3a5c] text-white"><th className="px-3 py-2 text-left">Phone</th><th className="px-3 py-2 text-left">Price</th><th className="px-3 py-2 text-left">Key Advantage</th><th className="px-3 py-2 text-left">Updates</th><th className="px-3 py-2 text-left">Rating</th></tr></thead>
         <tbody>{[
           ['Samsung Galaxy S25 Ultra','Rs 1,34,999','S Pen + 200MP zoom camera','7 years','9.5/10'],
@@ -183,7 +211,13 @@ export default async function BestFlagshipPhonesPage() {
             </div>
           </section>
         )}
-
+{/* ✅ ADDED: FINAL BUYING ADVICE */}
+<div className="mt-10 border-t pt-6">
+  <h2 className="font-playfair text-xl font-bold text-ink mb-3">Final Buying Advice</h2>
+  <p className="font-sans text-sm text-muted leading-relaxed">
+    The best flagship depends on your priorities. Choose iPhone for video and ecosystem, Samsung Ultra for versatility and productivity, and Pixel for pure photography. Instead of chasing specs, focus on how long you plan to use the device — that’s where flagship value becomes clear.
+  </p>
+</div>
         <div className="mt-10 bg-[#f8f4ef] border-l-4 border-[#d4220a] p-5">
           <p className="font-sans text-xs font-bold text-[#d4220a] uppercase tracking-wider mb-2">Editorial Note</p>
           <p className="font-sans text-sm text-muted">

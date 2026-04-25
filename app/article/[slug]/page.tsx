@@ -14,6 +14,10 @@ interface PageProps {
 // ❌ REMOVED generateStaticParams (causing 404 JSON + 500)
 // export async function generateStaticParams() { ... }
 
+export const metadata = {
+  robots: { index: false, follow: false }
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   try {
     const articles = await getAllArticlesAsync() as any[]
@@ -25,15 +29,18 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         robots: { index: false, follow: false } // ✅ AdSense safe
       }
     }
+    
 
     const title = (article.seoTitle || article.title || '').replace(/\s*\|\s*The Tech Bharat\s*$/i, '').trim()
     const description = article.seoDescription || article.summary || ''
-    const canonical = `${SITE_URL}/${params.slug}`
+    const canonical = `${SITE_URL}/${article.slug}`
 
     return {
       title,
       description,
-      alternates: { canonical },
+      alternates: {
+    canonical: canonical,
+  },
       robots: { index: true, follow: true },
 
       openGraph: {

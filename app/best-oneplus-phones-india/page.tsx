@@ -74,8 +74,35 @@ export default async function BestOnePlusPhonesPage() {
 
         <p className="font-body text-lg text-[#2a2a2a] leading-relaxed mb-6">OnePlus built its Indian reputation on a single promise: flagship performance at mid-range prices. In {month} {year}, that promise still largely holds — but the brand has evolved. The OnePlus that launched the 3T for Rs 29,999 in 2016 now sells phones from Rs 17,000 (Nord CE 4 Lite) to Rs 70,000 (OnePlus 13). Understanding which tier still delivers the original value proposition, and which is just brand premium, is the purpose of this guide.</p>
         <p className="font-body text-base text-[#2a2a2a] leading-relaxed mb-6">The short version: OnePlus 13 at Rs 69,999 is genuinely excellent. Nord 4 at Rs 34,999 hits the old OnePlus sweet spot. Nord CE 4 Lite at Rs 19,999 is adequate but not special. Skip the Nord CE 4 base at Rs 24,999 — the Nord 4 at Rs 10,000 more is a significantly better phone.</p>
+{/* ✅ ADDED: BUYER INTENT BLOCK */}
+<div className="bg-[#f8f4ef] border-l-4 border-[#d4220a] p-5 mb-8">
+  <h3 className="font-bold text-sm mb-2">Who should buy a OnePlus phone?</h3>
+  <p className="text-sm text-[#2a2a2a]">
+    OnePlus phones are ideal for users who want fast charging, smooth performance, and a clean software experience without heavy bloatware.
+  </p>
 
+  <h3 className="font-bold text-sm mt-4 mb-2">Who should NOT buy a OnePlus phone?</h3>
+  <p className="text-sm text-[#2a2a2a]">
+    If you prioritise long-term updates, resale value, or a wide service network in smaller cities, Samsung or Apple may be a better choice.
+  </p>
+
+  <h3 className="font-bold text-sm mt-4 mb-2">Final Verdict</h3>
+  <p className="text-sm text-[#2a2a2a]">
+    In {month} {year}, OnePlus still delivers strong value in India — but only in specific models like the Nord 4 and OnePlus 13. Choosing the right model matters more than choosing the brand.
+  </p>
+</div>
         <h2 className="font-playfair text-2xl font-bold text-ink mt-10 mb-4 pb-2 border-b-2 border-[#d4220a]">OnePlus Lineup — Complete India Comparison {month} {year}</h2>
+        {/* ✅ ADDED: INTERNAL LINK BOOST */}
+<p className="font-sans text-sm text-muted mb-6">
+  For broader comparisons across all brands, check our{' '}
+  <Link href="/best-smartphones-india" className="text-[#d4220a] font-semibold hover:underline">
+    Best Smartphones in India
+  </Link>{' '}
+  and{' '}
+  <Link href="/smartphone-buying-guide-india" className="text-[#d4220a] font-semibold hover:underline">
+    complete buying guide
+  </Link>.
+</p>
         <div className="overflow-x-auto mb-8">
           <table className="w-full border-collapse text-sm font-sans">
             <thead><tr className="bg-[#1a3a5c] text-white">
@@ -215,7 +242,13 @@ export default async function BestOnePlusPhonesPage() {
             </div>
           </section>
         )}
-
+{/* ✅ ADDED: FINAL BUYING ADVICE */}
+<div className="mt-10 border-t pt-6">
+  <h2 className="font-playfair text-xl font-bold text-ink mb-3">Final Buying Advice</h2>
+  <p className="font-sans text-sm text-muted leading-relaxed">
+    The best OnePlus phone depends on your budget. The Nord 4 offers the best balance of performance and price, while the OnePlus 13 is a true flagship alternative to Samsung. Avoid lower-end Nord models unless budget is your only priority — they don’t reflect the original OnePlus value proposition.
+  </p>
+</div>
         <div className="mt-10 bg-[#f8f4ef] border-l-4 border-[#d4220a] p-5">
           <p className="font-sans text-xs font-bold text-[#d4220a] uppercase tracking-wider mb-2">Editorial Note</p>
           <p className="font-sans text-sm text-muted">

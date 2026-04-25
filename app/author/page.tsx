@@ -89,6 +89,31 @@ export default async function AuthorPage() {
         </div>
       </section>
 
+      {/* ✅ ADDED: AUTHOR CONTENT AUTHORITY */}
+<section className="mb-10">
+  <h2 className="font-playfair text-2xl font-bold text-ink mb-4 border-l-4 border-[#d4220a] pl-3">
+    Core Guides Written by Vijay
+  </h2>
+  <p className="font-sans text-sm text-muted mb-4">
+    These are the main guides personally written and updated by Vijay Yadav, based on real-world testing in India:
+  </p>
+
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+    {[
+      ['Best Smartphones in India','/best-smartphones-india'],
+      ['Smartphone Buying Guide','/smartphone-buying-guide-india'],
+      ['Best Camera Phones','/best-camera-phones-india'],
+      ['Best 5G Phones India','/best-5g-phones-india'],
+    ].map(([title, link]) => (
+      <Link key={link} href={link} className="border border-border p-3 bg-white hover:border-[#d4220a] transition-colors">
+        <span className="font-sans text-sm font-bold text-ink hover:text-[#d4220a]">
+          {title} →
+        </span>
+      </Link>
+    ))}
+  </div>
+</section>
+
       {/* Expertise */}
       <section className="mb-10">
         <h2 className="font-playfair text-2xl font-bold text-ink mb-4 border-l-4 border-[#d4220a] pl-3">Areas of Expertise</h2>
@@ -131,6 +156,28 @@ export default async function AuthorPage() {
           </div>
         </div>
       </section>
+
+      {/* ✅ ADDED: TRUST SIGNAL */}
+<section className="mb-10">
+  <div className="bg-white border border-border p-5">
+    <h2 className="font-playfair text-xl font-bold text-ink mb-3">
+      Editorial Independence
+    </h2>
+    <p className="font-sans text-sm text-muted leading-relaxed">
+      All content on The Tech Bharat is written independently. No brand pays for placement or recommendations. Devices are evaluated based on real-world performance, long-term usability, and relevance for Indian users — not marketing claims.
+    </p>
+  </div>
+</section>
+
+{/* ✅ ADDED: FINAL AUTHOR NOTE */}
+<section className="mb-10 border-t pt-6">
+  <h2 className="font-playfair text-xl font-bold text-ink mb-3">
+    Final Note from the Author
+  </h2>
+  <p className="font-sans text-sm text-muted leading-relaxed">
+    My goal with The Tech Bharat is simple — to help Indian users choose the right phone without confusion. Every recommendation on this site is based on actual usage, not specs sheets. If a phone is not worth your money, I will say it clearly.
+  </p>
+</section>
 
       {/* Recent Articles */}
       {recent.length > 0 && (

@@ -75,9 +75,37 @@ export default async function BestSamsungPhonesPage() {
         {/* Intro */}
         <p className="font-body text-lg text-[#2a2a2a] leading-relaxed mb-6">Samsung has dominated the Indian smartphone market for over a decade — not just by volume but by trust. Walk into any mobile store in Patna, Indore, or Coimbatore, and the first brand the shopkeeper recommends is Samsung. That trust has been earned through consistency: consistent camera quality, consistent software updates, and a service network that reaches tier-3 cities where Chinese brands have almost no authorised presence.</p>
         <p className="font-body text-base text-[#2a2a2a] leading-relaxed mb-6">But trust alone does not make a phone worth buying in {month} {year}. Samsung\'s lineup spans from Rs 8,000 to Rs 1,35,000 — and the quality difference between these tiers is dramatic. This guide cuts through the noise and tells you exactly which Samsung phone is worth your money at every budget, based on real-world India use rather than spec sheet comparisons.</p>
+        {/* ✅ ADDED: BUYER INTENT BLOCK */}
+<div className="bg-[#f8f4ef] border-l-4 border-[#d4220a] p-5 mb-8">
+  <h3 className="font-bold text-sm mb-2">Who should buy a Samsung phone?</h3>
+  <p className="text-sm text-[#2a2a2a]">
+    Samsung phones are ideal for users who want long-term software support, reliable camera performance, and a strong service network across India — especially outside metro cities.
+  </p>
+
+  <h3 className="font-bold text-sm mt-4 mb-2">Who should NOT buy a Samsung phone?</h3>
+  <p className="text-sm text-[#2a2a2a]">
+    If you prioritise maximum performance per rupee or ultra-fast charging, brands like iQOO, Poco, or OnePlus often offer better value at the same price.
+  </p>
+
+  <h3 className="font-bold text-sm mt-4 mb-2">Final Verdict</h3>
+  <p className="text-sm text-[#2a2a2a]">
+    In {month} {year}, Samsung remains the safest smartphone brand in India — not always the fastest or cheapest, but the most reliable long-term choice.
+  </p>
+</div>
 
         {/* Comparison table */}
         <h2 className="font-playfair text-2xl font-bold text-ink mt-10 mb-4 pb-2 border-b-2 border-[#d4220a]">Samsung Galaxy Lineup — Quick Comparison {month} {year}</h2>
+        {/* ✅ ADDED: INTERNAL LINK BOOST */}
+<p className="font-sans text-sm text-muted mb-6">
+  For comparisons across all brands, check our{' '}
+  <Link href="/best-smartphones-india" className="text-[#d4220a] font-semibold hover:underline">
+    Best Smartphones in India
+  </Link>{' '}
+  and{' '}
+  <Link href="/smartphone-buying-guide-india" className="text-[#d4220a] font-semibold hover:underline">
+    complete buying guide
+  </Link>.
+</p>
         <div className="overflow-x-auto mb-8">
           <table className="w-full border-collapse text-sm font-sans">
             <thead><tr className="bg-[#1a3a5c] text-white">
@@ -269,7 +297,13 @@ export default async function BestSamsungPhonesPage() {
             </div>
           </section>
         )}
-
+{/* ✅ ADDED: FINAL BUYING ADVICE */}
+<div className="mt-10 border-t pt-6">
+  <h2 className="font-playfair text-xl font-bold text-ink mb-3">Final Buying Advice</h2>
+  <p className="font-sans text-sm text-muted leading-relaxed">
+    The best Samsung phone depends on your budget and priorities. Choose the Galaxy M series for battery and value, the A series for long-term reliability, and the S series for flagship performance and camera. If you plan to keep your phone for 3–5 years, Samsung offers the strongest overall experience in India.
+  </p>
+</div>
         <div className="mt-10 bg-[#f8f4ef] border-l-4 border-[#d4220a] p-5">
           <p className="font-sans text-xs font-bold text-[#d4220a] uppercase tracking-wider mb-2">Editorial Note</p>
           <p className="font-sans text-sm text-muted">

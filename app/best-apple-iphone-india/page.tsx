@@ -74,8 +74,36 @@ export default async function BestAppleIphonePage() {
 
         <p className="font-body text-lg text-[#2a2a2a] leading-relaxed mb-6">Buying an iPhone in India in {month} {year} is a decision that requires more thought than in any other market. Import duties, GST, and Apple\'s India pricing premium mean you pay 20-30% more than buyers in the USA for the same phone. And yet, iPhone sales in India keep growing — because for many buyers, the combination of resale value, ecosystem, and long-term software support makes the premium genuinely justifiable.</p>
         <p className="font-body text-base text-[#2a2a2a] leading-relaxed mb-6">This guide is written specifically for Indian buyers in {month} {year}: which iPhone to buy, where to buy it, how much you should actually pay, and which models to avoid. No marketing language — just practical guidance based on what makes financial and practical sense for life in India.</p>
+ {/* ✅ ADDED: BUYER INTENT BLOCK */}
+<div className="bg-[#f8f4ef] border-l-4 border-[#d4220a] p-5 mb-8">
+  <h3 className="font-bold text-sm mb-2">Who should buy an iPhone in India?</h3>
+  <p className="text-sm text-[#2a2a2a]">
+    iPhones make the most sense for users who plan to use their phone for 3–5 years, value long-term software updates, and want strong resale value. If you use a MacBook, AirPods, or iPad, the ecosystem advantage becomes even more meaningful.
+  </p>
 
+  <h3 className="font-bold text-sm mt-4 mb-2">Who should NOT buy an iPhone?</h3>
+  <p className="text-sm text-[#2a2a2a]">
+    If you frequently transfer files, need customization, or want the best specs for price, Android phones offer better flexibility and value in most price segments.
+  </p>
+
+  <h3 className="font-bold text-sm mt-4 mb-2">Final Verdict</h3>
+  <p className="text-sm text-[#2a2a2a]">
+    In {month} {year}, iPhones are expensive in India, but when you consider resale value, software support, and ecosystem benefits, they can be a smarter long-term investment than most Android phones.
+  </p>
+</div>
         <h2 className="font-playfair text-2xl font-bold text-ink mt-10 mb-4 pb-2 border-b-2 border-[#d4220a]">Complete iPhone Lineup — India Pricing {month} {year}</h2>
+        {/* ✅ ADDED: INTERNAL LINK BOOST */}
+<p className="font-sans text-sm text-muted mb-6">
+  If you're comparing iPhones with Android options, check our{' '}
+  <Link href="/best-smartphones-india" className="text-[#d4220a] font-semibold hover:underline">
+    Best Smartphones in India
+  </Link>{' '}
+  and{' '}
+  <Link href="/smartphone-buying-guide-india" className="text-[#d4220a] font-semibold hover:underline">
+    complete buying guide
+  </Link>{' '}
+  for a broader comparison.
+</p>
         <div className="overflow-x-auto mb-8">
           <table className="w-full border-collapse text-sm font-sans">
             <thead><tr className="bg-[#1a3a5c] text-white">
@@ -241,7 +269,13 @@ export default async function BestAppleIphonePage() {
             </div>
           </section>
         )}
-
+{/* ✅ ADDED: FINAL BUYING ADVICE */}
+<div className="mt-10 border-t pt-6">
+  <h2 className="font-playfair text-xl font-bold text-ink mb-3">Final Buying Advice</h2>
+  <p className="font-sans text-sm text-muted leading-relaxed">
+    The best iPhone for you depends on how long you plan to use it. If you want maximum longevity, the iPhone 16 or 16 Pro is the safest choice. If value matters most, a certified refurbished iPhone 15 offers the best balance of price and performance in India. Avoid older models without USB-C or long update support — they may seem cheaper today but cost more over time.
+  </p>
+</div>
         <div className="mt-10 bg-[#f8f4ef] border-l-4 border-[#d4220a] p-5">
           <p className="font-sans text-xs font-bold text-[#d4220a] uppercase tracking-wider mb-2">Editorial Note</p>
           <p className="font-sans text-sm text-muted">

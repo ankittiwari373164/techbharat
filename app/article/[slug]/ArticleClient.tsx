@@ -76,7 +76,7 @@ function getInternalLinkMap(articleBrand?: string): [RegExp, string, string][] {
   return [
     ...brandPillarLinks,
     // Buying guide — general (single instance only)
-    [/\b(buying guide|how to choose a phone|which phone to buy)\b/i, '/smartphone-buying-guide-india', 'Smartphone Buying Guide India 2026'],
+   
     // Price-specific guides
     [/\b(best phone under ₹30000|₹30k|₹30,000)\b/i, '/best-budget-phones-india', 'Best Budget Phones India 2026'],
     [/\b(best flagship|premium smartphone|flagship phone)\b/i, '/best-flagship-phones-india', 'Best Flagship Phones India 2026'],
@@ -85,11 +85,25 @@ function getInternalLinkMap(articleBrand?: string): [RegExp, string, string][] {
     [/\b(gaming phone|BGMI|game performance)\b/i, '/best-gaming-phones-india', 'Best Gaming Phones India 2026'],
     // Content section links
     [/\b(phone reviews?|hands-on|first look)\b/i, '/reviews', 'Phone Reviews India'],
-    [/\b(compare|comparison|vs|versus)\b/i, '/compare', 'Compare Phones India'],
+    [
+  /\b(best smartphone|top phones|smartphone list)\b/i,
+  '/best-smartphones-india',
+  'Best Smartphones India 2026'
+],
+[
+  /\b(which phone to buy|phone buying advice)\b/i,
+  '/smartphone-buying-guide-india',
+  'Smartphone Buying Guide India'
+],
+[
+  /\b(phone comparison|vs|versus)\b/i,
+  '/phone-comparison-guide-india',
+  'Phone Comparison Guide India'
+],
   ]
 }
 
-function addInternalLinks(html: string, _currentSlug: string, articleBrand?: string): string {
+function addInternalLinks(html: string, currentSlug: string, articleBrand?: string): string {
   if (!html || typeof html !== 'string') return ''
 
   const parts = html.split(/(<[^>]+>)/g)
@@ -98,32 +112,58 @@ function addInternalLinks(html: string, _currentSlug: string, articleBrand?: str
   let insideScript = false
   let insideStyle  = false
   let depth = 0
+
   let linkCount = 0
   const MAX_LINKS = 3
 
+  // PRIORITY ORDER
+  const linkMap = getInternalLinkMap(articleBrand)
+
   return parts.map((part) => {
+
+    // Skip scripts/styles
     if (/^<script[\s>]/i.test(part))  { insideScript = true;  return part }
     if (/^<\/script>/i.test(part))    { insideScript = false; return part }
     if (/^<style[\s>]/i.test(part))   { insideStyle  = true;  return part }
     if (/^<\/style>/i.test(part))     { insideStyle  = false; return part }
-    if (insideScript || insideStyle)  return part
-    if (/^<a[\s>]/i.test(part))       { insideAnchor = true; depth++; return part }
-    if (/^<\/a>/i.test(part))         { depth = Math.max(0, depth - 1); if (depth === 0) insideAnchor = false; return part }
-    if (part.startsWith('<'))         return part
-    if (insideAnchor)                 return part
+
+    if (insideScript || insideStyle) return part
+
+    // Skip existing links
+    if (/^<a[\s>]/i.test(part)) { insideAnchor = true; depth++; return part }
+    if (/^<\/a>/i.test(part))   { depth = Math.max(0, depth - 1); if (depth === 0) insideAnchor = false; return part }
+    if (insideAnchor) return part
+
+    // Skip HTML tags
+    if (part.startsWith('<')) return part
 
     let text = part
-    for (const [regex, url, title] of getInternalLinkMap(articleBrand)) {
+
+    for (const [regex, url, title] of linkMap) {
       if (linked.has(url) || linkCount >= MAX_LINKS) continue
+
+      // Prevent self-link
+      if (url === `/${currentSlug}`) continue
+
       regex.lastIndex = 0
-      const newText = text.replace(regex, (match) => {
+
+      const replaced = text.replace(regex, (match) => {
         if (linked.has(url) || linkCount >= MAX_LINKS) return match
+
         linked.add(url)
         linkCount++
-        return `<a href="${url}" title="${title}" class="internal-link text-[#1a3a5c] font-semibold hover:text-[#d4220a] transition-colors underline decoration-dotted" rel="internal">${match}</a>`
+
+        return `<a href="${url}" 
+          title="${title}" 
+          class="internal-link text-[#1a3a5c] font-semibold hover:text-[#d4220a] underline decoration-dotted"
+          rel="internal">${match}</a>`
       })
-      if (newText !== text) text = newText
+
+      if (replaced !== text) {
+        text = replaced
+      }
     }
+
     return text
   }).join('')
 }
@@ -155,6 +195,15 @@ export default function ArticleClient({ article, similar, slug }: ArticleClientP
   const hv = generateUniqueVerdict(liveArticle)
   const similarArticles = similar as Article[]
 
+  // Brand resolution: detect from title if generic 'Mobile'
+  const resolvedBrand: string = (() => {
+    if (liveArticle.brand && liveArticle.brand !== 'Mobile') return liveArticle.brand
+    for (const [rx, name] of BRAND_DETECT_MAP) {
+      if (rx.test(liveArticle.title)) return name
+    }
+    return liveArticle.brand || 'Mobile'
+  })()
+
   // Defensive: filter out local fallbacks, only use real proxy URLs
   const safeImages = (Array.isArray(liveArticle.images) ? liveArticle.images : [])
     .filter((img: string) => img && !img.startsWith('/phone-images/') && !img.includes('picsum'))
@@ -172,14 +221,7 @@ export default function ArticleClient({ article, similar, slug }: ArticleClientP
   const safeQSBullets = Array.isArray(liveArticle.quickSummary?.bullets) ? liveArticle.quickSummary!.bullets : []
   const safeQSBrand   = liveArticle.quickSummary?.brand || liveArticle.brand || ''
 
-  // Brand resolution: detect from title if generic 'Mobile'
-  const resolvedBrand = (() => {
-    if (liveArticle.brand && liveArticle.brand !== 'Mobile') return liveArticle.brand
-    for (const [rx, name] of BRAND_DETECT_MAP) {
-      if (rx.test(liveArticle.title)) return name
-    }
-    return liveArticle.brand || 'Mobile'
-  })()
+  
   const safeQSDate = liveArticle.quickSummary?.date || ''
 
   // Date formatting without locale issues
@@ -357,7 +399,7 @@ export default function ArticleClient({ article, similar, slug }: ArticleClientP
                     .replace(/<h1(\s[^>]*)?>/gi, '<h2$1>')
                     .replace(/<\/h1>/gi, '</h2>'),
                   slug,
-                  liveArticle.brand
+                  resolvedBrand
                 ) }}
               />
 
@@ -367,6 +409,17 @@ export default function ArticleClient({ article, similar, slug }: ArticleClientP
                   <img src={safeImages[2]} alt={`${liveArticle.title} — additional image`} width={800} height={450} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}} loading="lazy" onError={(e)=>{(e.target as HTMLImageElement).src="https://thetechbharat.com/og-image.jpg"}} />
                 </div>
               )}
+
+{/* ✅ ADDED: READ MORE SEO BOOST */}
+<div className="mt-10 border-t pt-6">
+  <h3 className="font-playfair text-lg font-bold mb-3">Read More</h3>
+
+  <ul className="space-y-2 text-sm">
+    <li><a href="/best-smartphones-india" className="text-[#d4220a] hover:underline">Best Smartphones in India</a></li>
+    <li><a href="/smartphone-buying-guide-india" className="text-[#d4220a] hover:underline">Smartphone Buying Guide</a></li>
+    <li><a href="/phone-comparison-guide-india" className="text-[#d4220a] hover:underline">Phone Comparison Guide</a></li>
+  </ul>
+</div>
 
               {/* Tags */}
               {safeTags.length > 0 && (
@@ -396,6 +449,14 @@ export default function ArticleClient({ article, similar, slug }: ArticleClientP
                 {resolvedBrand && resolvedBrand !== 'Mobile' && <a href={`/mobile-news?brand=${resolvedBrand}`} className="font-sans text-xs text-ink border border-border bg-white px-3 py-1.5 hover:border-[#d4220a] hover:text-[#d4220a] transition-colors">🔍 More {resolvedBrand} News</a>}
               </div>
             </div>
+
+{/* ✅ FINAL AUTHORITY BLOCK */}
+<div className="mt-10 border-t pt-6">
+  <h2 className="font-playfair text-xl font-bold mb-3">Final Advice</h2>
+  <p className="font-sans text-sm text-muted leading-relaxed">
+    The best smartphone is not decided by specs alone. Focus on your daily usage, long-term needs, and service availability in your area. A smart choice today ensures better value for years.
+  </p>
+</div>
 
             {/* Similar Articles */}
             {similarArticles.length > 0 && (

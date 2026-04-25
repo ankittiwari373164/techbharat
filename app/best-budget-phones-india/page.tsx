@@ -74,8 +74,36 @@ export default async function BestBudgetPhonesPage() {
 
         <p className="font-body text-lg text-[#2a2a2a] leading-relaxed mb-6">The Rs 10,000 to Rs 20,000 price range is where India\'s smartphone market is most competitive — and most confusing. In {month} {year}, you can get 5G, AMOLED displays, and 50MP cameras at Rs 12,000. But not all at once, and not without compromises that matter. This guide tells you exactly what each budget buys you and what you give up.</p>
         <p className="font-body text-base text-[#2a2a2a] leading-relaxed mb-6">The most important thing to understand about budget phones in India: the spec sheet is a marketing document. Real-world performance — particularly thermal throttling under sustained load, camera quality in low light, and software experience after 18 months of use — is what separates genuinely good budget phones from those that disappoint.</p>
+        {/* ✅ ADDED: BUYER INTENT BLOCK */}
+<div className="bg-[#f8f4ef] border-l-4 border-[#d4220a] p-5 mb-8">
+  <h3 className="font-bold text-sm mb-2">Who should buy a budget phone?</h3>
+  <p className="text-sm text-[#2a2a2a]">
+    Budget phones are ideal for students, first-time smartphone users, and anyone looking for value-for-money devices for everyday use like WhatsApp, YouTube, and light gaming.
+  </p>
+
+  <h3 className="font-bold text-sm mt-4 mb-2">Who should NOT buy a budget phone?</h3>
+  <p className="text-sm text-[#2a2a2a]">
+    If you care about camera quality, long-term performance, or heavy gaming, spending more on a mid-range phone will give you a much better experience.
+  </p>
+
+  <h3 className="font-bold text-sm mt-4 mb-2">Final Verdict</h3>
+  <p className="text-sm text-[#2a2a2a]">
+    In {month} {year}, budget phones offer incredible value, but only if you understand their limitations. Choosing the right priority — battery, camera, or performance — is more important than chasing specs.
+  </p>
+</div>
 
         <h2 className="font-playfair text-2xl font-bold text-ink mt-10 mb-4 pb-2 border-b-2 border-[#d4220a]">Best Budget Phones India {month} {year} — Quick Comparison</h2>
+        {/* ✅ ADDED: INTERNAL LINK BOOST */}
+<p className="font-sans text-sm text-muted mb-6">
+  For a broader comparison across all price ranges, check our{' '}
+  <Link href="/best-smartphones-india" className="text-[#d4220a] font-semibold hover:underline">
+    Best Smartphones in India
+  </Link>{' '}
+  and{' '}
+  <Link href="/smartphone-buying-guide-india" className="text-[#d4220a] font-semibold hover:underline">
+    complete buying guide
+  </Link>.
+</p>
         <div className="overflow-x-auto mb-8">
           <table className="w-full border-collapse text-sm font-sans">
             <thead><tr className="bg-[#1a3a5c] text-white">
@@ -204,7 +232,13 @@ export default async function BestBudgetPhonesPage() {
             </div>
           </section>
         )}
-
+{/* ✅ ADDED: FINAL BUYING ADVICE */}
+<div className="mt-10 border-t pt-6">
+  <h2 className="font-playfair text-xl font-bold text-ink mb-3">Final Buying Advice</h2>
+  <p className="font-sans text-sm text-muted leading-relaxed">
+    The best budget phone depends on your priorities. If battery matters most, choose Samsung M series. If performance matters, Poco and iQOO offer better chipsets. If camera is your priority, Redmi Note series still leads in this segment. Don’t try to get everything in one phone — choose based on your actual usage.
+  </p>
+</div>
         <div className="mt-10 bg-[#f8f4ef] border-l-4 border-[#d4220a] p-5">
           <p className="font-sans text-xs font-bold text-[#d4220a] uppercase tracking-wider mb-2">Editorial Note</p>
           <p className="font-sans text-sm text-muted">

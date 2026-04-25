@@ -73,7 +73,36 @@ export default async function BestBatteryPhonesPage() {
 
 
         <p className="font-body text-lg text-[#2a2a2a] leading-relaxed mb-6">Battery life is the most universally complained-about smartphone issue in India — and for good reason. Long commutes, power cuts in smaller cities, 8-hour workdays away from chargers, and hot Indian summers that accelerate battery drain all create real demand for phones that genuinely last. This guide ranks the best battery phones in India in {month} {year} based on real-world Indian usage scenarios, not controlled lab tests.</p>
+        {/* ✅ ADDED: BUYER INTENT BLOCK */}
+<div className="bg-[#f8f4ef] border-l-4 border-[#d4220a] p-5 mb-8">
+  <h3 className="font-bold text-sm mb-2">Who should buy a battery-focused phone?</h3>
+  <p className="text-sm text-[#2a2a2a]">
+    If you travel long distances, work outdoors, face frequent power cuts, or simply hate charging your phone multiple times a day, a high battery capacity phone (5,000mAh–6,000mAh) is the best choice.
+  </p>
+
+  <h3 className="font-bold text-sm mt-4 mb-2">Who should NOT prioritise battery phones?</h3>
+  <p className="text-sm text-[#2a2a2a]">
+    If you are always near a charger, or care more about camera quality, design, or flagship performance, you may be better off choosing a balanced or premium phone instead.
+  </p>
+
+  <h3 className="font-bold text-sm mt-4 mb-2">Final Verdict</h3>
+  <p className="text-sm text-[#2a2a2a]">
+    In {month} {year}, battery life is still one of the most practical features for Indian users. A slightly bigger battery often delivers more real-world value than extra performance or camera upgrades.
+  </p>
+</div>
         <h2 className="font-playfair text-2xl font-bold text-ink mt-10 mb-4 pb-2 border-b-2 border-[#d4220a]">Best Battery Phones India {month} {year} — Ranked</h2>
+        {/* ✅ ADDED: INTERNAL LINK BOOST */}
+<p className="font-sans text-sm text-muted mb-6">
+  For overall recommendations, check our{' '}
+  <Link href="/best-smartphones-india" className="text-[#d4220a] font-semibold hover:underline">
+    Best Smartphones in India
+  </Link>{' '}
+  and{' '}
+  <Link href="/smartphone-buying-guide-india" className="text-[#d4220a] font-semibold hover:underline">
+    complete buying guide
+  </Link>{' '}
+  to compare battery life with performance and camera.
+</p>
         <div className="overflow-x-auto mb-8"><table className="w-full border-collapse text-sm font-sans"><thead><tr className="bg-[#1a3a5c] text-white"><th className="px-3 py-2 text-left">Phone</th><th className="px-3 py-2 text-left">Price</th><th className="px-3 py-2 text-left">Battery</th><th className="px-3 py-2 text-left">Charging</th><th className="px-3 py-2 text-left">Screen-on Time</th><th className="px-3 py-2 text-left">Rating</th></tr></thead>
         <tbody>{[
           ['OnePlus 13','Rs 69,999','6,000mAh','100W + 50W wireless','9-10 hrs','9.4/10'],
@@ -182,7 +211,13 @@ export default async function BestBatteryPhonesPage() {
             </div>
           </section>
         )}
-
+{/* ✅ ADDED: FINAL BUYING ADVICE */}
+<div className="mt-10 border-t pt-6">
+  <h2 className="font-playfair text-xl font-bold text-ink mb-3">Final Buying Advice</h2>
+  <p className="font-sans text-sm text-muted leading-relaxed">
+    The best battery phone depends on your lifestyle. If you need all-day reliability without charging, choose a 6,000mAh device like the Galaxy M series. If you prefer convenience, fast charging phones like Redmi or OnePlus models reduce downtime significantly. For most users, a balance of battery size and charging speed delivers the best experience.
+  </p>
+</div>
         <div className="mt-10 bg-[#f8f4ef] border-l-4 border-[#d4220a] p-5">
           <p className="font-sans text-xs font-bold text-[#d4220a] uppercase tracking-wider mb-2">Editorial Note</p>
           <p className="font-sans text-sm text-muted">

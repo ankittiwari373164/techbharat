@@ -73,6 +73,25 @@ export default async function Best5GPhonesPage() {
 
 
         <p className="font-body text-lg text-[#2a2a2a] leading-relaxed mb-6">India\'s 5G rollout has transformed from a metro-only premium feature to a practically essential purchase consideration in {month} {year}. Jio and Airtel have expanded 5G coverage to hundreds of cities. If you\'re buying a phone you plan to use for the next 2-3 years, buying 4G is a decision you will likely regret. The 5G premium at most price points in {month} {year} is Rs 500-1,500 maximum — a trivial cost for 3-year future-proofing.</p>
+        <div className="bg-[#f8f4ef] border-l-4 border-[#d4220a] p-5 mb-8">
+  <h3 className="font-bold text-sm mb-2">Who should buy a 5G phone in India?</h3>
+  <p className="text-sm text-[#2a2a2a]">
+    Users planning to keep their phone for 2–3 years, living in cities with Jio or Airtel 5G coverage, or anyone who wants faster downloads and future-proof connectivity should choose a 5G phone.
+  </p>
+
+  <h3 className="font-bold text-sm mt-4 mb-2">Who should NOT buy a 5G phone?</h3>
+  <p className="text-sm text-[#2a2a2a]">
+    If you live in rural areas with no 5G rollout or only use basic apps like WhatsApp and calls, a 4G phone may still be sufficient for now.
+  </p>
+
+  <h3 className="font-bold text-sm mt-4 mb-2">Final Verdict</h3>
+  <p className="text-sm text-[#2a2a2a]">
+    In {month} {year}, 5G is no longer optional for most buyers. The price difference is small, but the long-term benefits are significant.
+  </p>
+</div>
+ <p className="text-sm mb-6">
+          Also read <Link href="/best-smartphones-india" className="text-[#d4220a] font-semibold">Best Smartphones</Link>
+        </p>
         <h2 className="font-playfair text-2xl font-bold text-ink mt-10 mb-4 pb-2 border-b-2 border-[#d4220a]">Best 5G Phones India {month} {year} — All Budgets</h2>
         <div className="overflow-x-auto mb-8"><table className="w-full border-collapse text-sm font-sans"><thead><tr className="bg-[#1a3a5c] text-white"><th className="px-3 py-2 text-left">Phone</th><th className="px-3 py-2 text-left">Price</th><th className="px-3 py-2 text-left">5G Bands</th><th className="px-3 py-2 text-left">Jio/Airtel</th><th className="px-3 py-2 text-left">Processor</th><th className="px-3 py-2 text-left">Rating</th></tr></thead>
         <tbody>{[
@@ -187,7 +206,12 @@ export default async function Best5GPhonesPage() {
             This guide is updated monthly. All analysis is independent editorial opinion by Vijay Yadav, Senior Mobile Editor at The Tech Bharat.
           </p>
         </div>
-
+<div className="mt-10 border-t pt-6">
+          <h2 className="text-xl font-bold mb-3">Final Buying Advice</h2>
+          <p className="text-sm">
+            Choose based on your usage and future needs.
+          </p>
+        </div>
       </div>
     </div>
   )

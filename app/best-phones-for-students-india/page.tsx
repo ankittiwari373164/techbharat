@@ -72,7 +72,35 @@ export default async function BestStudentPhonesPage() {
         </div>
 
         <p className="font-body text-lg text-[#2a2a2a] leading-relaxed mb-6">Choosing a smartphone as a student in India in {month} {year} involves tradeoffs that general phone guides ignore. You need a phone that handles WhatsApp groups for class notes, Zoom/Teams for online lectures, enough storage for assignment documents and photos, a camera that takes decent Instagram-worthy photos, and battery that survives a full day on campus without hunting for chargers. And you need all of this ideally under Rs 20,000.</p>
+        {/* ✅ ADDED: BUYER INTENT BLOCK */}
+<div className="bg-[#f8f4ef] border-l-4 border-[#d4220a] p-5 mb-8">
+  <h3 className="font-bold text-sm mb-2">Who should buy a student-focused phone?</h3>
+  <p className="text-sm text-[#2a2a2a]">
+    Students who need a reliable phone for studies, social media, light gaming, and full-day battery without frequent charging should choose a balanced budget smartphone.
+  </p>
+
+  <h3 className="font-bold text-sm mt-4 mb-2">Who should NOT buy a student budget phone?</h3>
+  <p className="text-sm text-[#2a2a2a]">
+    If you need high-end gaming, premium cameras, or long-term flagship performance, spending more on a mid-range or flagship phone will provide better value.
+  </p>
+
+  <h3 className="font-bold text-sm mt-4 mb-2">Final Verdict</h3>
+  <p className="text-sm text-[#2a2a2a]">
+    In {month} {year}, student phones in India offer excellent value — but choosing based on battery, storage, and update support matters more than chasing specs.
+  </p>
+</div>
         <h2 className="font-playfair text-2xl font-bold text-ink mt-10 mb-4 pb-2 border-b-2 border-[#d4220a]">Best Student Phones India {month} {year}</h2>
+        {/* ✅ ADDED: INTERNAL LINK BOOST */}
+<p className="font-sans text-sm text-muted mb-6">
+  For broader recommendations across all categories, check our{' '}
+  <Link href="/best-smartphones-india" className="text-[#d4220a] font-semibold hover:underline">
+    Best Smartphones in India
+  </Link>{' '}
+  and{' '}
+  <Link href="/smartphone-buying-guide-india" className="text-[#d4220a] font-semibold hover:underline">
+    complete buying guide
+  </Link>.
+</p>
         <div className="overflow-x-auto mb-8"><table className="w-full border-collapse text-sm font-sans"><thead><tr className="bg-[#1a3a5c] text-white"><th className="px-3 py-2 text-left">Phone</th><th className="px-3 py-2 text-left">Price</th><th className="px-3 py-2 text-left">Best For</th><th className="px-3 py-2 text-left">Battery</th><th className="px-3 py-2 text-left">Rating</th></tr></thead>
         <tbody>{[
           ['Samsung Galaxy M35 5G','Rs 20,999','Best overall student phone','6,000mAh','9.0/10'],
@@ -180,7 +208,13 @@ export default async function BestStudentPhonesPage() {
             </div>
           </section>
         )}
-
+{/* ✅ ADDED: FINAL BUYING ADVICE */}
+<div className="mt-10 border-t pt-6">
+  <h2 className="font-playfair text-xl font-bold text-ink mb-3">Final Buying Advice</h2>
+  <p className="font-sans text-sm text-muted leading-relaxed">
+    The best student phone depends on your priorities. Choose Samsung for long-term updates and reliability, Redmi for better display and camera, and iQOO or Poco for performance and gaming. Don’t try to get everything — choose based on what you actually use daily.
+  </p>
+</div>
         <div className="mt-10 bg-[#f8f4ef] border-l-4 border-[#d4220a] p-5">
           <p className="font-sans text-xs font-bold text-[#d4220a] uppercase tracking-wider mb-2">Editorial Note</p>
           <p className="font-sans text-sm text-muted">

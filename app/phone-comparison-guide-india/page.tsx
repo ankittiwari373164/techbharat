@@ -72,8 +72,35 @@ export default async function PhoneComparisonGuidePage() {
         </div>
 
         <p className="font-body text-lg text-[#2a2a2a] leading-relaxed mb-6">Choosing between two phones is one of the hardest consumer decisions — particularly in India where brands spend millions making their specs sound comparable while hiding the meaningful differences. This guide walks through the most common phone comparison dilemmas that Indian buyers face in {month} {year}, with clear verdicts that cut through the marketing.</p>
+        {/* ✅ ADDED: BUYER INTENT BLOCK */}
+<div className="bg-[#f8f4ef] border-l-4 border-[#d4220a] p-5 mb-8">
+  <h3 className="font-bold text-sm mb-2">Who should use a phone comparison guide?</h3>
+  <p className="text-sm text-[#2a2a2a]">
+    This guide is ideal for buyers confused between two or more phones in the same price range, especially when specifications look similar but real-world performance differs.
+  </p>
 
+  <h3 className="font-bold text-sm mt-4 mb-2">Who does NOT need comparison?</h3>
+  <p className="text-sm text-[#2a2a2a]">
+    If you already know your priority — like camera, gaming, or battery — a dedicated buying guide may help you more than detailed comparisons.
+  </p>
+
+  <h3 className="font-bold text-sm mt-4 mb-2">Final Verdict</h3>
+  <p className="text-sm text-[#2a2a2a]">
+    In {month} {year}, comparing phones is less about specs and more about real-world priorities like service network, update support, and long-term usability in India.
+  </p>
+</div>
         <h2 className="font-playfair text-2xl font-bold text-ink mt-10 mb-4 pb-2 border-b-2 border-[#d4220a]">Samsung Galaxy A55 5G vs OnePlus 13R — The Rs 40,000 Battle</h2>
+        {/* ✅ ADDED: INTERNAL LINK BOOST */}
+<p className="font-sans text-sm text-muted mb-6">
+  For complete recommendations instead of comparisons, check our{' '}
+  <Link href="/best-smartphones-india" className="text-[#d4220a] font-semibold hover:underline">
+    Best Smartphones in India
+  </Link>{' '}
+  and{' '}
+  <Link href="/smartphone-buying-guide-india" className="text-[#d4220a] font-semibold hover:underline">
+    smartphone buying guide
+  </Link>.
+</p>
         <div className="overflow-x-auto mb-6"><table className="w-full border-collapse text-sm font-sans"><thead><tr className="bg-[#1a3a5c] text-white"><th className="px-3 py-2 text-left">Feature</th><th className="px-3 py-2 text-left">Samsung Galaxy A55 5G</th><th className="px-3 py-2 text-left">OnePlus 13R</th></tr></thead>
         <tbody>{[
           ['Price','Rs 39,999','Rs 44,999'],
@@ -202,7 +229,13 @@ export default async function PhoneComparisonGuidePage() {
             </div>
           </section>
         )}
-
+{/* ✅ ADDED: FINAL BUYING ADVICE */}
+<div className="mt-10 border-t pt-6">
+  <h2 className="font-playfair text-xl font-bold text-ink mb-3">Final Buying Advice</h2>
+  <p className="font-sans text-sm text-muted leading-relaxed">
+    The best phone is not always the one with better specs — it is the one that fits your usage. Choose based on how long you will keep the phone, where you live, and what you actually use daily. In India, service availability and update support often matter more than raw performance.
+  </p>
+</div>
         <div className="mt-10 bg-[#f8f4ef] border-l-4 border-[#d4220a] p-5">
           <p className="font-sans text-xs font-bold text-[#d4220a] uppercase tracking-wider mb-2">Editorial Note</p>
           <p className="font-sans text-sm text-muted">

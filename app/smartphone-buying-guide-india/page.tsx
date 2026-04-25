@@ -72,8 +72,36 @@ export default async function SmartphoneBuyingGuidePage() {
         </div>
 
         <p className="font-body text-lg text-[#2a2a2a] leading-relaxed mb-6">Buying a smartphone in India in {month} {year} is both easier and harder than it has ever been. Easier because quality phones are available at every price point. Harder because the choices are overwhelming and specifications are increasingly used to mislead rather than inform. This guide gives you a practical framework for choosing the right smartphone regardless of your budget — from Rs 10,000 to Rs 1,50,000.</p>
+        {/* ✅ ADDED: BUYER INTENT BLOCK */}
+<div className="bg-[#f8f4ef] border-l-4 border-[#d4220a] p-5 mb-8">
+  <h3 className="font-bold text-sm mb-2">Who should follow this buying guide?</h3>
+  <p className="text-sm text-[#2a2a2a]">
+    This guide is ideal for anyone confused about which phone to buy in India — especially first-time buyers or users upgrading after 2–3 years who want the best value for their budget.
+  </p>
+
+  <h3 className="font-bold text-sm mt-4 mb-2">Who does NOT need this guide?</h3>
+  <p className="text-sm text-[#2a2a2a]">
+    If you already know your exact requirement — like gaming, camera, or battery — you may benefit more from specialised guides focused on those categories.
+  </p>
+
+  <h3 className="font-bold text-sm mt-4 mb-2">Final Verdict</h3>
+  <p className="text-sm text-[#2a2a2a]">
+    In {month} {year}, the best smartphone is not the one with the highest specs — it is the one that fits your usage, location, and long-term needs. A smart decision today saves money and frustration for years.
+  </p>
+</div>
 
         <h2 className="font-playfair text-2xl font-bold text-ink mt-10 mb-4 pb-2 border-b-2 border-[#d4220a]">Step 1 — Define Your Budget Range (Not Just a Number)</h2>
+        {/* ✅ ADDED: INTERNAL LINK BOOST */}
+<p className="font-sans text-sm text-muted mb-6">
+  If you want direct recommendations instead of step-by-step analysis, check our{' '}
+  <Link href="/best-smartphones-india" className="text-[#d4220a] font-semibold hover:underline">
+    Best Smartphones in India
+  </Link>{' '}
+  and{' '}
+  <Link href="/phone-comparison-guide-india" className="text-[#d4220a] font-semibold hover:underline">
+    phone comparison guide
+  </Link>.
+</p>
         <p className="font-body text-base text-[#2a2a2a] leading-relaxed mb-4">The most common mistake Indian buyers make is setting a precise budget (Rs 15,000 exactly) and missing significantly better phones at Rs 16,000-17,000. Define a range: under Rs 15,000, or Rs 15,000-20,000. Within a range, choose the best phone — not the cheapest. A Rs 1,000-2,000 stretch often delivers a dramatically better phone (better display, more updates, faster charging) that you\'ll appreciate for 3 years.</p>
         <p className="font-body text-base text-[#2a2a2a] leading-relaxed mb-4">Key thresholds in India\'s smartphone market in {month} {year}: Below Rs 12,000 (entry 5G, basic AMOLED), Rs 12,000-15,000 (better AMOLED, stronger cameras), Rs 15,000-25,000 (significantly better performance, update longevity), Rs 25,000-40,000 (OIS cameras, IP-rated builds, premium mid-range), Rs 40,000-70,000 (flagship-adjacent performance), above Rs 70,000 (true flagships with 7-year support).</p>
 
@@ -187,7 +215,13 @@ export default async function SmartphoneBuyingGuidePage() {
             </div>
           </section>
         )}
-
+{/* ✅ ADDED: FINAL BUYING ADVICE */}
+<div className="mt-10 border-t pt-6">
+  <h2 className="font-playfair text-xl font-bold text-ink mb-3">Final Buying Advice</h2>
+  <p className="font-sans text-sm text-muted leading-relaxed">
+    The best smartphone choice depends on three things: your budget, your usage, and your location. In India, service availability and software support often matter more than specifications. Choose a phone that you can comfortably use for at least 2–3 years — not just one that looks impressive on paper today.
+  </p>
+</div>
         <div className="mt-10 bg-[#f8f4ef] border-l-4 border-[#d4220a] p-5">
           <p className="font-sans text-xs font-bold text-[#d4220a] uppercase tracking-wider mb-2">Editorial Note</p>
           <p className="font-sans text-sm text-muted">

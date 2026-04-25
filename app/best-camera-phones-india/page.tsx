@@ -73,8 +73,37 @@ export default async function BestCameraPhonePage() {
 
 
         <p className="font-body text-lg text-[#2a2a2a] leading-relaxed mb-6">Camera quality has become the primary purchase driver for Indian smartphone buyers in {month} {year}. Social media, family photography, food shots, travel content — the smartphone camera is now the camera for most Indians. This guide ranks the best camera phones across every budget, with honest assessment of what each actually delivers in real India-use scenarios: bright outdoor light, indoor family dinners in dim light, and the critical portrait quality that makes or breaks a camera phone recommendation.</p>
+        {/* ✅ ADDED: BUYER INTENT */}
+<div className="bg-[#f8f4ef] border-l-4 border-[#d4220a] p-5 mb-8">
+  <h3 className="font-bold text-sm mb-2">Who should buy a camera-focused phone?</h3>
+  <p className="text-sm text-[#2a2a2a]">
+    If you frequently take photos for Instagram, travel, family events, or content creation, investing in a camera-focused phone will make a noticeable difference in your daily usage.
+  </p>
+
+  <h3 className="font-bold text-sm mt-4 mb-2">Who should NOT prioritise camera phones?</h3>
+  <p className="text-sm text-[#2a2a2a]">
+    If you mainly use your phone for gaming, battery life, or productivity, spending extra on camera hardware may not give you real value.
+  </p>
+
+  <h3 className="font-bold text-sm mt-4 mb-2">Final Verdict</h3>
+  <p className="text-sm text-[#2a2a2a]">
+    In {month} {year}, camera quality varies more by processing than megapixels. Choosing the right brand based on your shooting style matters more than specs.
+  </p>
+</div>
 
         <h2 className="font-playfair text-2xl font-bold text-ink mt-10 mb-4 pb-2 border-b-2 border-[#d4220a]">Best Camera Phones India {month} {year} — Ranked</h2>
+        {/* ✅ ADDED: INTERNAL LINK BOOST */}
+<p className="font-sans text-sm text-muted mb-6">
+  For overall recommendations, explore our{' '}
+  <Link href="/best-smartphones-india" className="text-[#d4220a] font-semibold hover:underline">
+    Best Smartphones in India
+  </Link>{' '}
+  and{' '}
+  <Link href="/smartphone-buying-guide-india" className="text-[#d4220a] font-semibold hover:underline">
+    complete buying guide
+  </Link>{' '}
+  to compare camera performance with battery and overall value.
+</p>
         <div className="overflow-x-auto mb-8">
           <table className="w-full border-collapse text-sm font-sans">
             <thead><tr className="bg-[#1a3a5c] text-white"><th className="px-3 py-2 text-left">Phone</th><th className="px-3 py-2 text-left">Price</th><th className="px-3 py-2 text-left">Main Camera</th><th className="px-3 py-2 text-left">Zoom</th><th className="px-3 py-2 text-left">Video</th><th className="px-3 py-2 text-left">Camera Score</th></tr></thead>
@@ -204,7 +233,13 @@ export default async function BestCameraPhonePage() {
             </div>
           </section>
         )}
-
+{/* ✅ ADDED: FINAL BUYING ADVICE */}
+<div className="mt-10 border-t pt-6">
+  <h2 className="font-playfair text-xl font-bold text-ink mb-3">Final Buying Advice</h2>
+  <p className="font-sans text-sm text-muted leading-relaxed">
+    The best camera phone depends on your usage. Pixel phones deliver the best photos, iPhones dominate video, and Samsung offers the most versatile zoom. Instead of chasing megapixels, choose based on what you actually shoot — portraits, videos, or zoom.
+  </p>
+</div>
         <div className="mt-10 bg-[#f8f4ef] border-l-4 border-[#d4220a] p-5">
           <p className="font-sans text-xs font-bold text-[#d4220a] uppercase tracking-wider mb-2">Editorial Note</p>
           <p className="font-sans text-sm text-muted">
