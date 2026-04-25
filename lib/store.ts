@@ -163,30 +163,37 @@ export function generateSlug(title: string): string {
 }
 
 function generateStoredVerdict(article: Article) {
-  const title = article.title.toLowerCase()
+  const seed = article.slug.length + article.title.length
 
-  let buy = ''
-  let notBuy = ''
-  let final = ''
+  const pick = (arr: string[], i: number) => arr[(seed + i) % arr.length]
 
-  if (title.includes('camera')) {
-    buy = 'Best for users who want strong camera performance and photography features.'
-    notBuy = 'Not ideal if you need top gaming performance.'
-  } 
-  else if (title.includes('gaming')) {
-    buy = 'Good choice for users focused on gaming and performance.'
-    notBuy = 'Not suitable if camera is your main priority.'
-  } 
-  else if (title.includes('under') || title.includes('budget')) {
-    buy = 'Perfect for users looking for value-for-money in this price range.'
-    notBuy = 'Not ideal if you want flagship-level features.'
-  } 
-  else {
-    buy = 'Suitable for users who want a balanced smartphone experience.'
-    notBuy = 'Not ideal for users expecting top-tier flagship performance.'
+  const brand = article.brand || 'This device'
+
+  // Different sentence pools
+  const buyPool = [
+    `${brand} is a good fit for users who want a balanced everyday experience.`,
+    `This device suits users who are looking for practical performance and usability.`,
+    `A solid option for users who don’t want to overspend but still want reliability.`,
+    `Best for users who want a simple, dependable smartphone experience.`
+  ]
+
+  const notBuyPool = [
+    `Not the right choice for users expecting flagship-level performance.`,
+    `Power users may find this device limiting in the long run.`,
+    `Not ideal if you want top-tier camera or gaming capabilities.`,
+    `Skip this if your priority is high-end performance or premium features.`
+  ]
+
+  const verdictPool = [
+    `${brand} delivers a stable overall experience, but faces strong competition.`,
+    `Overall, this is a practical device, but not the most exciting option available.`,
+    `It gets the basics right, though it doesn’t stand out in its category.`,
+    `A sensible choice for the right user, but not a category leader.`
+  ]
+
+  return {
+    buy: pick(buyPool, 1),
+    notBuy: pick(notBuyPool, 2),
+    final: pick(verdictPool, 3),
   }
-
-  final = `${article.brand || 'This device'} offers a decent overall experience, but your choice should depend on your needs.`
-
-  return { buy, notBuy, final }
 }
