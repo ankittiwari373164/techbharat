@@ -30,6 +30,7 @@ return quality >= 6 && !a.isLowValue
   const hasArticles    = articles.length > 0
 
   return (
+    
     <div>
       {hasArticles && featured ? (
         <div className="max-w-7xl mx-auto px-4 py-6">

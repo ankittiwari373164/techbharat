@@ -11,6 +11,11 @@ export interface Article {
   bullets: string[]; content: string; tags: string[]; relatedSlugs: string[]
   reviews: Review[]; quickSummary: { brand: string; date: string; bullets: string[] }
   seoTitle: string; seoDescription: string; isFeatured: boolean
+  verdict?: {
+  buy: string
+  notBuy: string
+  final: string
+}
 }
 
 const KV_KEY    = 'tb:articles'
@@ -75,9 +80,15 @@ export async function saveArticlesAsync(articles: Article[]): Promise<void> {
   IS_VERCEL ? await kvSet(articles) : fileSet(articles)
 }
 
+
+
 export async function addArticleAsync(article: Article): Promise<void> {
   const all = await getAllArticlesAsync()
   if (all.find(a => a.slug === article.slug)) return
+  if (!article.verdict) {
+    article.verdict = generateStoredVerdict(article)
+  }
+
   all.unshift(article)
   await saveArticlesAsync(all.slice(0, 200))
 }
@@ -95,6 +106,9 @@ export function addArticle(article: Article): void {
   else {
     const all = fileGet()
     if (all.find(a => a.slug === article.slug)) return
+    if (!article.verdict) {
+      article.verdict = generateStoredVerdict(article)
+    }
     all.unshift(article); fileSet(all.slice(0, 200))
   }
 }
@@ -146,4 +160,33 @@ export function getArticlesByType(type: ArticleType): Article[] {
 
 export function generateSlug(title: string): string {
   return title.toLowerCase().replace(/[^a-z0-9\s-]/g,'').replace(/\s+/g,'-').replace(/-+/g,'-').trim().slice(0,80)
+}
+
+function generateStoredVerdict(article: Article) {
+  const title = article.title.toLowerCase()
+
+  let buy = ''
+  let notBuy = ''
+  let final = ''
+
+  if (title.includes('camera')) {
+    buy = 'Best for users who want strong camera performance and photography features.'
+    notBuy = 'Not ideal if you need top gaming performance.'
+  } 
+  else if (title.includes('gaming')) {
+    buy = 'Good choice for users focused on gaming and performance.'
+    notBuy = 'Not suitable if camera is your main priority.'
+  } 
+  else if (title.includes('under') || title.includes('budget')) {
+    buy = 'Perfect for users looking for value-for-money in this price range.'
+    notBuy = 'Not ideal if you want flagship-level features.'
+  } 
+  else {
+    buy = 'Suitable for users who want a balanced smartphone experience.'
+    notBuy = 'Not ideal for users expecting top-tier flagship performance.'
+  }
+
+  final = `${article.brand || 'This device'} offers a decent overall experience, but your choice should depend on your needs.`
+
+  return { buy, notBuy, final }
 }

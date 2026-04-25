@@ -5,6 +5,58 @@ import type { Article } from '@/lib/store'
 import ArticleCard from '@/components/ArticleCard'
 import PillarNav from '@/components/PillarNav'
 
+function hashString(str: string) {
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i)
+    hash |= 0
+  }
+  return Math.abs(hash)
+}
+
+function generateUniqueVerdict(article: Article) {
+  const seed = hashString(article.slug + article.title + article.brand)
+
+  const pick = (arr: string[], offset = 0) =>
+    arr[(seed + offset) % arr.length]
+
+  const brand = article.brand || 'This device'
+
+  const intros = [
+    `After analyzing ${brand}'s approach here,`,
+    `Looking at real-world usage,`,
+    `From a practical perspective,`,
+    `Based on overall performance,`
+  ]
+
+  const buyers = [
+    'this is best suited for everyday users who want reliability.',
+    'this makes sense for users who prefer balanced performance.',
+    'this is ideal for users upgrading from older devices.',
+    'this works well for users who want value without complexity.'
+  ]
+
+  const avoid = [
+    'However, it may not satisfy power users.',
+    'This might not be ideal for heavy gamers or advanced users.',
+    'Users expecting flagship-level performance may feel limited.',
+    'It’s not the best choice if you want top-tier features.'
+  ]
+
+  const endings = [
+    'it delivers a stable experience but doesn’t lead the segment.',
+    'it’s a practical choice, though not the most exciting one.',
+    'it performs well overall, but faces strong competition.',
+    'it offers good value, but with some compromises.'
+  ]
+
+  return {
+    buy: `${pick(intros)} ${pick(buyers, 1)}`,
+    notBuy: pick(avoid, 2),
+    verdict: `${pick(intros, 3)} ${pick(endings, 4)}`
+  }
+}
+
 // ── IMPROVED INTERNAL LINKER (2-3 LINKS MAX, NATURAL FLOW) ────────
 function getInternalLinkMap(articleBrand?: string): [RegExp, string, string][] {
   // Brand-specific pillar links (highest priority)
@@ -100,7 +152,7 @@ export default function ArticleClient({ article, similar, slug }: ArticleClientP
   const [reviewLocation, setReviewLocation] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [liveArticle, setLiveArticle] = useState<Article>(article)
-
+  const hv = generateUniqueVerdict(liveArticle)
   const similarArticles = similar as Article[]
 
   // Defensive: filter out local fallbacks, only use real proxy URLs
@@ -251,7 +303,23 @@ export default function ArticleClient({ article, similar, slug }: ArticleClientP
             </div>
 
             {/* Introduction */}
-            <p className="font-body text-lg text-[#2a2a2a] leading-relaxed mb-5">{liveArticle.summary}</p>
+<p className="font-body text-lg text-[#2a2a2a] leading-relaxed mb-5">
+  {liveArticle.summary}
+</p>
+
+{/* ✅ NEW: VALUE SECTION (ONLY ADDITION) */}
+{liveArticle.verdict && (
+  <div className="bg-[#f8f4ef] border-l-4 border-[#d4220a] p-5 mb-6">
+    <h3 className="font-bold text-sm mb-2">Who should buy this?</h3>
+    <p className="text-sm text-[#2a2a2a]">{liveArticle.verdict.buy}</p>
+
+    <h3 className="font-bold text-sm mt-4 mb-2">Who should NOT buy this?</h3>
+    <p className="text-sm text-[#2a2a2a]">{liveArticle.verdict.notBuy}</p>
+
+    <h3 className="font-bold text-sm mt-4 mb-2">Final Verdict</h3>
+    <p className="text-sm text-[#2a2a2a]">{liveArticle.verdict.final}</p>
+  </div>
+)}
 
             {/* Key Bullet Points */}
             {safeBullets.length > 0 && (
