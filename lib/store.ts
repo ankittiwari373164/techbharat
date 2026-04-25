@@ -1,4 +1,4 @@
-﻿export type ArticleType = 'mobile-news' | 'review' | 'compare'
+export type ArticleType = 'mobile-news' | 'review' | 'compare'
 
 export interface Review {
   name: string; location: string; rating: number; text: string; date: string; avatar?: string
@@ -25,8 +25,17 @@ async function getRedis() {
 }
 
 async function kvGet(): Promise<Article[]> {
-  const redis = await getRedis()
-  return (await redis.get<Article[]>(KV_KEY)) || []
+  try {
+    const redis = await getRedis()
+    const data = await redis.get<Article[]>(KV_KEY)
+
+    // ✅ FIX: always return array (AdSense safe)
+    if (!Array.isArray(data)) return []
+
+    return data
+  } catch {
+    return [] // ✅ never crash
+  }
 }
 
 async function kvSet(articles: Article[]): Promise<void> {
@@ -54,7 +63,12 @@ function fileSet(articles: Article[]): void {
 }
 
 export async function getAllArticlesAsync(): Promise<Article[]> {
-  return IS_VERCEL ? kvGet() : fileGet()
+  const data = IS_VERCEL ? await kvGet() : fileGet()
+
+  // ✅ FIX: always safe array
+  if (!Array.isArray(data)) return []
+
+  return data
 }
 
 export async function saveArticlesAsync(articles: Article[]): Promise<void> {
@@ -87,6 +101,10 @@ export function addArticle(article: Article): void {
 
 export async function getArticleBySlugAsync(slug: string): Promise<Article | null> {
   const all = await getAllArticlesAsync()
+
+  // ✅ FIX: prevent crash
+  if (!slug) return null
+
   return all.find(a => a.slug === slug) || null
 }
 
@@ -106,6 +124,10 @@ export function getFeaturedArticle(): Article | null {
 
 export async function getSimilarArticlesAsync(article: Article, limit = 3): Promise<Article[]> {
   const all = await getAllArticlesAsync()
+
+  // ✅ FIX: prevent crash
+  if (!article) return []
+
   return all.filter(a => a.id !== article.id && (a.brand === article.brand || a.type === article.type)).slice(0, limit)
 }
 
@@ -124,4 +146,4 @@ export function getArticlesByType(type: ArticleType): Article[] {
 
 export function generateSlug(title: string): string {
   return title.toLowerCase().replace(/[^a-z0-9\s-]/g,'').replace(/\s+/g,'-').replace(/-+/g,'-').trim().slice(0,80)
-} 
+}
