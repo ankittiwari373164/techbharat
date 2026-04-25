@@ -22,6 +22,7 @@ Disallow: /api/auto-index
 Disallow: /api/index-url
 Disallow: /default
 Disallow: /feeds/
+Disallow: /api/
 
 User-agent: Googlebot-Image
 Allow: /api/image/

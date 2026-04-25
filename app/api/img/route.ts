@@ -51,11 +51,11 @@ export async function GET(request: NextRequest) {
     return new NextResponse(buffer, {
       status: 200,
       headers: {
-        'Content-Type': contentType,
-        'Cache-Control': 'public, max-age=86400, s-maxage=86400',
-        'Access-Control-Allow-Origin': '*',
-        'X-Robots-Tag': 'noindex',  // Don't index image proxy URLs as pages
-      },
+    'Content-Type': contentType,
+    'Cache-Control': 'public, max-age=31536000, immutable',
+    'Access-Control-Allow-Origin': '*',
+    'X-Robots-Tag': 'noindex, nofollow, noimageindex',
+  },
     })
   } catch (err) {
     console.error('img proxy error:', err)

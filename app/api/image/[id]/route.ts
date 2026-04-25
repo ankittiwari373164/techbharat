@@ -117,13 +117,12 @@ export async function GET(
     return new NextResponse(buffer, {
       status: 200,
       headers: {
-        'Content-Type': contentType,
-        // Cache aggressively — image content never changes for a given ID
-        'Cache-Control': 'public, max-age=2592000, s-maxage=2592000, immutable',
-        'CDN-Cache-Control': 'public, max-age=2592000',
-        'Referrer-Policy': 'no-referrer',
-        'X-Robots-Tag': 'noindex',  // Prevent /api/image/* from appearing in GSC as pages
-      },
+    'Content-Type': contentType,
+    'Cache-Control': 'public, max-age=31536000, immutable',
+    'CDN-Cache-Control': 'public, max-age=31536000',
+    'Referrer-Policy': 'no-referrer',
+    'X-Robots-Tag': 'noindex, nofollow, noimageindex',
+  },
     })
   } catch {
     return NextResponse.redirect('https://thetechbharat.com/og-image.jpg', { status: 302 })

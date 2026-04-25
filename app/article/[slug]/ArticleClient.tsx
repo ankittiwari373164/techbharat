@@ -114,7 +114,7 @@ function addInternalLinks(html: string, currentSlug: string, articleBrand?: stri
   let depth = 0
 
   let linkCount = 0
-  const MAX_LINKS = 3
+  const MAX_LINKS = 5
 
   // PRIORITY ORDER
   const linkMap = getInternalLinkMap(articleBrand)
