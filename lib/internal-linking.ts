@@ -6,40 +6,56 @@ export function addInternalLinks(
   if (!html || typeof html !== 'string') return html
 
   try {
-    let output = html
-    let count = 0
-    const MAX = 3
+    let linkCount = 0
+    const MAX_LINKS = 3
 
-    for (const a of allArticles) {
-      if (count >= MAX) break
-      if (!a.slug || a.slug === currentSlug) continue
-      if (!a.title) continue
+    // Split into HTML tags + text
+    const parts = html.split(/(<[^>]+>)/g)
 
-      const words = a.title
-        .toLowerCase()
-        .replace(/[^a-z0-9\s]/g, '')
-        .split(' ')
-        .filter((w: string) => w.length > 5)
+    return parts
+      .map((part) => {
+        // Skip HTML tags completely
+        if (part.startsWith('<')) return part
 
-      if (!words.length) continue
+        if (linkCount >= MAX_LINKS) return part
 
-      const keyword = words[0]
+        let text = part
 
-      const regex = new RegExp(`\\b(${keyword})\\b`, 'i')
+        for (const a of allArticles) {
+          if (linkCount >= MAX_LINKS) break
+          if (!a.slug || a.slug === currentSlug) continue
+          if (!a.title) continue
 
-      if (!regex.test(output)) continue
+          // Extract safe keyword
+          const keyword = a.title
+            .toLowerCase()
+            .replace(/[^a-z0-9\s]/g, '')
+            .split(' ')
+            .find((w: string) => w.length > 5)
 
-      output = output.replace(regex, (match) => {
-        return `<a href="/${a.slug}" 
-          class="internal-link text-[#1a3a5c] font-semibold hover:text-[#d4220a] underline decoration-dotted"
-          rel="internal">${match}</a>`
+          if (!keyword) continue
+
+          const regex = new RegExp(`\\b(${keyword})\\b`, 'i')
+
+          if (!regex.test(text)) continue
+
+          // Prevent double linking
+          if (text.includes(`href="/${a.slug}"`)) continue
+
+          text = text.replace(regex, (match) => {
+            linkCount++
+
+            return `<a href="/${a.slug}" 
+              class="internal-link text-[#1a3a5c] font-semibold hover:text-[#d4220a] underline decoration-dotted"
+              rel="internal">${match}</a>`
+          })
+        }
+
+        return text
       })
-
-      count++
-    }
-
-    return output
-  } catch {
+      .join('')
+  } catch (err) {
+    console.error('Internal linking error:', err)
     return html
   }
 }
