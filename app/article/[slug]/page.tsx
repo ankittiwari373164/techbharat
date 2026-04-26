@@ -124,7 +124,6 @@ export default async function ArticlePage({ params }: PageProps) {
       content={contentWithLinks}
       similar={similar}
       slug={slug}
-      allArticles={articles}
     />
   )
 }
