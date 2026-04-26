@@ -66,8 +66,8 @@ export async function GET() {
     { url: '/phone-comparison-guide-india',     priority: '0.8',  changefreq: 'weekly', lastmod: today },
     { url: '/iphone-buying-guide-india',        priority: '0.8',  changefreq: 'weekly', lastmod: today },
     { url: '/best-phones-for-students-india',   priority: '0.8',  changefreq: 'weekly', lastmod: today },
-    { url: '/used-refurbished-phone-buying-guide-india', priority: '0.75', changefreq: 'weekly', lastmod: today },
-    { url: '/guides',                           priority: '0.75', changefreq: 'weekly', lastmod: today },
+    { url: '/best-5g-phones-india',             priority: '0.8',  changefreq: 'weekly', lastmod: today },
+    
   ]
 
   let articleEntries: SitemapEntry[] = []
