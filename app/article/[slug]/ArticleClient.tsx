@@ -4,6 +4,7 @@ import Link from 'next/link'
 import type { Article } from '@/lib/store'
 import ArticleCard from '@/components/ArticleCard'
 import PillarNav from '@/components/PillarNav'
+import { JSDOM } from 'jsdom'
 
 
 function hashString(str: string) {
@@ -107,139 +108,74 @@ function getInternalLinkMap(articleBrand?: string): [RegExp, string, string][] {
 function addInternalLinks(
   html: string,
   currentSlug: string,
-  articleBrand?: string,
-  allArticles: any[] = []
+  resolvedBrand: string,
+  allArticles: any[]
 ): string {
-  if (!html || typeof html !== 'string') return ''
+  try {
+    const dom = new JSDOM(html)
+    const doc = dom.window.document
 
-  const parts = html.split(/(<[^>]+>)/g)
-  const linked = new Set<string>()
-  let insideAnchor = false
-  let insideScript = false
-  let insideStyle  = false
-  let depth = 0
+    const walker = doc.createTreeWalker(
+      doc.body,
+      dom.window.NodeFilter.SHOW_TEXT
+    )
 
-  let linkCount = 0
-  const MAX_LINKS = 3
+    let linkCount = 0
+    const MAX_LINKS = 5
 
-  // PRIORITY ORDER
-  const linkMap = getInternalLinkMap(articleBrand)
+    let node: Node | null
 
-  // 🔥 ADD THIS BLOCK (ARTICLE → ARTICLE LINKING)
+    while ((node = walker.nextNode())) {
+      if (linkCount >= MAX_LINKS) break
 
-const articleLinks: [RegExp, string, string][] = allArticles
-  .filter((a: Article) => a.slug !== currentSlug)
-  .slice(0, 8)
-  .map((a: Article) => {
-    const keywords = a.title
-  ?.toLowerCase()
-  .replace(/[^a-z0-9\s]/g, '')
-  .split(' ')
-  .filter(w => w.length > 5)
-  .slice(0, 1)
-  .join('')
+      const parent = node.parentElement
+      if (!parent) continue
 
-    if (!keywords) return null
-
-    return [
-      new RegExp(`\\b(${keywords})\\b`, 'i'),
-      `/${a.slug}`,
-      a.title
-    ]
-  })
-  .filter(Boolean) as [RegExp, string, string][]
-
-// Merge both
-const finalLinkMap = [...linkMap, ...articleLinks]
-
-  return parts.map((part) => {
-
-  // ───────── SCRIPT / STYLE SAFETY ─────────
-  if (/^<script[\s>]/i.test(part))  { insideScript = true;  return part }
-  if (/^<\/script>/i.test(part))    { insideScript = false; return part }
-  if (/^<style[\s>]/i.test(part))   { insideStyle  = true;  return part }
-  if (/^<\/style>/i.test(part))     { insideStyle  = false; return part }
-
-  if (insideScript || insideStyle) return part
-
-
-  // ───────── ANCHOR SAFETY (VERY IMPORTANT) ─────────
-  if (/^<a[\s>]/i.test(part)) {
-    insideAnchor = true
-    depth++
-    return part
-  }
-
-  if (/^<\/a>/i.test(part)) {
-    depth = Math.max(0, depth - 1)
-    if (depth === 0) insideAnchor = false
-    return part
-  }
-
-  if (insideAnchor) return part
-
-
-  // ───────── SKIP ALL HTML TAGS ─────────
-  if (part.startsWith('<')) return part
-
-
-  // ───────── 🚨 CRITICAL: SKIP ATTRIBUTES / BROKEN SEGMENTS ─────────
-  if (
-    part.includes('href=') ||
-    part.includes('title=') ||
-    part.includes('class=') ||
-    part.includes('src=') ||
-    part.includes('http') ||
-    part.includes('www.')
-  ) {
-    return part
-  }
-
-
-  // ───────── TEXT PROCESSING START ─────────
-  let text = part
-
-  // Skip very small fragments (prevents corruption)
-  if (!text || text.length < 40) return text
-
-
-  for (const [regex, url, title] of finalLinkMap) {
-    if (linked.has(url) || linkCount >= MAX_LINKS) continue
-
-    // Prevent self-link
-    if (url === `/${currentSlug}`) continue
-
-    regex.lastIndex = 0
-
-    const replaced = text.replace(regex, (match, offset, fullText) => {
-      const before = fullText.slice(Math.max(0, offset - 30), offset)
-
-      // 🚨 HARD PROTECTION (THIS FIXES YOUR BUG)
+      // ❌ skip unwanted tags
       if (
-        before.includes('href') ||
-        before.includes('http') ||
-        before.includes('<') ||
-        before.includes('=')
-      ) return match
+        parent.closest('a, script, style, h1, h2, h3')
+      ) continue
 
-      return `<a href="${url}" 
-        title="${title}" 
-        class="internal-link text-[#1a3a5c] font-semibold hover:text-[#d4220a] underline decoration-dotted"
-        rel="internal">${match}</a>`
-    })
+      const text = node.textContent || ''
+      if (text.length < 40) continue
 
-    if (replaced !== text) {
-      text = replaced
-      linked.add(url)   // ✅ VERY IMPORTANT
-      linkCount++
+      for (const article of allArticles) {
+        if (!article.slug || article.slug === currentSlug) continue
+
+        const words: string[] = (article.title || '')
+          .toLowerCase()
+          .replace(/[^a-z0-9\s]/g, '')
+          .split(' ')
+          .filter((w: string) => w.length > 5)
+
+        const keyword = words[0]
+        if (!keyword) continue
+
+        const regex = new RegExp(`\\b${keyword}\\b`, 'i')
+
+        if (regex.test(text)) {
+          const replaced = text.replace(
+            regex,
+            `<a href="/${article.slug}" class="internal-link">${keyword}</a>`
+          )
+
+          const span = doc.createElement('span')
+          span.innerHTML = replaced
+
+          parent.replaceChild(span, node)
+
+          linkCount++
+          break
+        }
+      }
     }
+
+    return doc.body.innerHTML
+
+  } catch (err) {
+    console.error('Internal link error:', err)
+    return html
   }
-
-  return text
-
-}).join('')
-
-
 }
 
 
