@@ -80,9 +80,10 @@ export async function GET() {
     // ✅ CRITICAL FIX: ONLY include high-quality articles
     articleEntries = articles
       .filter((a: any) => {
-        const quality = a.contentQuality ?? 5
-        return quality >= 6 && !a.isLowValue
-      })
+  if (!a.slug) return false
+  if (!a.title) return false
+  return true
+})
       .map((a: any) => ({
         url:        `/${a.slug}`,
         lastmod:    (a.updatedDate || a.publishDate || today).split('T')[0],
@@ -106,7 +107,11 @@ export async function GET() {
     }))
   } catch { /* no stories yet */ }
 
-  const all: SitemapEntry[] = [...staticPages, ...articleEntries, ...storyEntries]
+  const all = [
+  ...staticPages,
+  ...articleEntries.sort((a, b) => b.lastmod.localeCompare(a.lastmod)),
+  ...storyEntries
+]
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
