@@ -2,6 +2,7 @@
 import { getAllArticlesAsync } from '@/lib/store'
 import type { Metadata } from 'next'
 import ArticleClient from './ArticleClient'
+import { addInternalLinks } from '@/lib/internal-linking'
 
 export const dynamic = 'force-dynamic' // ✅ FIX: prevent static JSON 404 (AdSense critical)
 
@@ -68,32 +69,42 @@ export default async function ArticlePage({ params }: PageProps) {
   let article: any = null
   let similar: any[] = []
   let articles: any[] = []
+  let contentWithLinks = ''
 
   try {
-    articles = await getAllArticlesAsync() as any[]
-    article = articles.find(a => a.slug === slug) || null
+  articles = await getAllArticlesAsync() as any[]
+  article = articles.find(a => a.slug === slug) || null
 
-    if (article) {
-      const seen = new Set([slug])
+  contentWithLinks = article?.content || ''
 
-      similar = articles
-        .filter(a => {
-          if (!a.slug || seen.has(a.slug)) return false
-          if (!a.title) return false
-
-          // keep your original logic untouched
-          if (article.brand && article.brand !== 'Mobile') {
-            return (a.brand || '').toLowerCase() === article.brand.toLowerCase()
-          }
-
-          return a.type === article.type
-        })
-        .slice(0, 4)
-    }
-
-  } catch {
-    // never crash
+  if (article) {
+    contentWithLinks = addInternalLinks(
+      article.content,
+      slug,
+      articles
+    )
   }
+
+  if (article) {
+    const seen = new Set([slug])
+
+    similar = articles
+      .filter(a => {
+        if (!a.slug || seen.has(a.slug)) return false
+        if (!a.title) return false
+
+        if (article.brand && article.brand !== 'Mobile') {
+          return (a.brand || '').toLowerCase() === article.brand.toLowerCase()
+        }
+
+        return a.type === article.type
+      })
+      .slice(0, 4)
+  }
+
+} catch {
+  // never crash
+}
 
   // ✅ CRITICAL FIX: NEVER return empty 500 page
   if (!article) {
@@ -110,6 +121,7 @@ export default async function ArticlePage({ params }: PageProps) {
   return (
     <ArticleClient
       article={article}
+      content={contentWithLinks}
       similar={similar}
       slug={slug}
       allArticles={articles}

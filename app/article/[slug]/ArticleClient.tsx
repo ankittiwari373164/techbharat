@@ -4,7 +4,6 @@ import Link from 'next/link'
 import type { Article } from '@/lib/store'
 import ArticleCard from '@/components/ArticleCard'
 import PillarNav from '@/components/PillarNav'
-import { JSDOM } from 'jsdom'
 
 
 function hashString(str: string) {
@@ -108,65 +107,88 @@ function getInternalLinkMap(articleBrand?: string): [RegExp, string, string][] {
 function addInternalLinks(
   html: string,
   currentSlug: string,
-  resolvedBrand: string,
-  allArticles: any[]
+  articleBrand?: string,
+  allArticles: any[] = []
 ): string {
+
+  if (!html || typeof html !== 'string') return ''
+
   try {
-    const dom = new JSDOM(html)
-    const doc = dom.window.document
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(html, 'text/html')
 
-    const walker = doc.createTreeWalker(
-      doc.body,
-      dom.window.NodeFilter.SHOW_TEXT
-    )
-
+    const MAX_LINKS = 4
     let linkCount = 0
-    const MAX_LINKS = 5
+    const linked = new Set<string>()
 
-    let node: Node | null
+    const linkMap = getInternalLinkMap(articleBrand)
 
-    while ((node = walker.nextNode())) {
-      if (linkCount >= MAX_LINKS) break
-
-      const parent = node.parentElement
-      if (!parent) continue
-
-      // ❌ skip unwanted tags
-      if (
-        parent.closest('a, script, style, h1, h2, h3')
-      ) continue
-
-      const text = node.textContent || ''
-      if (text.length < 40) continue
-
-      for (const article of allArticles) {
-        if (!article.slug || article.slug === currentSlug) continue
-
-        const words: string[] = (article.title || '')
-          .toLowerCase()
+    const articleLinks: [RegExp, string, string][] = allArticles
+      .filter(a => a.slug !== currentSlug)
+      .slice(0, 8)
+      .map(a => {
+        const keyword = a.title
+          ?.toLowerCase()
           .replace(/[^a-z0-9\s]/g, '')
           .split(' ')
-          .filter((w: string) => w.length > 5)
+.filter((w: string) => w.length > 5)
 
-        const keyword = words[0]
-        if (!keyword) continue
+        if (!keyword) return null
 
-        const regex = new RegExp(`\\b${keyword}\\b`, 'i')
+        return [
+          new RegExp(`\\b(${keyword})\\b`, 'i'),
+          `/${a.slug}`,
+          a.title
+        ]
+      })
+      .filter(Boolean) as [RegExp, string, string][]
 
-        if (regex.test(text)) {
-          const replaced = text.replace(
-            regex,
-            `<a href="/${article.slug}" class="internal-link">${keyword}</a>`
-          )
+    const finalLinkMap = [...linkMap, ...articleLinks]
 
-          const span = doc.createElement('span')
-          span.innerHTML = replaced
+    // 🚀 WALK TEXT NODES ONLY (THIS IS THE KEY FIX)
+    const walker = document.createTreeWalker(
+      doc.body,
+      NodeFilter.SHOW_TEXT,
+      null
+    )
 
-          parent.replaceChild(span, node)
+    let node: Text | null
 
-          linkCount++
-          break
-        }
+    while ((node = walker.nextNode() as Text | null)) {
+
+      if (!node || !node.nodeValue) continue
+
+      const parent = node.parentElement
+
+      // 🚫 skip inside links, scripts, styles
+      if (!parent) continue
+      if (parent.closest('a, script, style')) continue
+
+      let text = node.nodeValue
+
+      if (!text || text.length < 40) continue
+
+      for (const [regex, url, title] of finalLinkMap) {
+        if (linkCount >= MAX_LINKS) break
+        if (linked.has(url)) continue
+        if (url === `/${currentSlug}`) continue
+
+        if (!regex.test(text)) continue
+
+        const span = document.createElement('span')
+
+        span.innerHTML = text.replace(regex, (match) => {
+          return `<a href="${url}" 
+            title="${title}" 
+            class="internal-link text-[#1a3a5c] font-semibold hover:text-[#d4220a] underline decoration-dotted"
+            rel="internal">${match}</a>`
+        })
+
+        parent.replaceChild(span, node)
+
+        linked.add(url)
+        linkCount++
+        break
       }
     }
 
@@ -174,7 +196,7 @@ function addInternalLinks(
 
   } catch (err) {
     console.error('Internal link error:', err)
-    return html
+    return html // fallback (VERY IMPORTANT)
   }
 }
 
@@ -182,9 +204,10 @@ function addInternalLinks(
 
 interface ArticleClientProps {
   article: Article
+  content: string
   similar: unknown[]
   slug: string
-  allArticles: Article[]
+
 }
 
 // Brand detection map
@@ -198,7 +221,7 @@ const BRAND_DETECT_MAP: [RegExp, string][] = [
   [/\bHonor\b/i, 'Honor'],
 ]
 
-export default function ArticleClient({ article, similar, slug, allArticles }: ArticleClientProps) {
+export default function ArticleClient({ article, similar, slug, content }: ArticleClientProps) {
   const [reviewName, setReviewName] = useState('')
   const [reviewText, setReviewText] = useState('')
   const [reviewRating, setReviewRating] = useState(5)
@@ -413,7 +436,7 @@ export default function ArticleClient({ article, similar, slug, allArticles }: A
                     .replace(/<\/h1>/gi, '</h2>'),
                   slug,
                   resolvedBrand,
-                  allArticles,
+                  
                 ) }}
               />
 
