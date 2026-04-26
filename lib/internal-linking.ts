@@ -9,56 +9,51 @@ export function addInternalLinks(
   const MAX_LINKS = 4
 
   try {
-    // ✅ Filter ONLY real articles (NO guides / NO pillar pages)
+    // ✅ ONLY REAL ARTICLES (no guides / no pillar pages)
     const validArticles = articles.filter(a =>
       a.slug &&
       a.slug !== currentSlug &&
       a.title &&
-      (
-        a.type === 'news' || a.type === 'article' || !a.type // fallback support
-      ) &&
+      a.slug.split('-').length > 5 && // real articles only
       !a.slug.includes('best-') &&
       !a.slug.includes('guide') &&
       !a.slug.includes('compare')
     )
 
-    // ✅ Split HTML safely (avoid breaking tags)
+    // ✅ Safe HTML split (prevents breaking tags)
     const parts = html.split(/(<[^>]+>)/g)
 
     return parts.map((part) => {
       // 🚫 Skip HTML tags
       if (part.startsWith('<')) return part
 
-      // 🚫 Skip small text chunks
-      if (part.length < 20) return part
-
       if (linkCount >= MAX_LINKS) return part
+      if (part.length < 20) return part
 
       let updated = part
 
       for (const a of validArticles) {
         if (linkCount >= MAX_LINKS) break
 
-        // ✅ Strong keyword (first 2 meaningful words)
+        // ✅ Use strong single keyword (better matching)
         const words = a.title
           .split(' ')
-          .filter((w: string) => w.length > 5)
+          .filter((w: string) => w.length > 4)
 
         if (!words.length) continue
 
-        const keyword = words.slice(0, 2).join(' ')
+        const keyword = words[0]
 
-        // ✅ Safe regex (word boundary)
         const regex = new RegExp(`\\b${keyword}\\b`, 'i')
 
         if (!regex.test(updated)) continue
 
-        // ✅ Replace only once per article
         updated = updated.replace(regex, (match) => {
           linkCount++
 
           return `<a href="/${a.slug}"
-            class="internal-link text-[#1a3a5c] font-semibold hover:text-[#d4220a] underline decoration-dotted"
+            style="color:#d4220a;font-weight:600;text-decoration:underline;"
+            class="internal-link"
             rel="internal">${match}</a>`
         })
 
@@ -69,6 +64,6 @@ export function addInternalLinks(
     }).join('')
   } catch (err) {
     console.error('Internal linking error:', err)
-    return html // ✅ fallback (never break page)
+    return html // ✅ never break page
   }
 }
