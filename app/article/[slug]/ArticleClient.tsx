@@ -5,6 +5,7 @@ import type { Article } from '@/lib/store'
 import ArticleCard from '@/components/ArticleCard'
 import PillarNav from '@/components/PillarNav'
 
+
 function hashString(str: string) {
   let hash = 0
   for (let i = 0; i < str.length; i++) {
@@ -103,7 +104,12 @@ function getInternalLinkMap(articleBrand?: string): [RegExp, string, string][] {
   ]
 }
 
-function addInternalLinks(html: string, currentSlug: string, articleBrand?: string): string {
+function addInternalLinks(
+  html: string,
+  currentSlug: string,
+  articleBrand?: string,
+  allArticles: any[] = []
+): string {
   if (!html || typeof html !== 'string') return ''
 
   const parts = html.split(/(<[^>]+>)/g)
@@ -118,6 +124,23 @@ function addInternalLinks(html: string, currentSlug: string, articleBrand?: stri
 
   // PRIORITY ORDER
   const linkMap = getInternalLinkMap(articleBrand)
+
+  // 🔥 ADD THIS BLOCK (ARTICLE → ARTICLE LINKING)
+
+const articleLinks: [RegExp, string, string][] = allArticles
+  .filter(a => a.slug !== currentSlug)
+  .slice(0, 20)
+  .map(a => {
+    const words = a.title?.split(' ').slice(0, 3).join(' ')
+    return [
+      new RegExp(`\\b(${words})\\b`, 'i'),
+      `/${a.slug}`,
+      a.title
+    ]
+  })
+
+// Merge both
+const finalLinkMap = [...linkMap, ...articleLinks]
 
   return parts.map((part) => {
 
@@ -139,7 +162,7 @@ function addInternalLinks(html: string, currentSlug: string, articleBrand?: stri
 
     let text = part
 
-    for (const [regex, url, title] of linkMap) {
+    for (const [regex, url, title] of finalLinkMap) {
       if (linked.has(url) || linkCount >= MAX_LINKS) continue
 
       // Prevent self-link
@@ -172,6 +195,7 @@ interface ArticleClientProps {
   article: Article
   similar: unknown[]
   slug: string
+  allArticles: Article[]
 }
 
 // Brand detection map
@@ -399,7 +423,8 @@ export default function ArticleClient({ article, similar, slug }: ArticleClientP
                     .replace(/<h1(\s[^>]*)?>/gi, '<h2$1>')
                     .replace(/<\/h1>/gi, '</h2>'),
                   slug,
-                  resolvedBrand
+                  resolvedBrand,
+                  similarArticles
                 ) }}
               />
 

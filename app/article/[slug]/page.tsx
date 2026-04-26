@@ -67,10 +67,10 @@ export default async function ArticlePage({ params }: PageProps) {
 
   let article: any = null
   let similar: any[] = []
+  let articles: any[] = []
 
   try {
-    const articles = await getAllArticlesAsync() as any[]
-
+    articles = await getAllArticlesAsync() as any[]
     article = articles.find(a => a.slug === slug) || null
 
     if (article) {
@@ -112,6 +112,7 @@ export default async function ArticlePage({ params }: PageProps) {
       article={article}
       similar={similar}
       slug={slug}
+      allArticles={articles}
     />
   )
 }

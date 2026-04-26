@@ -1,26 +1,45 @@
-const PILLAR_LINKS = [
-  { keyword: 'best smartphones', url: '/best-smartphones-india' },
-  { keyword: 'buying guide', url: '/smartphone-buying-guide-india' },
-  { keyword: 'camera phones', url: '/best-camera-phones-india' },
-  { keyword: '5g phones', url: '/best-5g-phones-india' },
-  { keyword: 'phone comparison', url: '/phone-comparison-guide-india' },
-]
+export function injectSmartLinks(
+  html: string,
+  currentSlug: string,
+  articles: any[]
+): string {
+  if (!html || typeof html !== 'string') return html
 
-export function injectInternalLinks(content: string) {
-  if (!content) return ''
+  const MAX_LINKS = 5
 
-  let updated = content
+  const lower = html.toLowerCase()
 
-  for (const link of PILLAR_LINKS) {
-    const regex = new RegExp(`\\b(${link.keyword})\\b`, 'i')
+  // 1. Pick relevant articles (not random)
+  const related = articles
+    .filter(a => a.slug !== currentSlug)
+    .filter(a => {
+      const title = (a.title || '').toLowerCase()
+      return lower.includes(title.split(' ')[0]) // loose relevance
+    })
+    .slice(0, 10)
 
-    if (regex.test(updated)) {
-      updated = updated.replace(
-        regex,
-        `<a href="${link.url}" class="text-[#d4220a] font-semibold hover:underline">$1</a>`
-      )
+  let linkCount = 0
+
+  let output = html
+
+  for (const a of related) {
+    if (linkCount >= MAX_LINKS) break
+
+    const words = a.title.split(' ').slice(0, 3).join(' ') // anchor phrase
+    if (!words) continue
+
+    const regex = new RegExp(`\\b(${words})\\b`, 'i')
+
+    if (regex.test(output)) {
+      output = output.replace(regex, `
+        <a href="/${a.slug}" 
+           class="text-blue-600 font-semibold underline decoration-2 hover:text-red-600">
+          $1
+        </a>
+      `)
+      linkCount++
     }
   }
 
-  return updated
+  return output
 }
