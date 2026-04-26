@@ -4,7 +4,7 @@ import Link from 'next/link'
 import type { Article } from '@/lib/store'
 import ArticleCard from '@/components/ArticleCard'
 import PillarNav from '@/components/PillarNav'
-
+import { JSDOM } from 'jsdom'
 
 function hashString(str: string) {
   let hash = 0
@@ -114,8 +114,8 @@ function addInternalLinks(
   if (!html || typeof html !== 'string') return ''
 
   try {
-    const parser = new DOMParser()
-    const doc = parser.parseFromString(html, 'text/html')
+    const dom = new JSDOM(html)
+    const doc = dom.window.document
 
     const MAX_LINKS = 4
     let linkCount = 0
@@ -123,33 +123,9 @@ function addInternalLinks(
 
     const linkMap = getInternalLinkMap(articleBrand)
 
-    const articleLinks: [RegExp, string, string][] = allArticles
-      .filter(a => a.slug !== currentSlug)
-      .slice(0, 8)
-      .map(a => {
-        const keyword = a.title
-          ?.toLowerCase()
-          .replace(/[^a-z0-9\s]/g, '')
-          .split(' ')
-.filter((w: string) => w.length > 5)
-
-        if (!keyword) return null
-
-        return [
-          new RegExp(`\\b(${keyword})\\b`, 'i'),
-          `/${a.slug}`,
-          a.title
-        ]
-      })
-      .filter(Boolean) as [RegExp, string, string][]
-
-    const finalLinkMap = [...linkMap, ...articleLinks]
-
-    // 🚀 WALK TEXT NODES ONLY (THIS IS THE KEY FIX)
-    const walker = document.createTreeWalker(
+    const walker = doc.createTreeWalker(
       doc.body,
-      NodeFilter.SHOW_TEXT,
-      null
+      dom.window.NodeFilter.SHOW_TEXT
     )
 
     let node: Text | null
@@ -160,7 +136,6 @@ function addInternalLinks(
 
       const parent = node.parentElement
 
-      // 🚫 skip inside links, scripts, styles
       if (!parent) continue
       if (parent.closest('a, script, style')) continue
 
@@ -168,18 +143,18 @@ function addInternalLinks(
 
       if (!text || text.length < 40) continue
 
-      for (const [regex, url, title] of finalLinkMap) {
+      for (const [regex, url, title] of linkMap) {
         if (linkCount >= MAX_LINKS) break
         if (linked.has(url)) continue
         if (url === `/${currentSlug}`) continue
 
         if (!regex.test(text)) continue
 
-        const span = document.createElement('span')
+        const span = doc.createElement('span')
 
         span.innerHTML = text.replace(regex, (match) => {
-          return `<a href="${url}" 
-            title="${title}" 
+          return `<a href="${url}"
+            title="${title}"
             class="internal-link text-[#1a3a5c] font-semibold hover:text-[#d4220a] underline decoration-dotted"
             rel="internal">${match}</a>`
         })
@@ -196,7 +171,7 @@ function addInternalLinks(
 
   } catch (err) {
     console.error('Internal link error:', err)
-    return html // fallback (VERY IMPORTANT)
+    return html
   }
 }
 
@@ -429,15 +404,7 @@ export default function ArticleClient({ article, similar, slug, content }: Artic
               <div
                 className="article-content"
                 suppressHydrationWarning
-                dangerouslySetInnerHTML={{ __html: addInternalLinks(
-                  (typeof liveArticle.content === 'string' ? liveArticle.content : '')
-                    .replace(/<script[^>]*type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi, '')
-                    .replace(/<h1(\s[^>]*)?>/gi, '<h2$1>')
-                    .replace(/<\/h1>/gi, '</h2>'),
-                  slug,
-                  resolvedBrand,
-                  
-                ) }}
+                dangerouslySetInnerHTML={{ __html: content }}
               />
 
               {/* Mid-article image */}
