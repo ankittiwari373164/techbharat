@@ -4,7 +4,7 @@ import Link from 'next/link'
 import type { Article } from '@/lib/store'
 import ArticleCard from '@/components/ArticleCard'
 import PillarNav from '@/components/PillarNav'
-import { JSDOM } from 'jsdom'
+
 
 function hashString(str: string) {
   let hash = 0
@@ -104,76 +104,76 @@ function getInternalLinkMap(articleBrand?: string): [RegExp, string, string][] {
   ]
 }
 
-function addInternalLinks(
-  html: string,
-  currentSlug: string,
-  articleBrand?: string,
-  allArticles: any[] = []
-): string {
+// function addInternalLinks(
+//   html: string,
+//   currentSlug: string,
+//   articleBrand?: string,
+//   allArticles: any[] = []
+// ): string {
 
-  if (!html || typeof html !== 'string') return ''
+//   if (!html || typeof html !== 'string') return ''
 
-  try {
-    const dom = new JSDOM(html)
-    const doc = dom.window.document
+//   try {
+//     const dom = new JSDOM(html)
+//     const doc = dom.window.document
 
-    const MAX_LINKS = 4
-    let linkCount = 0
-    const linked = new Set<string>()
+//     const MAX_LINKS = 4
+//     let linkCount = 0
+//     const linked = new Set<string>()
 
-    const linkMap = getInternalLinkMap(articleBrand)
+//     const linkMap = getInternalLinkMap(articleBrand)
 
-    const walker = doc.createTreeWalker(
-      doc.body,
-      dom.window.NodeFilter.SHOW_TEXT
-    )
+//     const walker = doc.createTreeWalker(
+//       doc.body,
+//       dom.window.NodeFilter.SHOW_TEXT
+//     )
 
-    let node: Text | null
+//     let node: Text | null
 
-    while ((node = walker.nextNode() as Text | null)) {
+//     while ((node = walker.nextNode() as Text | null)) {
 
-      if (!node || !node.nodeValue) continue
+//       if (!node || !node.nodeValue) continue
 
-      const parent = node.parentElement
+//       const parent = node.parentElement
 
-      if (!parent) continue
-      if (parent.closest('a, script, style')) continue
+//       if (!parent) continue
+//       if (parent.closest('a, script, style')) continue
 
-      let text = node.nodeValue
+//       let text = node.nodeValue
 
-      if (!text || text.length < 40) continue
+//       if (!text || text.length < 40) continue
 
-      for (const [regex, url, title] of linkMap) {
-        if (linkCount >= MAX_LINKS) break
-        if (linked.has(url)) continue
-        if (url === `/${currentSlug}`) continue
+//       for (const [regex, url, title] of linkMap) {
+//         if (linkCount >= MAX_LINKS) break
+//         if (linked.has(url)) continue
+//         if (url === `/${currentSlug}`) continue
 
-        if (!regex.test(text)) continue
+//         if (!regex.test(text)) continue
 
-        const span = doc.createElement('span')
+//         const span = doc.createElement('span')
 
-        span.innerHTML = text.replace(regex, (match) => {
-          return `<a href="${url}"
-            title="${title}"
-            class="internal-link text-[#1a3a5c] font-semibold hover:text-[#d4220a] underline decoration-dotted"
-            rel="internal">${match}</a>`
-        })
+//         span.innerHTML = text.replace(regex, (match) => {
+//           return `<a href="${url}"
+//             title="${title}"
+//             class="internal-link text-[#1a3a5c] font-semibold hover:text-[#d4220a] underline decoration-dotted"
+//             rel="internal">${match}</a>`
+//         })
 
-        parent.replaceChild(span, node)
+//         parent.replaceChild(span, node)
 
-        linked.add(url)
-        linkCount++
-        break
-      }
-    }
+//         linked.add(url)
+//         linkCount++
+//         break
+//       }
+//     }
 
-    return doc.body.innerHTML
+//     return doc.body.innerHTML
 
-  } catch (err) {
-    console.error('Internal link error:', err)
-    return html
-  }
-}
+//   } catch (err) {
+//     console.error('Internal link error:', err)
+//     return html
+//   }
+// }
 
 
 

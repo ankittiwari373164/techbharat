@@ -1,69 +1,45 @@
-import { JSDOM } from 'jsdom'
-
 export function addInternalLinks(
   html: string,
   currentSlug: string,
   allArticles: any[]
 ): string {
+  if (!html || typeof html !== 'string') return html
+
   try {
-    const dom = new JSDOM(html)
-    const doc = dom.window.document
+    let output = html
+    let count = 0
+    const MAX = 3
 
-    const walker = doc.createTreeWalker(
-      doc.body,
-      dom.window.NodeFilter.SHOW_TEXT
-    )
+    for (const a of allArticles) {
+      if (count >= MAX) break
+      if (!a.slug || a.slug === currentSlug) continue
+      if (!a.title) continue
 
-    let linkCount = 0
-    const MAX_LINKS = 5
+      const words = a.title
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, '')
+        .split(' ')
+        .filter((w: string) => w.length > 5)
 
-    let node: Node | null
+      if (!words.length) continue
 
-    while ((node = walker.nextNode())) {
-      if (linkCount >= MAX_LINKS) break
+      const keyword = words[0]
 
-      const parent = node.parentElement
-      if (!parent) continue
+      const regex = new RegExp(`\\b(${keyword})\\b`, 'i')
 
-      if (parent.closest('a, script, style, h1, h2, h3')) continue
+      if (!regex.test(output)) continue
 
-      const text = node.textContent || ''
-      if (text.length < 40) continue
+      output = output.replace(regex, (match) => {
+        return `<a href="/${a.slug}" 
+          class="internal-link text-[#1a3a5c] font-semibold hover:text-[#d4220a] underline decoration-dotted"
+          rel="internal">${match}</a>`
+      })
 
-      for (const article of allArticles) {
-        if (!article.slug || article.slug === currentSlug) continue
-
-        const words = (article.title || '')
-          .toLowerCase()
-          .replace(/[^a-z0-9\s]/g, '')
-          .split(' ')
-          .filter((w: string) => w.length > 5)
-
-        const keyword = words[0]
-        if (!keyword) continue
-
-        const regex = new RegExp(`\\b${keyword}\\b`, 'i')
-
-        if (regex.test(text)) {
-          const replaced = text.replace(
-            regex,
-            `<a href="/${article.slug}" class="internal-link">${keyword}</a>`
-          )
-
-          const span = doc.createElement('span')
-          span.innerHTML = replaced
-
-          parent.replaceChild(span, node)
-
-          linkCount++
-          break
-        }
-      }
+      count++
     }
 
-    return doc.body.innerHTML
-  } catch (err) {
-    console.error('Internal link error:', err)
+    return output
+  } catch {
     return html
   }
 }
