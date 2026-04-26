@@ -120,7 +120,7 @@ function addInternalLinks(
   let depth = 0
 
   let linkCount = 0
-  const MAX_LINKS = 5
+  const MAX_LINKS = 3
 
   // PRIORITY ORDER
   const linkMap = getInternalLinkMap(articleBrand)
@@ -129,14 +129,15 @@ function addInternalLinks(
 
 const articleLinks: [RegExp, string, string][] = allArticles
   .filter((a: Article) => a.slug !== currentSlug)
-  .slice(0, 20)
+  .slice(0, 8)
   .map((a: Article) => {
     const keywords = a.title
-      ?.toLowerCase()
-      .split(' ')
-      .filter(w => w.length > 4)
-      .slice(0, 2)
-      .join('|')
+  ?.toLowerCase()
+  .replace(/[^a-z0-9\s]/g, '')
+  .split(' ')
+  .filter(w => w.length > 5)
+  .slice(0, 1)
+  .join('')
 
     if (!keywords) return null
 
@@ -153,52 +154,95 @@ const finalLinkMap = [...linkMap, ...articleLinks]
 
   return parts.map((part) => {
 
-    // Skip scripts/styles
-    if (/^<script[\s>]/i.test(part))  { insideScript = true;  return part }
-    if (/^<\/script>/i.test(part))    { insideScript = false; return part }
-    if (/^<style[\s>]/i.test(part))   { insideStyle  = true;  return part }
-    if (/^<\/style>/i.test(part))     { insideStyle  = false; return part }
+  // ───────── SCRIPT / STYLE SAFETY ─────────
+  if (/^<script[\s>]/i.test(part))  { insideScript = true;  return part }
+  if (/^<\/script>/i.test(part))    { insideScript = false; return part }
+  if (/^<style[\s>]/i.test(part))   { insideStyle  = true;  return part }
+  if (/^<\/style>/i.test(part))     { insideStyle  = false; return part }
 
-    if (insideScript || insideStyle) return part
+  if (insideScript || insideStyle) return part
 
-    // Skip existing links
-    if (/^<a[\s>]/i.test(part)) { insideAnchor = true; depth++; return part }
-    if (/^<\/a>/i.test(part))   { depth = Math.max(0, depth - 1); if (depth === 0) insideAnchor = false; return part }
-    if (insideAnchor) return part
 
-    // Skip HTML tags
-    if (part.startsWith('<')) return part
+  // ───────── ANCHOR SAFETY (VERY IMPORTANT) ─────────
+  if (/^<a[\s>]/i.test(part)) {
+    insideAnchor = true
+    depth++
+    return part
+  }
 
-    let text = part
+  if (/^<\/a>/i.test(part)) {
+    depth = Math.max(0, depth - 1)
+    if (depth === 0) insideAnchor = false
+    return part
+  }
 
-    for (const [regex, url, title] of finalLinkMap) {
-      if (linked.has(url) || linkCount >= MAX_LINKS) continue
+  if (insideAnchor) return part
 
-      // Prevent self-link
-      if (url === `/${currentSlug}`) continue
 
-      regex.lastIndex = 0
+  // ───────── SKIP ALL HTML TAGS ─────────
+  if (part.startsWith('<')) return part
 
-      const replaced = text.replace(regex, (match) => {
-        if (linked.has(url) || linkCount >= MAX_LINKS) return match
 
-        linked.add(url)
-        linkCount++
+  // ───────── 🚨 CRITICAL: SKIP ATTRIBUTES / BROKEN SEGMENTS ─────────
+  if (
+    part.includes('href=') ||
+    part.includes('title=') ||
+    part.includes('class=') ||
+    part.includes('src=') ||
+    part.includes('http') ||
+    part.includes('www.')
+  ) {
+    return part
+  }
 
-        return `<a href="${url}" 
-          title="${title}" 
-          class="internal-link text-[#1a3a5c] font-semibold hover:text-[#d4220a] underline decoration-dotted"
-          rel="internal">${match}</a>`
-      })
 
-      if (replaced !== text) {
-        text = replaced
-      }
+  // ───────── TEXT PROCESSING START ─────────
+  let text = part
+
+  // Skip very small fragments (prevents corruption)
+  if (!text || text.length < 40) return text
+
+
+  for (const [regex, url, title] of finalLinkMap) {
+    if (linked.has(url) || linkCount >= MAX_LINKS) continue
+
+    // Prevent self-link
+    if (url === `/${currentSlug}`) continue
+
+    regex.lastIndex = 0
+
+    const replaced = text.replace(regex, (match, offset, fullText) => {
+      const before = fullText.slice(Math.max(0, offset - 30), offset)
+
+      // 🚨 HARD PROTECTION (THIS FIXES YOUR BUG)
+      if (
+        before.includes('href') ||
+        before.includes('http') ||
+        before.includes('<') ||
+        before.includes('=')
+      ) return match
+
+      return `<a href="${url}" 
+        title="${title}" 
+        class="internal-link text-[#1a3a5c] font-semibold hover:text-[#d4220a] underline decoration-dotted"
+        rel="internal">${match}</a>`
+    })
+
+    if (replaced !== text) {
+      text = replaced
+      linked.add(url)   // ✅ VERY IMPORTANT
+      linkCount++
     }
+  }
 
-    return text
-  }).join('')
+  return text
+
+}).join('')
+
+
 }
+
+
 
 interface ArticleClientProps {
   article: Article
