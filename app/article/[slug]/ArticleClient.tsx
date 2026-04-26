@@ -128,16 +128,25 @@ function addInternalLinks(
   // 🔥 ADD THIS BLOCK (ARTICLE → ARTICLE LINKING)
 
 const articleLinks: [RegExp, string, string][] = allArticles
-  .filter(a => a.slug !== currentSlug)
+  .filter((a: Article) => a.slug !== currentSlug)
   .slice(0, 20)
-  .map(a => {
-    const words = a.title?.split(' ').slice(0, 3).join(' ')
+  .map((a: Article) => {
+    const keywords = a.title
+      ?.toLowerCase()
+      .split(' ')
+      .filter(w => w.length > 4)
+      .slice(0, 2)
+      .join('|')
+
+    if (!keywords) return null
+
     return [
-      new RegExp(`\\b(${words})\\b`, 'i'),
+      new RegExp(`\\b(${keywords})\\b`, 'i'),
       `/${a.slug}`,
       a.title
     ]
   })
+  .filter(Boolean) as [RegExp, string, string][]
 
 // Merge both
 const finalLinkMap = [...linkMap, ...articleLinks]
@@ -209,7 +218,7 @@ const BRAND_DETECT_MAP: [RegExp, string][] = [
   [/\bHonor\b/i, 'Honor'],
 ]
 
-export default function ArticleClient({ article, similar, slug }: ArticleClientProps) {
+export default function ArticleClient({ article, similar, slug, allArticles }: ArticleClientProps) {
   const [reviewName, setReviewName] = useState('')
   const [reviewText, setReviewText] = useState('')
   const [reviewRating, setReviewRating] = useState(5)
@@ -424,7 +433,7 @@ export default function ArticleClient({ article, similar, slug }: ArticleClientP
                     .replace(/<\/h1>/gi, '</h2>'),
                   slug,
                   resolvedBrand,
-                  similarArticles
+                  allArticles,
                 ) }}
               />
 
