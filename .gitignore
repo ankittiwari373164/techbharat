@@ -1,6 +1,14 @@
 node_modules/
 .next/
+.vercel/
 .env.local
-data/
-.vercel
 .env*.local
+
+# Large image folder — never commit, deploy artifact only
+public/phone-images/
+
+# Local article store — production uses Upstash Redis (KV)
+data/
+
+
+*.zip

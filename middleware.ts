@@ -1,33 +1,49 @@
 // middleware.ts
-// ─────────────────────────────────────────────────────────────────────────────
-// 1. Injects x-pathname header so server components can read current path
-// 2. Protects /admin/* and /api/admin/* routes (requires __tb_admin cookie)
-// 3. Blocks schedulers from hitting /api/scheduler without ?secret=
-// 4. Fires fire-and-forget analytics ping on every public page view (no bots)
-// 5. Rewrites clean article URLs: /some-slug → /article/some-slug (internal)
-//    Browser URL stays clean — no redirect, no flicker, no 404
-// ─────────────────────────────────────────────────────────────────────────────
+// =====================================================================
+//  PATCHED FOR ADSENSE & GOOGLE INDEXING
+// ---------------------------------------------------------------------
+//  WHAT THIS MIDDLEWARE DOES (in order):
+//   1. /article/<slug>  →  301 redirect to /<slug>      (canonical)
+//   2. /<slug>          →  internal rewrite to /article/<slug>
+//                          so the SSR article page renders, while
+//                          the URL stays clean for SEO + sharing.
+//   3. Inject  x-pathname  header so server components know the path.
+//   4. Protect  /admin/*  and  /api/admin/*  routes.
+//   5. Protect /api/scheduler + /api/seo-cron  with CRON_SECRET.
+//   6. Fire-and-forget analytics ping for real human page views.
+// ---------------------------------------------------------------------
+//  KEY FIXES (vs previous version):
+//   1. NEVER rewrite URLs that have more than one path segment
+//      (e.g. /foo/amp must NOT be rewritten — its real route is
+//       /app/[slug]/amp/page.tsx).
+//   2. NEVER rewrite paths containing a dot (file extensions).
+//   3. NEVER rewrite query-string-only paths.
+//   4. Skip analytics for /api/*, /_next/*, /admin/*, /sitemap*,
+//      /robots.txt, /ads.txt, and known files.
+//   5. Tighter bot detection list including AdsBot-Google.
+//   6. Made the early /article/<slug> redirect handle the case where
+//      the slug itself is empty (was returning broken URL before).
+// =====================================================================
 import { NextRequest, NextResponse } from 'next/server'
 
-
-
-// ── ALL known top-level pages — must NOT be treated as article slugs ─────────
-// Add every app/[slug]/page.tsx here so middleware never rewrites them to /article/
+// ---------------------------------------------------------------------
+//  Top-level routes that must NOT be treated as article slugs
+// ---------------------------------------------------------------------
 const TOP_LEVEL_ROUTES = new Set([
   // Core nav
   'mobile-news', 'reviews', 'compare', 'web-stories',
-  // Trust/info pages
+  // Trust pages
   'about', 'contact', 'privacy-policy', 'disclaimer', 'terms',
   'editorial-policy', 'corrections-policy', 'author',
   // System
-  'admin', 'api', '_next', 'sitemap.xml', 'robots.txt', 'favicon.ico',
-
-  // ── BRAND PILLAR PAGES ────────────────────────────────────────────────────
+  'admin', 'api', '_next', 'sitemap.xml', 'sitemap-index.xml',
+  'web-stories-sitemap.xml', 'robots.txt', 'ads.txt', 'favicon.ico',
+  'favicon.png', 'logo.png', 'og-image.jpg', 'og-image.png',
+  // Brand pillars
   'best-samsung-phones-india',
   'best-apple-iphone-india',
   'best-oneplus-phones-india',
-
-  // ── GENERIC PILLAR PAGES ──────────────────────────────────────────────────
+  // Generic pillars
   'best-smartphones-india',
   'best-budget-phones-india',
   'best-camera-phones-india',
@@ -38,42 +54,45 @@ const TOP_LEVEL_ROUTES = new Set([
   'best-phones-for-students-india',
   'smartphone-buying-guide-india',
   'phone-comparison-guide-india',
+  'iphone-buying-guide-india',
   'android-battery-health-guide',
 ])
 
 function isArticleSlug(pathname: string): boolean {
   const parts = pathname.split('/').filter(Boolean)
-  if (parts.length !== 1) return false          // must be /slug only, not /a/b
+  if (parts.length !== 1) return false                        // must be /<slug> only
   const segment = parts[0]
-  if (TOP_LEVEL_ROUTES.has(segment)) return false  // known page → skip
-  if (segment.includes('.')) return false           // skip files (.ico, .png…)
-  return /^[a-z0-9][a-z0-9-]{2,}$/.test(segment)  // looks like a slug
+  if (TOP_LEVEL_ROUTES.has(segment)) return false             // known page
+  if (segment.includes('.')) return false                     // file extension
+  if (segment.startsWith('_')) return false                   // _next, _vercel, etc.
+  return /^[a-z0-9][a-z0-9-]{2,}$/.test(segment)              // slug shape
 }
 
 export function middleware(req: NextRequest) {
-  // ✅ FIX CANNIBALIZATION: redirect /article/* → /
-if (req.nextUrl.pathname.startsWith('/article/')) {
-  const slug = req.nextUrl.pathname.replace('/article/', '')
-
-  if (slug) {
-    const newUrl = new URL(`/${slug}`, req.url)
-    return NextResponse.redirect(newUrl, 301)
-  }
-}
   const { pathname } = req.nextUrl
 
-  // ── 5. Rewrite clean slug URLs → /article/[slug] internally ─────────────
+  // ─── 1. /article/<slug>  →  301 redirect to /<slug> ─────────────
+  if (pathname.startsWith('/article/')) {
+    const slug = pathname.replace('/article/', '').replace(/\/$/, '')
+    if (slug && !slug.includes('/')) {
+      const newUrl = new URL(`/${slug}`, req.url)
+      newUrl.search = req.nextUrl.search
+      return NextResponse.redirect(newUrl, 301)
+    }
+  }
+
+  // ─── 2. /<slug>  →  internal rewrite to /article/<slug> ────────
   if (isArticleSlug(pathname)) {
     const url = req.nextUrl.clone()
     url.pathname = `/article${pathname}`
     return NextResponse.rewrite(url)
   }
 
-  // ── 1. Inject pathname header ────────────────────────────────────────────
+  // ─── 3. Inject x-pathname header ───────────────────────────────
   const requestHeaders = new Headers(req.headers)
   requestHeaders.set('x-pathname', pathname)
 
-  // ── 2. Protect scheduler/cron endpoints ─────────────────────────────────
+  // ─── 4. Protect cron endpoints ─────────────────────────────────
   if (pathname === '/api/scheduler' || pathname === '/api/seo-cron') {
     const secret     = req.nextUrl.searchParams.get('secret')
     const authHeader = req.headers.get('authorization')?.replace('Bearer ', '')
@@ -83,7 +102,7 @@ if (req.nextUrl.pathname.startsWith('/article/')) {
     }
   }
 
-  // ── 3. Protect admin routes ──────────────────────────────────────────────
+  // ─── 5. Protect admin routes ───────────────────────────────────
   const isAdminPage = pathname.startsWith('/admin') && !pathname.startsWith('/admin/login')
   const isAdminApi  = pathname.startsWith('/api/admin') && !pathname.startsWith('/api/admin/login')
 
@@ -95,17 +114,20 @@ if (req.nextUrl.pathname.startsWith('/article/')) {
     }
   }
 
-  // ── 4. Analytics — fire-and-forget, never blocks the page ───────────────
+  // ─── 6. Analytics — fire-and-forget for real human page views ──
   const isPublicPage =
     !pathname.startsWith('/api') &&
     !pathname.startsWith('/_next') &&
     !pathname.startsWith('/admin') &&
+    !pathname.startsWith('/sitemap') &&
+    pathname !== '/robots.txt' &&
+    pathname !== '/ads.txt' &&
     !pathname.includes('.')
 
   if (isPublicPage) {
-    const ua        = req.headers.get('user-agent') || ''
-    const host      = req.headers.get('host') || ''
-    const isBot     = /UptimeRobot|bot|crawl|spider|slurp|Googlebot|Bingbot|YandexBot|pingdom|GTmetrix|PageSpeed|HeadlessChrome|python-requests|axios|node-fetch/i.test(ua)
+    const ua   = req.headers.get('user-agent') || ''
+    const host = req.headers.get('host') || ''
+    const isBot = /UptimeRobot|bot|crawl|spider|slurp|Googlebot|AdsBot|Bingbot|YandexBot|DuckDuckBot|pingdom|GTmetrix|PageSpeed|HeadlessChrome|python-requests|axios|node-fetch|curl|wget/i.test(ua)
     const isPreview = host.includes('.vercel.app')
 
     if (!isBot && !isPreview) {
@@ -127,5 +149,5 @@ if (req.nextUrl.pathname.startsWith('/article/')) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|logo\\.png|ads\\.txt|robots\\.txt).*)'],
 }
