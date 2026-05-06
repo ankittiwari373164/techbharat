@@ -1,24 +1,22 @@
 // app/article/[slug]/page.tsx
 // =====================================================================
-//  v2 PATCH — surgical fixes for issues observed in GSC after first deploy
+//  v3 PATCH — fixes the actual duplicate FAQPage cause
 // ---------------------------------------------------------------------
-//  CHANGES vs v1:
-//   1. Title cleanup now strips BOTH `| The Tech Bharat` AND `| TechBharat`
-//      (your stored seoTitle uses "| TechBharat" → was producing
-//       double-suffixed browser tabs).
-//   2. When the article store is unreachable (Redis hiccup, network blip),
-//      DO NOT call notFound(). A 404 is a permanent signal to Google;
-//      a missing article during a transient failure should return a 503
-//      so Google retries instead of dropping the URL from the index.
-//   3. notFound() is reserved for the case where articles[] DID load
-//      successfully but this specific slug genuinely doesn't exist.
-//   4. FAQ schema only emits when bullets have ≥3 substantive entries
-//      AND we de-dupe against title — fixes the "Duplicate field 'FAQPage'"
-//      warning shown in GSC for at least one article.
-//   5. seoTitle is now sanitized of all known TechBharat suffix variants
-//      before being passed to <title>.
-//   6. Added explicit `id` on the JSON-LD scripts so React can detect
-//      and avoid double-render in dev/strict mode.
+//  ROOT CAUSE FOUND:
+//   Some articles' `content` HTML contains a literal
+//   `<h2>Frequently Asked Questions</h2>` section followed by
+//   `<h3>Question text</h3>` headings and answer paragraphs.
+//   Google's rich-results parser auto-detects this pattern as a
+//   FAQPage entity — EVEN WITHOUT explicit JSON-LD.
+//   Meanwhile, our JSON-LD ALSO emits a FAQPage from `bullets[]`.
+//   Result: two FAQPage entities for the same URL → "Duplicate field".
+//
+//  FIX:
+//   Detect the in-content FAQ pattern. When present, SKIP our
+//   bullets-based FAQPage JSON-LD entirely — let Google parse the
+//   real one from the article body. The bullets still display
+//   visually inside ArticleClient (Key Highlights box) but no
+//   second FAQ schema is emitted.
 // =====================================================================
 import { getAllArticlesAsync } from '@/lib/store'
 import type { Metadata } from 'next'
@@ -36,7 +34,7 @@ interface PageProps {
 }
 
 // ---------------------------------------------------------------------
-//  Title cleaner — strips ALL known TechBharat suffix variants
+//  Title cleaner
 // ---------------------------------------------------------------------
 function cleanTitle(raw: string): string {
   if (!raw) return ''
@@ -46,6 +44,28 @@ function cleanTitle(raw: string): string {
     .replace(/\s*–\s*The\s*Tech\s*Bharat\s*$/i, '')
     .replace(/\s*-\s*TechBharat\s*$/i, '')
     .trim()
+}
+
+// ---------------------------------------------------------------------
+//  Detect in-content FAQ section
+// ---------------------------------------------------------------------
+//  Returns true if the article body has a "Frequently Asked Questions"
+//  heading or similar FAQ pattern that Google will auto-parse as a
+//  FAQPage entity. When this returns true, we MUST NOT emit our own
+//  FAQPage JSON-LD or Google flags the page as duplicate FAQ.
+function hasInContentFaq(html: string): boolean {
+  if (!html) return false
+  // Look for any of these heading patterns that Google's rich-results
+  // parser treats as an FAQ section starter:
+  const patterns = [
+    /<h[1-6][^>]*>\s*Frequently\s+Asked\s+Questions\s*<\/h[1-6]>/i,
+    /<h[1-6][^>]*>\s*FAQs?\s*<\/h[1-6]>/i,
+    /<h[1-6][^>]*>\s*Common\s+Questions\s*<\/h[1-6]>/i,
+    /<h[1-6][^>]*>\s*Questions?\s+(and|&amp;|&)\s+Answers\s*<\/h[1-6]>/i,
+    /##\s*Frequently\s+Asked\s+Questions/i,    // markdown form
+    /##\s*FAQs?\b/i,
+  ]
+  return patterns.some(p => p.test(html))
 }
 
 // =====================================================================
@@ -62,12 +82,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     storeFailed = true
   }
 
-  // Store outage → return non-committal metadata; the page will
-  // throw a 503 below so Google retries.
   if (storeFailed) {
     return {
       title: 'The Tech Bharat',
-      robots: { index: false, follow: true }, // not "noindex" permanently
+      robots: { index: false, follow: true },
     }
   }
 
@@ -161,16 +179,12 @@ export default async function ArticlePage({ params }: PageProps) {
   }
 
   // ───── Phase 2: handle store outage WITHOUT 404'ing ────────
-  // Throwing causes Next.js to render error.tsx with HTTP 500/503,
-  // which tells Google "try again later" instead of "delete this URL"
   if (storeFailed) {
     throw new Error('Article store temporarily unavailable')
   }
 
   // ───── Phase 3: find the requested article ─────────────────
   article = articles.find(a => a.slug === slug) || null
-
-  // Genuinely missing → real 404 (correct behaviour)
   if (!article) {
     notFound()
   }
@@ -273,11 +287,12 @@ export default async function ArticlePage({ params }: PageProps) {
     ],
   }
 
-  // 3) FAQ schema — STRICTER conditions to prevent invalid emit:
-  //    (a) bullets must exist
-  //    (b) at least 3 of them
-  //    (c) each one ≥ 20 chars (avoids placeholder/short-line issues)
-  //    (d) deduped against each other (no two identical answers)
+  // 3) FAQ schema — ONLY emit when there is NO in-content FAQ section.
+  //    If the article body already has "Frequently Asked Questions",
+  //    Google auto-parses that as a FAQPage. Emitting our own would
+  //    create the duplicate that GSC flagged.
+  const articleHasFaq = hasInContentFaq(contentWithLinks)
+
   const rawBullets: string[] = Array.isArray(article.bullets) ? article.bullets : []
   const cleanBullets = Array.from(new Set(
     rawBullets
@@ -286,7 +301,9 @@ export default async function ArticlePage({ params }: PageProps) {
       .filter(b => b.length >= 20)
   )).slice(0, 5)
 
-  const faqSchema = cleanBullets.length >= 3 ? {
+  const shouldEmitFaqSchema = !articleHasFaq && cleanBullets.length >= 3
+
+  const faqSchema = shouldEmitFaqSchema ? {
     '@context': 'https://schema.org',
     '@type':    'FAQPage',
     mainEntity: cleanBullets.map((b, i) => ({
@@ -298,7 +315,6 @@ export default async function ArticlePage({ params }: PageProps) {
 
   return (
     <>
-      {/* ---------------- JSON-LD (server-rendered, deduped via id) ---------------- */}
       <script
         id="ld-article"
         type="application/ld+json"
@@ -317,7 +333,6 @@ export default async function ArticlePage({ params }: PageProps) {
         />
       )}
 
-      {/* ---------------- Article body ---------------- */}
       <ArticleClient
         article={article}
         content={contentWithLinks}
