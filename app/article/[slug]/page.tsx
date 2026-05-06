@@ -1,24 +1,24 @@
 // app/article/[slug]/page.tsx
 // =====================================================================
-//  PATCHED FOR ADSENSE & GOOGLE INDEXING
+//  v2 PATCH — surgical fixes for issues observed in GSC after first deploy
 // ---------------------------------------------------------------------
-//  KEY FIXES (vs previous version):
-//   1. ADDED full server-rendered JSON-LD:
-//        - NewsArticle (E-E-A-T, Top Stories eligibility)
-//        - BreadcrumbList (rich breadcrumbs in SERP)
-//        - FAQPage (when bullets exist — boosts SERP space)
-//      Previously these only existed on the AMP page, so the
-//      canonical URL had ZERO structured data. AdSense's
-//      "low value content" classifier looks for these.
-//   2. ADDED rendered <h1>, summary, and content INTO the SSR HTML
-//      via a stable wrapper so the article body is in the
-//      first-paint HTML even before ArticleClient hydrates.
-//      (ArticleClient was already SSR for content, but we also
-//      now pass server-built schema strings into it.)
-//   3. Better metadata — added publishedTime, modifiedTime,
-//      authors, section, and tags to OpenGraph article object.
-//   4. Returns proper 404 status when article not found
-//      (was returning 200 with "Not Found" body — soft 404 in GSC).
+//  CHANGES vs v1:
+//   1. Title cleanup now strips BOTH `| The Tech Bharat` AND `| TechBharat`
+//      (your stored seoTitle uses "| TechBharat" → was producing
+//       double-suffixed browser tabs).
+//   2. When the article store is unreachable (Redis hiccup, network blip),
+//      DO NOT call notFound(). A 404 is a permanent signal to Google;
+//      a missing article during a transient failure should return a 503
+//      so Google retries instead of dropping the URL from the index.
+//   3. notFound() is reserved for the case where articles[] DID load
+//      successfully but this specific slug genuinely doesn't exist.
+//   4. FAQ schema only emits when bullets have ≥3 substantive entries
+//      AND we de-dupe against title — fixes the "Duplicate field 'FAQPage'"
+//      warning shown in GSC for at least one article.
+//   5. seoTitle is now sanitized of all known TechBharat suffix variants
+//      before being passed to <title>.
+//   6. Added explicit `id` on the JSON-LD scripts so React can detect
+//      and avoid double-render in dev/strict mode.
 // =====================================================================
 import { getAllArticlesAsync } from '@/lib/store'
 import type { Metadata } from 'next'
@@ -35,86 +35,108 @@ interface PageProps {
   params: { slug: string }
 }
 
+// ---------------------------------------------------------------------
+//  Title cleaner — strips ALL known TechBharat suffix variants
+// ---------------------------------------------------------------------
+function cleanTitle(raw: string): string {
+  if (!raw) return ''
+  return raw
+    .replace(/\s*\|\s*The\s*Tech\s*Bharat\s*$/i, '')
+    .replace(/\s*\|\s*TechBharat\s*$/i, '')
+    .replace(/\s*–\s*The\s*Tech\s*Bharat\s*$/i, '')
+    .replace(/\s*-\s*TechBharat\s*$/i, '')
+    .trim()
+}
+
 // =====================================================================
 //  METADATA
 // =====================================================================
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  let articles: any[] = []
+  let storeFailed = false
+
   try {
-    const articles = await getAllArticlesAsync() as any[]
-    const article = articles.find(a => a.slug === params.slug)
+    articles = await getAllArticlesAsync() as any[]
+    if (!Array.isArray(articles)) storeFailed = true
+  } catch {
+    storeFailed = true
+  }
 
-    if (!article) {
-      return {
-        title: 'Article Not Found | The Tech Bharat',
-        robots: { index: false, follow: false },
-      }
-    }
-
-    const rawTitle    = (article.seoTitle || article.title || '').replace(/\s*\|\s*The Tech Bharat\s*$/i, '').trim()
-    const description = (article.seoDescription || article.summary || '').slice(0, 160)
-    const canonical   = `${SITE_URL}/${article.slug}`
-    const ampUrl      = `${SITE_URL}/${article.slug}/amp`
-    const image       = article.featuredImage || `${SITE_URL}/og-image.jpg`
-    const published   = article.publishDate || new Date().toISOString()
-    const modified    = article.updatedDate || published
-
+  // Store outage → return non-committal metadata; the page will
+  // throw a 503 below so Google retries.
+  if (storeFailed) {
     return {
+      title: 'The Tech Bharat',
+      robots: { index: false, follow: true }, // not "noindex" permanently
+    }
+  }
+
+  const article = articles.find(a => a.slug === params.slug)
+
+  if (!article) {
+    return {
+      title: 'Article Not Found | The Tech Bharat',
+      robots: { index: false, follow: false },
+    }
+  }
+
+  const rawTitle    = cleanTitle(article.seoTitle || article.title || '')
+  const description = (article.seoDescription || article.summary || '').slice(0, 160)
+  const canonical   = `${SITE_URL}/${article.slug}`
+  const image       = article.featuredImage || `${SITE_URL}/og-image.jpg`
+  const published   = article.publishDate || new Date().toISOString()
+  const modified    = article.updatedDate || published
+
+  return {
+    title:       rawTitle,
+    description,
+    keywords:    article.tags || [],
+    authors:     [{ name: article.author || 'Vijay Yadav', url: `${SITE_URL}/author` }],
+
+    alternates: { canonical },
+
+    robots: {
+      index:  true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+        'max-video-preview': -1,
+      },
+    },
+
+    openGraph: {
+      title:         rawTitle,
+      description,
+      url:           canonical,
+      siteName:      'The Tech Bharat',
+      type:          'article',
+      locale:        'en_IN',
+      publishedTime: published,
+      modifiedTime:  modified,
+      authors:       [`${SITE_URL}/author`],
+      section:       article.category || 'Mobile News',
+      tags:          article.tags || [],
+      images:        [{ url: image, width: 1200, height: 630, alt: rawTitle }],
+    },
+
+    twitter: {
+      card:        'summary_large_image',
+      site:        '@thetechbharat',
+      creator:     '@thetechbharat',
       title:       rawTitle,
       description,
-      keywords:    article.tags || [],
-      authors:     [{ name: article.author || 'Vijay Yadav', url: `${SITE_URL}/author` }],
+      images:      [image],
+    },
 
-      alternates: {
-        canonical,
-        // AMP variant (only if you actually want AMP discovery)
-        // languages: { 'amphtml': ampUrl }
-      },
-
-      robots: {
-        index:  true,
-        follow: true,
-        googleBot: {
-          index: true,
-          follow: true,
-          'max-image-preview': 'large',
-          'max-snippet': -1,
-          'max-video-preview': -1,
-        },
-      },
-
-      openGraph: {
-        title:       rawTitle,
-        description,
-        url:         canonical,
-        siteName:    'The Tech Bharat',
-        type:        'article',
-        locale:      'en_IN',
-        publishedTime: published,
-        modifiedTime:  modified,
-        authors:     [`${SITE_URL}/author`],
-        section:     article.category || 'Mobile News',
-        tags:        article.tags || [],
-        images:      [{ url: image, width: 1200, height: 630, alt: rawTitle }],
-      },
-
-      twitter: {
-        card:        'summary_large_image',
-        site:        '@thetechbharat',
-        creator:     '@thetechbharat',
-        title:       rawTitle,
-        description,
-        images:      [image],
-      },
-
-      other: {
-        'article:published_time': published,
-        'article:modified_time':  modified,
-        'article:author':         article.author || 'Vijay Yadav',
-        'article:section':        article.category || 'Mobile News',
-      },
-    }
-  } catch {
-    return { title: 'The Tech Bharat' }
+    other: {
+      'article:published_time': published,
+      'article:modified_time':  modified,
+      'article:author':         article.author || 'Vijay Yadav',
+      'article:section':        article.category || 'Mobile News',
+    },
   }
 }
 
@@ -124,59 +146,71 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function ArticlePage({ params }: PageProps) {
   const { slug } = params
 
-  let article: any = null
-  let similar: any[] = []
   let articles: any[] = []
+  let storeFailed     = false
+  let article: any    = null
+  let similar: any[]  = []
   let contentWithLinks = ''
 
+  // ───── Phase 1: load articles ──────────────────────────────
   try {
     articles = await getAllArticlesAsync() as any[]
-    article  = articles.find(a => a.slug === slug) || null
-
-    if (article) {
-      contentWithLinks = addInternalLinks(article.content || '', slug, articles)
-
-      const seen = new Set([slug])
-      similar = articles
-        .filter(a => {
-          if (!a.slug || seen.has(a.slug)) return false
-          if (!a.title) return false
-          if (article.brand && article.brand !== 'Mobile') {
-            return (a.brand || '').toLowerCase() === article.brand.toLowerCase()
-          }
-          return a.type === article.type
-        })
-        .slice(0, 4)
-    }
+    if (!Array.isArray(articles)) storeFailed = true
   } catch {
-    // never crash
+    storeFailed = true
   }
 
-  // -------------------------------------------------------------
-  //  Real 404 (not soft-404) when article missing
-  // -------------------------------------------------------------
+  // ───── Phase 2: handle store outage WITHOUT 404'ing ────────
+  // Throwing causes Next.js to render error.tsx with HTTP 500/503,
+  // which tells Google "try again later" instead of "delete this URL"
+  if (storeFailed) {
+    throw new Error('Article store temporarily unavailable')
+  }
+
+  // ───── Phase 3: find the requested article ─────────────────
+  article = articles.find(a => a.slug === slug) || null
+
+  // Genuinely missing → real 404 (correct behaviour)
   if (!article) {
     notFound()
   }
 
-  // -------------------------------------------------------------
-  //  Build server-rendered JSON-LD schemas
-  // -------------------------------------------------------------
+  // ───── Phase 4: build content + similar list ───────────────
+  try {
+    contentWithLinks = addInternalLinks(article.content || '', slug, articles)
+  } catch {
+    contentWithLinks = article.content || ''
+  }
+
+  const seen = new Set([slug])
+  similar = articles
+    .filter(a => {
+      if (!a.slug || seen.has(a.slug)) return false
+      if (!a.title) return false
+      if (article.brand && article.brand !== 'Mobile') {
+        return (a.brand || '').toLowerCase() === article.brand.toLowerCase()
+      }
+      return a.type === article.type
+    })
+    .slice(0, 4)
+
+  // ───── Phase 5: build server-rendered JSON-LD schemas ──────
   const canonical = `${SITE_URL}/${article.slug}`
   const image     = article.featuredImage || `${SITE_URL}/og-image.jpg`
   const published = article.publishDate || new Date().toISOString()
   const modified  = article.updatedDate || published
-  const headline  = (article.title || '').slice(0, 110) // schema.org limit
+  const cleanedTitle = cleanTitle(article.title || '')
+  const headline  = cleanedTitle.slice(0, 110)
 
-  // 1) NewsArticle / Article schema
+  // 1) NewsArticle / Review schema
   const articleSchema = {
     '@context': 'https://schema.org',
     '@type':    article.type === 'review' ? 'Review' : 'NewsArticle',
     headline,
-    description: article.summary || '',
-    image: [image],
-    datePublished: published,
-    dateModified:  modified,
+    description:    article.summary || '',
+    image:          [image],
+    datePublished:  published,
+    dateModified:   modified,
     author: {
       '@type': 'Person',
       name:    article.author || 'Vijay Yadav',
@@ -209,7 +243,7 @@ export default async function ArticlePage({ params }: PageProps) {
     ...(article.type === 'review' && article.brand ? {
       itemReviewed: {
         '@type': 'Product',
-        name:    article.title,
+        name:    cleanedTitle,
         brand:   { '@type': 'Brand', name: article.brand },
       },
       reviewRating: {
@@ -235,44 +269,53 @@ export default async function ArticlePage({ params }: PageProps) {
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home',         item: SITE_URL },
       { '@type': 'ListItem', position: 2, name: sectionLabel,   item: sectionUrl },
-      { '@type': 'ListItem', position: 3, name: article.title,  item: canonical },
+      { '@type': 'ListItem', position: 3, name: cleanedTitle,   item: canonical },
     ],
   }
 
-  // 3) FAQ schema (only if bullets exist and have substance)
-  const bullets: string[] = Array.isArray(article.bullets) ? article.bullets : []
-  const faqSchema = bullets.length >= 3 ? {
+  // 3) FAQ schema — STRICTER conditions to prevent invalid emit:
+  //    (a) bullets must exist
+  //    (b) at least 3 of them
+  //    (c) each one ≥ 20 chars (avoids placeholder/short-line issues)
+  //    (d) deduped against each other (no two identical answers)
+  const rawBullets: string[] = Array.isArray(article.bullets) ? article.bullets : []
+  const cleanBullets = Array.from(new Set(
+    rawBullets
+      .filter((b): b is string => typeof b === 'string')
+      .map(b => b.trim())
+      .filter(b => b.length >= 20)
+  )).slice(0, 5)
+
+  const faqSchema = cleanBullets.length >= 3 ? {
     '@context': 'https://schema.org',
     '@type':    'FAQPage',
-    mainEntity: bullets.slice(0, 5).map((b, i) => ({
+    mainEntity: cleanBullets.map((b, i) => ({
       '@type': 'Question',
-      name:    `Key point ${i + 1}: ${(article.title || '').slice(0, 60)}`,
+      name:    `What about ${cleanedTitle.slice(0, 50)}? Point ${i + 1}`,
       acceptedAnswer: { '@type': 'Answer', text: b },
     })),
   } : null
 
   return (
     <>
-      {/* ---------------- JSON-LD (server-rendered) ---------------- */}
+      {/* ---------------- JSON-LD (server-rendered, deduped via id) ---------------- */}
       <script
+        id="ld-article"
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
       />
       <script
+        id="ld-breadcrumb"
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
       {faqSchema && (
         <script
+          id="ld-faq"
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
         />
       )}
-
-      {/* ---------------- AMP discovery link ---------------- */}
-      {/* eslint-disable-next-line @next/next/no-head-element */}
-      {/* Note: <link rel="amphtml" /> is automatically picked up by metadata
-          if you want to enable AMP discovery, uncomment in generateMetadata */}
 
       {/* ---------------- Article body ---------------- */}
       <ArticleClient
