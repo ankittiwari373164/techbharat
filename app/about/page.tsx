@@ -103,10 +103,29 @@ export default function AboutPage() {
               <p className="font-body text-sm text-[#3a3a3a] leading-relaxed mb-3">
                 Vijay started his journalism career at a print technology magazine in Mumbai in 2014. He spent six years there before moving to digital, covering the Indian smartphone market as it exploded from 2G to 5G. He has personally tested over 300 devices — everything from ₹6,000 feature phones to ₹1,50,000 foldables.
               </p>
-              <p className="font-body text-sm text-[#3a3a3a] leading-relaxed mb-3">
+              <p className="font-body text-sm text-[#3a3a3a] leading-relaxed mb-4">
                 He founded The Tech Bharat in 2025 after noticing a gap: no publication was covering smartphones specifically for the ₹15,000–₹40,000 buyer who dominates the Indian market. His test methodology is rooted in actual Indian usage — he test-drives every device on Delhi's crowded metro, in the heat, and with the apps Indians actually use.
               </p>
-              <Link href="/author" className="font-sans text-sm font-semibold text-[#d4220a] hover:underline">Full author profile →</Link>
+              {/* ✅ E-E-A-T: verifiable contact + LinkedIn */}
+              <div className="flex flex-wrap gap-3 items-center">
+                <Link href="/author" className="font-sans text-sm font-semibold text-[#d4220a] hover:underline">
+                  Full author profile →
+                </Link>
+                <a
+                  href="https://www.linkedin.com/company/the-tech-bharat/about/"
+                  target="_blank"
+                  rel="noopener noreferrer me"
+                  className="font-sans text-sm font-semibold text-[#1a3a5c] hover:underline"
+                >
+                  LinkedIn
+                </a>
+                <a
+                  href="mailto:editorial@thetechbharat.com"
+                  className="font-sans text-sm font-semibold text-[#1a3a5c] hover:underline"
+                >
+                  editorial@thetechbharat.com
+                </a>
+              </div>
             </div>
           </div>
         </section>

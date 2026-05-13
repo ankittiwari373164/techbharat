@@ -1,3 +1,21 @@
+// lib/store.ts
+// =====================================================================
+//  ADSENSE REMEDIATION
+// ---------------------------------------------------------------------
+//  Key fixes from the audit:
+//    1. Removed generateStoredVerdict() — it shuffled boilerplate
+//       phrases like "delivers a stable overall experience" and
+//       "faces strong competition" and attached one to every newly
+//       added article, regardless of whether it was about a phone.
+//       This created the "Mobile delivers a stable experience but
+//       doesn't lead its segment" filler that ArticleClient now
+//       refuses to render anyway. We stop generating it at the
+//       source so it stops landing in the DB at all.
+//    2. Added optional `noindex` flag on Article for editorial
+//       quality gating (set true to noindex a thin article).
+//    3. addArticleAsync()/addArticle() no longer mutate the
+//       incoming article object with a fabricated verdict.
+// =====================================================================
 export type ArticleType = 'mobile-news' | 'review' | 'compare'
 
 export interface Review {
@@ -11,11 +29,26 @@ export interface Article {
   bullets: string[]; content: string; tags: string[]; relatedSlugs: string[]
   reviews: Review[]; quickSummary: { brand: string; date: string; bullets: string[] }
   seoTitle: string; seoDescription: string; isFeatured: boolean
+  /**
+   * Set to true to mark an article as low-quality / not ready for
+   * search indexing. The article will still render at its URL (so
+   * internal links and direct visits work) but will emit
+   * `<meta name="robots" content="noindex,follow">` and be excluded
+   * from sitemaps. Use for: very thin articles, draft content,
+   * pre-launch articles you haven't fact-checked yet.
+   */
+  noindex?: boolean
+  /**
+   * Optional editorial verdict. ONLY set this by hand or via a
+   * dedicated editor — NEVER fabricate it from string pools.
+   * ArticleClient validates and hides any verdict that matches
+   * known filler signatures.
+   */
   verdict?: {
-  buy: string
-  notBuy: string
-  final: string
-}
+    buy: string
+    notBuy: string
+    final: string
+  }
 }
 
 const KV_KEY    = 'tb:articles'
@@ -33,13 +66,10 @@ async function kvGet(): Promise<Article[]> {
   try {
     const redis = await getRedis()
     const data = await redis.get<Article[]>(KV_KEY)
-
-    // ✅ FIX: always return array (AdSense safe)
     if (!Array.isArray(data)) return []
-
     return data
   } catch {
-    return [] // ✅ never crash
+    return []
   }
 }
 
@@ -69,10 +99,7 @@ function fileSet(articles: Article[]): void {
 
 export async function getAllArticlesAsync(): Promise<Article[]> {
   const data = IS_VERCEL ? await kvGet() : fileGet()
-
-  // ✅ FIX: always safe array
   if (!Array.isArray(data)) return []
-
   return data
 }
 
@@ -80,15 +107,13 @@ export async function saveArticlesAsync(articles: Article[]): Promise<void> {
   IS_VERCEL ? await kvSet(articles) : fileSet(articles)
 }
 
-
-
 export async function addArticleAsync(article: Article): Promise<void> {
   const all = await getAllArticlesAsync()
   if (all.find(a => a.slug === article.slug)) return
-  if (!article.verdict) {
-    article.verdict = generateStoredVerdict(article)
-  }
-
+  // NOTE: We intentionally do NOT auto-fill article.verdict here.
+  // Auto-generated verdicts triggered AdSense "low value content"
+  // because they used templated text pooled by hash. Any missing
+  // verdict simply stays undefined; ArticleClient renders nothing.
   all.unshift(article)
   await saveArticlesAsync(all.slice(0, 200))
 }
@@ -106,19 +131,14 @@ export function addArticle(article: Article): void {
   else {
     const all = fileGet()
     if (all.find(a => a.slug === article.slug)) return
-    if (!article.verdict) {
-      article.verdict = generateStoredVerdict(article)
-    }
+    // No autogen verdict — see addArticleAsync comment above.
     all.unshift(article); fileSet(all.slice(0, 200))
   }
 }
 
 export async function getArticleBySlugAsync(slug: string): Promise<Article | null> {
   const all = await getAllArticlesAsync()
-
-  // ✅ FIX: prevent crash
   if (!slug) return null
-
   return all.find(a => a.slug === slug) || null
 }
 
@@ -138,10 +158,7 @@ export function getFeaturedArticle(): Article | null {
 
 export async function getSimilarArticlesAsync(article: Article, limit = 3): Promise<Article[]> {
   const all = await getAllArticlesAsync()
-
-  // ✅ FIX: prevent crash
   if (!article) return []
-
   return all.filter(a => a.id !== article.id && (a.brand === article.brand || a.type === article.type)).slice(0, limit)
 }
 
@@ -160,40 +177,4 @@ export function getArticlesByType(type: ArticleType): Article[] {
 
 export function generateSlug(title: string): string {
   return title.toLowerCase().replace(/[^a-z0-9\s-]/g,'').replace(/\s+/g,'-').replace(/-+/g,'-').trim().slice(0,80)
-}
-
-function generateStoredVerdict(article: Article) {
-  const seed = article.slug.length + article.title.length
-
-  const pick = (arr: string[], i: number) => arr[(seed + i) % arr.length]
-
-  const brand = article.brand || 'This device'
-
-  // Different sentence pools
-  const buyPool = [
-    `${brand} is a good fit for users who want a balanced everyday experience.`,
-    `This device suits users who are looking for practical performance and usability.`,
-    `A solid option for users who don’t want to overspend but still want reliability.`,
-    `Best for users who want a simple, dependable smartphone experience.`
-  ]
-
-  const notBuyPool = [
-    `Not the right choice for users expecting flagship-level performance.`,
-    `Power users may find this device limiting in the long run.`,
-    `Not ideal if you want top-tier camera or gaming capabilities.`,
-    `Skip this if your priority is high-end performance or premium features.`
-  ]
-
-  const verdictPool = [
-    `${brand} delivers a stable overall experience, but faces strong competition.`,
-    `Overall, this is a practical device, but not the most exciting option available.`,
-    `It gets the basics right, though it doesn’t stand out in its category.`,
-    `A sensible choice for the right user, but not a category leader.`
-  ]
-
-  return {
-    buy: pick(buyPool, 1),
-    notBuy: pick(notBuyPool, 2),
-    final: pick(verdictPool, 3),
-  }
 }

@@ -141,15 +141,24 @@ export async function GET() {
 
     const TWO_YEARS_AGO = Date.now() - (2 * 365 * 24 * 60 * 60 * 1000)
 
+    // Minimum word count to be sitemap-eligible — matches the
+    // indexability threshold in app/article/[slug]/page.tsx. Thin
+    // articles get noindex,follow on the page AND are excluded here
+    // so Google never even discovers them via the sitemap.
+    const MIN_INDEXABLE_WORDS = 600
+
     articleEntries = articles
       .filter(a => {
-        if (!a.slug || !a.title)               return false
-        if (a.isLowValue)                       return false
-        if (a.contentQuality && a.contentQuality < 6) return false
-        const content = (a.content || '').replace(/<[^>]+>/g, '')
-        if (content.length < 200)               return false
+        if (!a.slug || !a.title)                          return false
+        if (a.noindex === true)                           return false   // ✅ explicit editorial flag
+        if (a.isLowValue)                                 return false
+        if (a.contentQuality && a.contentQuality < 6)     return false
+        const content = (a.content || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+        if (!content)                                     return false
+        const wordCount = content.split(' ').length
+        if (wordCount < MIN_INDEXABLE_WORDS)              return false   // ✅ thin-content filter
         const ts = new Date(a.publishDate || 0).getTime()
-        if (ts && ts < TWO_YEARS_AGO)           return false
+        if (ts && ts < TWO_YEARS_AGO)                     return false
         return true
       })
       .map(a => {

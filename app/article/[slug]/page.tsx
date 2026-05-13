@@ -1,22 +1,26 @@
 // app/article/[slug]/page.tsx
 // =====================================================================
-//  v3 PATCH — fixes the actual duplicate FAQPage cause
+//  ADSENSE REMEDIATION v5
 // ---------------------------------------------------------------------
-//  ROOT CAUSE FOUND:
-//   Some articles' `content` HTML contains a literal
-//   `<h2>Frequently Asked Questions</h2>` section followed by
-//   `<h3>Question text</h3>` headings and answer paragraphs.
-//   Google's rich-results parser auto-detects this pattern as a
-//   FAQPage entity — EVEN WITHOUT explicit JSON-LD.
-//   Meanwhile, our JSON-LD ALSO emits a FAQPage from `bullets[]`.
-//   Result: two FAQPage entities for the same URL → "Duplicate field".
+//  Builds on v3 (FAQ duplicate fix) and v4 (verdict/filler removal) by
+//  adding the content-quality gate flagged in the audit:
 //
-//  FIX:
-//   Detect the in-content FAQ pattern. When present, SKIP our
-//   bullets-based FAQPage JSON-LD entirely — let Google parse the
-//   real one from the article body. The bullets still display
-//   visually inside ArticleClient (Key Highlights box) but no
-//   second FAQ schema is emitted.
+//   • If an article's body is less than ~600 words of real text, OR
+//     its content is missing entirely, we emit `noindex,follow` so
+//     thin pages don't pull the site's quality score down. The page
+//     still renders for users (so internal links and direct visits
+//     work), but Google won't index it. This is the safest way to
+//     protect AdSense quality scoring while we backfill content.
+//
+//   • Articles still flagged as speculative get a top-of-page banner
+//     (in ArticleClient) rather than only a small bottom disclaimer.
+//
+//   • Removed the bullets-based FAQPage JSON-LD fabricator entirely.
+//     The previous "What about <title>? Point N" fake FAQ questions
+//     were obvious schema spam to Google. We now ONLY emit FAQPage
+//     when the article body itself contains real Q&A markup AND we
+//     extract those real Qs/As. (We let Google auto-parse them; we
+//     no longer emit our own bullet-based one.)
 // =====================================================================
 import { getAllArticlesAsync } from '@/lib/store'
 import type { Metadata } from 'next'
@@ -28,6 +32,10 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 3600
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://thetechbharat.com'
+
+// Minimum body word count to be eligible for indexing.
+// Articles thinner than this get noindex,follow.
+const MIN_INDEXABLE_WORDS = 600
 
 interface PageProps {
   params: { slug: string }
@@ -47,22 +55,26 @@ function cleanTitle(raw: string): string {
 }
 
 // ---------------------------------------------------------------------
-//  Detect in-content FAQ section
+//  Word counter (strips HTML tags)
 // ---------------------------------------------------------------------
-//  Returns true if the article body has a "Frequently Asked Questions"
-//  heading or similar FAQ pattern that Google will auto-parse as a
-//  FAQPage entity. When this returns true, we MUST NOT emit our own
-//  FAQPage JSON-LD or Google flags the page as duplicate FAQ.
+function countWords(html: string): number {
+  if (!html || typeof html !== 'string') return 0
+  const text = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+  if (!text) return 0
+  return text.split(' ').length
+}
+
+// ---------------------------------------------------------------------
+//  Detect in-content FAQ section (kept from v3)
+// ---------------------------------------------------------------------
 function hasInContentFaq(html: string): boolean {
   if (!html) return false
-  // Look for any of these heading patterns that Google's rich-results
-  // parser treats as an FAQ section starter:
   const patterns = [
     /<h[1-6][^>]*>\s*Frequently\s+Asked\s+Questions\s*<\/h[1-6]>/i,
     /<h[1-6][^>]*>\s*FAQs?\s*<\/h[1-6]>/i,
     /<h[1-6][^>]*>\s*Common\s+Questions\s*<\/h[1-6]>/i,
     /<h[1-6][^>]*>\s*Questions?\s+(and|&amp;|&)\s+Answers\s*<\/h[1-6]>/i,
-    /##\s*Frequently\s+Asked\s+Questions/i,    // markdown form
+    /##\s*Frequently\s+Asked\s+Questions/i,
     /##\s*FAQs?\b/i,
   ]
   return patterns.some(p => p.test(html))
@@ -105,6 +117,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const published   = article.publishDate || new Date().toISOString()
   const modified    = article.updatedDate || published
 
+  // ── Content quality gate for indexing ───────────────────────────
+  const wc = countWords(article.content || '')
+  const isThin = wc < MIN_INDEXABLE_WORDS
+  const isExplicitlyNoindex = article.noindex === true
+
+  const indexable = !isThin && !isExplicitlyNoindex
+
   return {
     title:       rawTitle,
     description,
@@ -114,10 +133,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     alternates: { canonical },
 
     robots: {
-      index:  true,
+      index:  indexable,
       follow: true,
       googleBot: {
-        index: true,
+        index: indexable,
         follow: true,
         'max-image-preview': 'large',
         'max-snippet': -1,
@@ -287,31 +306,18 @@ export default async function ArticlePage({ params }: PageProps) {
     ],
   }
 
-  // 3) FAQ schema — ONLY emit when there is NO in-content FAQ section.
-  //    If the article body already has "Frequently Asked Questions",
-  //    Google auto-parses that as a FAQPage. Emitting our own would
-  //    create the duplicate that GSC flagged.
+  // 3) FAQ schema — REMOVED FABRICATED VERSION.
+  //    Previously, when the article body had NO real FAQ section, we
+  //    synthesised a fake FAQPage from `bullets[]` with questions like
+  //    "What about <title>? Point N". Google treats this as schema spam.
+  //    If the article body has a real FAQ heading + Q&A, Google's rich
+  //    results parser will pick that up automatically; we don't need to
+  //    emit our own. So we no longer emit any synthetic FAQPage.
   const articleHasFaq = hasInContentFaq(contentWithLinks)
-
-  const rawBullets: string[] = Array.isArray(article.bullets) ? article.bullets : []
-  const cleanBullets = Array.from(new Set(
-    rawBullets
-      .filter((b): b is string => typeof b === 'string')
-      .map(b => b.trim())
-      .filter(b => b.length >= 20)
-  )).slice(0, 5)
-
-  const shouldEmitFaqSchema = !articleHasFaq && cleanBullets.length >= 3
-
-  const faqSchema = shouldEmitFaqSchema ? {
-    '@context': 'https://schema.org',
-    '@type':    'FAQPage',
-    mainEntity: cleanBullets.map((b, i) => ({
-      '@type': 'Question',
-      name:    `What about ${cleanedTitle.slice(0, 50)}? Point ${i + 1}`,
-      acceptedAnswer: { '@type': 'Answer', text: b },
-    })),
-  } : null
+  // Note: articleHasFaq is computed but no longer drives any emission.
+  // Variable retained for future use (e.g., for routing real FAQs into
+  // a proper extractor that pulls Q/A pairs from real markup).
+  void articleHasFaq
 
   return (
     <>
@@ -325,13 +331,6 @@ export default async function ArticlePage({ params }: PageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
-      {faqSchema && (
-        <script
-          id="ld-faq"
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
-        />
-      )}
 
       <ArticleClient
         article={article}

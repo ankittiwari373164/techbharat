@@ -13,6 +13,37 @@ export const metadata: Metadata = {
   }
 }
 
+// ── Person JSON-LD: gives Google an entity for Vijay Yadav to verify
+//    against his LinkedIn / external profiles. Strengthens E-E-A-T.
+const personSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  '@id': 'https://thetechbharat.com/author#vijay-yadav',
+  name: 'Vijay Yadav',
+  url: 'https://thetechbharat.com/author',
+  jobTitle: 'Founder & Senior Mobile Editor',
+  worksFor: {
+    '@type': 'NewsMediaOrganization',
+    name: 'The Tech Bharat',
+    url: 'https://thetechbharat.com',
+  },
+  knowsAbout: [
+    'Smartphones',
+    'Mobile Technology',
+    'Indian Smartphone Market',
+    'Phone Reviews',
+    '5G in India',
+    'Smartphone Cameras',
+  ],
+  email: 'editorial@thetechbharat.com',
+  sameAs: [
+    'https://www.linkedin.com/company/the-tech-bharat/about/',
+    'https://t.me/the_tech_bharat',
+  ],
+  description:
+    'Indian mobile-technology journalist with 11 years of experience covering smartphones. Founded The Tech Bharat in 2025. 300+ device reviews.',
+}
+
 export default async function AuthorPage() {
   const allArticles = await getAllArticlesAsync()
   const recent = allArticles
@@ -24,6 +55,11 @@ export default async function AuthorPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">
+      {/* ✅ E-E-A-T: Person JSON-LD for the author */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(personSchema) }}
+      />
 
       {/* Hero Author Card */}
       <div className="bg-white border-2 border-[#d4220a] p-8 mb-10">
@@ -48,9 +84,35 @@ export default async function AuthorPage() {
               <span className="font-sans text-xs bg-gray-700 text-white px-2 py-1 font-semibold">No Brand Affiliations</span>
             </div>
 
-            <p className="font-body text-sm text-[#3a3a3a] leading-relaxed">
+            <p className="font-body text-sm text-[#3a3a3a] leading-relaxed mb-4">
               Vijay Yadav has been covering the Indian smartphone market since 2014. He started at a print technology magazine in Mumbai, then spent years in digital journalism before founding The Tech Bharat in 2025. He has personally tested over 300 devices — from budget phones to ultra-premium foldables — and is known for honest, India-specific analysis that cuts through marketing noise.
             </p>
+
+            {/* ✅ Verifiable external profile links */}
+            <div className="flex flex-wrap gap-3 items-center pt-3 border-t border-border">
+              <a
+                href="https://www.linkedin.com/company/the-tech-bharat/about/"
+                target="_blank"
+                rel="noopener noreferrer me"
+                className="font-sans text-sm font-semibold text-[#1a3a5c] hover:underline"
+              >
+                LinkedIn →
+              </a>
+              <a
+                href="mailto:editorial@thetechbharat.com"
+                className="font-sans text-sm font-semibold text-[#d4220a] hover:underline"
+              >
+                editorial@thetechbharat.com
+              </a>
+              <a
+                href="https://t.me/the_tech_bharat"
+                target="_blank"
+                rel="noopener noreferrer me"
+                className="font-sans text-sm font-semibold text-[#2AABEE] hover:underline"
+              >
+                Telegram →
+              </a>
+            </div>
           </div>
         </div>
       </div>
