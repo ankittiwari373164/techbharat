@@ -3,6 +3,7 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 import { getPillarArticles, formatPillarDate, currentMonthYear } from '@/lib/pillar-utils'
 
+import PillarItemListSchema from '@/components/PillarItemListSchema'
 export const revalidate = 3600
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -39,7 +40,13 @@ export default async function BestCameraPhonePage() {
         ],
       }) }} />
 
-      <div className="max-w-4xl mx-auto px-4 py-10">
+      
+      <PillarItemListSchema
+        path="/best-camera-phones-india"
+        title="Best Camera Phones in India"
+        articles={articles}
+      />
+<div className="max-w-4xl mx-auto px-4 py-10">
 
         {/* Breadcrumb */}
         <nav className="font-sans text-xs text-muted mb-6 flex items-center gap-2 flex-wrap">

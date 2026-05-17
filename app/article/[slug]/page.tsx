@@ -26,7 +26,8 @@ import { getAllArticlesAsync } from '@/lib/store'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import ArticleClient from './ArticleClient'
-import { addInternalLinks } from '@/lib/internal-linking'
+import { addInternalLinksRich } from '@/lib/internal-linking'
+import { getPillarsForArticle } from '@/lib/pillar-registry'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 3600
@@ -209,17 +210,43 @@ export default async function ArticlePage({ params }: PageProps) {
   }
 
   // ───── Phase 4: build content + similar list ───────────────
+  let linkingResult: { html: string; readAlso: any[]; linksAdded: number } =
+    { html: article.content || '', readAlso: [], linksAdded: 0 }
   try {
-    contentWithLinks = addInternalLinks(article.content || '', slug, articles)
+    linkingResult = addInternalLinksRich(
+      article.content || '',
+      slug,
+      articles,
+      {
+        maxLinks: 6,
+        brand:    article.brand,
+        type:     article.type,
+        tags:     article.tags,
+      },
+    )
+    contentWithLinks = linkingResult.html
   } catch {
     contentWithLinks = article.content || ''
   }
 
+  // Pillars relevant to this article (for back-link strip in client)
+  const relevantPillars = getPillarsForArticle({
+    brand:   article.brand,
+    type:    article.type,
+    tags:    article.tags,
+    title:   article.title,
+    summary: article.summary,
+  }).slice(0, 3)
+
+  // Similar articles: exclude noindexed ones (we don't want hub pages
+  // pointing at hidden content) AND only show same-brand or same-type
+  // articles for relevance.
   const seen = new Set([slug])
   similar = articles
     .filter(a => {
       if (!a.slug || seen.has(a.slug)) return false
       if (!a.title) return false
+      if (a.noindex === true) return false
       if (article.brand && article.brand !== 'Mobile') {
         return (a.brand || '').toLowerCase() === article.brand.toLowerCase()
       }
@@ -319,6 +346,21 @@ export default async function ArticlePage({ params }: PageProps) {
   // a proper extractor that pulls Q/A pairs from real markup).
   void articleHasFaq
 
+  // 4) Related ItemList schema — helps Google understand the "More like
+  //    this" section is a proper curated list. Only emit when we have
+  //    at least 3 related articles.
+  const itemListSchema = similar.length >= 3 ? {
+    '@context': 'https://schema.org',
+    '@type':    'ItemList',
+    name:       'Related articles',
+    itemListElement: similar.slice(0, 4).map((a: any, i: number) => ({
+      '@type':   'ListItem',
+      position:  i + 1,
+      url:       `${SITE_URL}/${a.slug}`,
+      name:      a.title,
+    })),
+  } : null
+
   return (
     <>
       <script
@@ -331,12 +373,20 @@ export default async function ArticlePage({ params }: PageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
+      {itemListSchema && (
+        <script
+          id="ld-itemlist"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }}
+        />
+      )}
 
       <ArticleClient
         article={article}
         content={contentWithLinks}
         similar={similar}
         slug={slug}
+        pillars={relevantPillars}
       />
     </>
   )

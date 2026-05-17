@@ -30,11 +30,18 @@ import Link from 'next/link'
 import type { Article } from '@/lib/store'
 import ArticleCard from '@/components/ArticleCard'
 
+interface PillarLink {
+  id:    string
+  path:  string
+  title: string
+}
+
 interface ArticleClientProps {
   article: Article
   content: string
   similar: unknown[]
-  slug: string
+  slug:    string
+  pillars?: PillarLink[]
 }
 
 // ── Brand detection map (used only for context hints, not content gen) ──
@@ -113,7 +120,7 @@ function isSpeculative(article: Article): boolean {
   return false
 }
 
-export default function ArticleClient({ article, similar, slug, content }: ArticleClientProps) {
+export default function ArticleClient({ article, similar, slug, content, pillars = [] }: ArticleClientProps) {
   const [reviewName, setReviewName] = useState('')
   const [reviewText, setReviewText] = useState('')
   const [reviewRating, setReviewRating] = useState(5)
@@ -374,30 +381,55 @@ export default function ArticleClient({ article, similar, slug, content }: Artic
               )}
             </div>
 
-            {/* ✅ REPLACED: The 13-emoji "Browse All Guides" bar + the
-                identical "Read More" trio + the boilerplate "Final Advice"
-                block (which appeared verbatim on every article) have all
-                been removed. They were classic scaled-content filler
-                signatures. We now show ONLY a small contextual nav with
-                brand-aware links. */}
+            {/* ✅ HUB LINKS: Pillar back-links — sends authority signal
+                from spoke (this article) back to relevant hub pages.
+                The pillar list is computed server-side based on this
+                article's brand, type, and content topic, so links are
+                contextual rather than identical-everywhere. */}
             <div className="mt-8 pt-6 border-t border-border">
               <p className="font-sans text-xs font-bold text-[#d4220a] uppercase tracking-wider mb-3">
-                Continue reading
+                Related buyer guides
               </p>
               <div className="flex flex-wrap gap-2">
-                <Link href="/mobile-news" className="font-sans text-xs text-ink border border-border bg-white px-3 py-1.5 hover:border-[#d4220a] hover:text-[#d4220a] transition-colors">
+                {pillars.length > 0 ? (
+                  pillars.map(p => (
+                    <Link
+                      key={p.id}
+                      href={p.path}
+                      className="font-sans text-xs text-ink border border-border bg-white px-3 py-1.5 hover:border-[#d4220a] hover:text-[#d4220a] transition-colors"
+                    >
+                      {p.title} →
+                    </Link>
+                  ))
+                ) : (
+                  <>
+                    <Link href="/best-smartphones-india" className="font-sans text-xs text-ink border border-border bg-white px-3 py-1.5 hover:border-[#d4220a] hover:text-[#d4220a] transition-colors">
+                      Best smartphones in India →
+                    </Link>
+                    <Link href="/smartphone-buying-guide-india" className="font-sans text-xs text-ink border border-border bg-white px-3 py-1.5 hover:border-[#d4220a] hover:text-[#d4220a] transition-colors">
+                      Smartphone buying guide →
+                    </Link>
+                  </>
+                )}
+              </div>
+
+              <p className="font-sans text-xs font-bold text-muted uppercase tracking-wider mt-5 mb-2">
+                Continue browsing
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Link href="/mobile-news" className="font-sans text-xs text-muted border border-border bg-white px-3 py-1.5 hover:border-[#d4220a] hover:text-[#d4220a] transition-colors">
                   Latest mobile news
                 </Link>
-                <Link href="/reviews" className="font-sans text-xs text-ink border border-border bg-white px-3 py-1.5 hover:border-[#d4220a] hover:text-[#d4220a] transition-colors">
+                <Link href="/reviews" className="font-sans text-xs text-muted border border-border bg-white px-3 py-1.5 hover:border-[#d4220a] hover:text-[#d4220a] transition-colors">
                   Reviews
                 </Link>
-                <Link href="/compare" className="font-sans text-xs text-ink border border-border bg-white px-3 py-1.5 hover:border-[#d4220a] hover:text-[#d4220a] transition-colors">
+                <Link href="/compare" className="font-sans text-xs text-muted border border-border bg-white px-3 py-1.5 hover:border-[#d4220a] hover:text-[#d4220a] transition-colors">
                   Comparisons
                 </Link>
                 {resolvedBrand && resolvedBrand !== 'Mobile' && (
                   <Link
                     href={`/mobile-news?brand=${encodeURIComponent(resolvedBrand)}`}
-                    className="font-sans text-xs text-ink border border-border bg-white px-3 py-1.5 hover:border-[#d4220a] hover:text-[#d4220a] transition-colors"
+                    className="font-sans text-xs text-muted border border-border bg-white px-3 py-1.5 hover:border-[#d4220a] hover:text-[#d4220a] transition-colors"
                   >
                     More from {resolvedBrand}
                   </Link>

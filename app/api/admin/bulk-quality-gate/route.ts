@@ -99,6 +99,29 @@ const SPECULATION_MARKERS = [
   'pre-launch', 'pre launch', 'unconfirmed',
 ]
 
+// ── Fabricated-experience signatures ────────────────────────────────
+//  These are the real AdSense killers — sentences where the AI claims
+//  measured personal testing of products it can't possibly have tested
+//  (or where the writer hasn't done the testing). Google's Helpful
+//  Content System penalises content that pretends to have first-hand
+//  experience it doesn't have.
+const FABRICATED_EXPERIENCE_PATTERNS = [
+  /in controlled testing scenarios?/i,
+  /after (using|testing) (this|the) (phone|device) for \d+ (days?|weeks?|months?)/i,
+  /i[\u2019']ve been using (the|my|this) [^.!?]{1,40} for (the past )?\d+ (days?|weeks?|months?)/i,
+  /i personally tested/i,
+  /in my testing[, ][^.]*\b\d+\s*(hours?|fps|mAh|GB|MB|MHz|GHz)/i,
+  /during (my|our) [^.!?]{1,30} testing/i,
+  /our (lab|in-house) testing (showed|revealed|confirmed)/i,
+]
+
+function countFabricatedClaims(article: any): number {
+  const hay = `${article.summary || ''} ${article.content || ''}`
+  let hits = 0
+  for (const re of FABRICATED_EXPERIENCE_PATTERNS) if (re.test(hay)) hits++
+  return hits
+}
+
 // ── Helpers ────────────────────────────────────────────────────────
 function countWords(html: string): number {
   if (!html || typeof html !== 'string') return 0
@@ -133,6 +156,8 @@ interface Report {
   hasFillerVerdict: boolean
   speculationHits: number
   isHeavilySpeculative: boolean
+  fabricatedClaims: number
+  hasFabricatedClaims: boolean
   currentlyNoindexed: boolean
   failsQualityGate: boolean
 }
@@ -143,8 +168,10 @@ function buildReport(a: any): Report {
   const filler = hasFillerVerdict(a.verdict)
   const specCount = countSpeculation(a)
   const isHeavySpec = specCount >= 3
+  const fabCount = countFabricatedClaims(a)
+  const hasFab = fabCount >= 1   // ANY fabricated claim → fail. They're poison.
   const noindexed = a.noindex === true
-  const fails = isThin || filler || isHeavySpec
+  const fails = isThin || filler || isHeavySpec || hasFab
   return {
     slug:                  a.slug || '',
     title:                 a.title || '',
@@ -153,6 +180,8 @@ function buildReport(a: any): Report {
     hasFillerVerdict:      filler,
     speculationHits:       specCount,
     isHeavilySpeculative:  isHeavySpec,
+    fabricatedClaims:      fabCount,
+    hasFabricatedClaims:   hasFab,
     currentlyNoindexed:    noindexed,
     failsQualityGate:      fails,
   }
@@ -178,6 +207,7 @@ async function handle(req: NextRequest): Promise<NextResponse> {
       thin:                 reports.filter(r => r.isThin).length,
       withFillerVerdict:    reports.filter(r => r.hasFillerVerdict).length,
       heavilySpeculative:   reports.filter(r => r.isHeavilySpeculative).length,
+      withFabricatedClaims: reports.filter(r => r.hasFabricatedClaims).length,
       failingQualityGate:   reports.filter(r => r.failsQualityGate).length,
       wouldNoindexAll:      reports.length,
       wouldNoindexThinOnly: reports.filter(r => r.failsQualityGate).length,
@@ -185,7 +215,11 @@ async function handle(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({
       op: 'analyze',
       summary,
-      threshold: { minWords: MIN_INDEXABLE_WORDS, minSpeculationMarkers: 3 },
+      threshold: {
+        minWords:                MIN_INDEXABLE_WORDS,
+        minSpeculationMarkers:   3,
+        minFabricatedClaimsToFail: 1,
+      },
       reports,
     })
   }
