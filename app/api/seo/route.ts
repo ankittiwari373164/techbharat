@@ -134,7 +134,9 @@ async function batchSubmitArticles() {
   const slugs = keys.slice(0, 200)
   for (const key of slugs) {
     const slug = key.replace('article:', '')
-    const url  = `${SITE_URL}/article/${slug}`
+    // Canonical URL: root-level slug (matches what next.config.js
+    // canonicalises to). Avoids "Page with redirect" entries.
+    const url  = `${SITE_URL}/${slug}`
     try {
       const r = await submitUrlToGoogle(url)
       results.push({ url, status: r.error ? `error: ${JSON.stringify(r.error)}` : 'submitted' })

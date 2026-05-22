@@ -212,7 +212,13 @@ async function indexNewArticles(log: string[]): Promise<void> {
     const artTime = (art.publishedAt as number) || new Date((art.publishDate as string) || 0).getTime()
     if (artTime <= twoHrsAgo || (art.googleIndexed as boolean)) continue
 
-    const url = `${SITE_URL}/article/${key.replace('article:', '')}`
+    // Submit the canonical URL (root-level slug), NOT the legacy
+    // /article/SLUG path. The /article/* path is 301-redirected by
+    // next.config.js to the root, so submitting it gives Google a
+    // "Page with redirect" entry in Search Console and wastes the
+    // daily Indexing API quota.
+    const slug = key.replace('article:', '')
+    const url  = `${SITE_URL}/${slug}`
     try {
       const r      = await fetch('https://indexing.googleapis.com/v3/urlNotifications:publish', {
         method:  'POST',

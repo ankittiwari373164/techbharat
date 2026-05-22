@@ -26,8 +26,6 @@ export async function GET() {
 
 User-agent: *
 Allow: /
-Allow: /api/image/
-Allow: /api/admin/uploaded-image/
 Allow: /api/article/
 Allow: /api/ticker/
 Allow: /api/stories/
@@ -35,6 +33,8 @@ Allow: /api/phone-images/
 Disallow: /admin/
 Disallow: /admin
 Disallow: /api/admin/
+Disallow: /api/image/
+Disallow: /api/admin/uploaded-image/
 Disallow: /api/scheduler
 Disallow: /api/seo-cron
 Disallow: /api/analytics
@@ -55,13 +55,15 @@ Disallow: /*?utm_
 
 # ─────────────────────────────────────────────────────────────────
 # Googlebot — full crawl access for content + images
+# Note: image proxy URLs are disallowed for Googlebot (page-crawler)
+# but explicitly allowed for Googlebot-Image below.
 # ─────────────────────────────────────────────────────────────────
 User-agent: Googlebot
 Allow: /
-Allow: /api/image/
-Allow: /api/admin/uploaded-image/
 Disallow: /admin/
 Disallow: /api/admin/
+Disallow: /api/image/
+Disallow: /api/admin/uploaded-image/
 Disallow: /api/scheduler
 Disallow: /api/seo-cron
 Disallow: /api/analytics
@@ -71,8 +73,10 @@ Disallow: /api/fetch-news
 Disallow: /api/img
 
 # ─────────────────────────────────────────────────────────────────
-# Googlebot-Image — explicit allow for image-serving routes
-# (article hero images are proxied through these paths)
+# Googlebot-Image — explicit allow for image-serving routes only.
+# This agent fetches images for Google Images; it does NOT add
+# URLs to the page index, so allowing it here means images still
+# appear in image search without polluting Page indexing reports.
 # ─────────────────────────────────────────────────────────────────
 User-agent: Googlebot-Image
 Allow: /
@@ -89,24 +93,24 @@ User-agent: Googlebot-News
 Allow: /
 Disallow: /admin/
 Disallow: /api/admin/
+Disallow: /api/image/
 
 # ─────────────────────────────────────────────────────────────────
 # AdsBot-Google — AdSense site crawler. CRITICAL for monetisation.
-# Must have full crawl access to article pages and their images.
+# Allowed to crawl article pages but not the image proxy (the
+# AdSense bot indexes page content, not standalone image URLs).
 # ─────────────────────────────────────────────────────────────────
 User-agent: AdsBot-Google
 Allow: /
-Allow: /api/image/
-Allow: /api/admin/uploaded-image/
 Disallow: /admin/
 Disallow: /api/admin/
+Disallow: /api/image/
 
 User-agent: AdsBot-Google-Mobile
 Allow: /
-Allow: /api/image/
-Allow: /api/admin/uploaded-image/
 Disallow: /admin/
 Disallow: /api/admin/
+Disallow: /api/image/
 
 # ─────────────────────────────────────────────────────────────────
 # Sitemaps

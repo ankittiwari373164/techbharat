@@ -83,17 +83,30 @@ const nextConfig = {
       //  (these are the actual article hero images Google Images
       //   and AdSense rely on to understand page topic / quality)
       // -----------------------------------------------------------
+      //  Public image-serving APIs  →  noindex (so they don't appear
+      //  in Page indexing reports as "Crawled, not indexed") but
+      //  Googlebot-Image can still fetch them as images. The
+      //  max-image-preview:large directive signals that the image
+      //  may be shown at large size in search results.
+      //
+      //  We had to flip this from "index, follow" to "noindex": when
+      //  the proxy URL is treated as a page candidate, Google adds it
+      //  to its index queue, then drops it as "no content found",
+      //  cluttering Search Console with hundreds of /api/image/XXX
+      //  entries. Setting noindex stops them ever being queued as
+      //  pages while leaving image-discovery intact.
+      // -----------------------------------------------------------
       {
         source: '/api/image/:path*',
         headers: [
-          { key: 'X-Robots-Tag', value: 'index, follow, max-image-preview:large' },
+          { key: 'X-Robots-Tag', value: 'noindex, max-image-preview:large' },
           { key: 'Cache-Control', value: 'public, max-age=86400, immutable' },
         ],
       },
       {
         source: '/api/admin/uploaded-image/:path*',
         headers: [
-          { key: 'X-Robots-Tag', value: 'index, follow, max-image-preview:large' },
+          { key: 'X-Robots-Tag', value: 'noindex, max-image-preview:large' },
           { key: 'Cache-Control', value: 'public, max-age=86400, immutable' },
         ],
       },

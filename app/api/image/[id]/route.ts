@@ -21,7 +21,10 @@ export async function GET(
   const { id } = params
 
   if (!id) {
-    return new NextResponse('Missing image ID', { status: 400 })
+    return new NextResponse('Missing image ID', {
+      status: 400,
+      headers: { 'X-Robots-Tag': 'noindex, nofollow' },
+    })
   }
 
   let imageUrl = ''
@@ -125,6 +128,11 @@ export async function GET(
   },
     })
   } catch {
-    return NextResponse.redirect('https://thetechbharat.com/og-image.jpg', { status: 302 })
+    // No redirect here — that creates "Page with redirect" entries
+    // in Search Console. Return 404 with noindex so Google forgets it.
+    return new NextResponse('Image not found', {
+      status: 404,
+      headers: { 'X-Robots-Tag': 'noindex, nofollow' },
+    })
   }
 }
